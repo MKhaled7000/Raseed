@@ -32,7 +32,18 @@
 <select id="actAccountFilter" onchange="filterActivity()"><option value="">كل الحسابات</option></select>
 </div>
 <div class="section-head"><h2>تحويل / تسوية</h2></div><div class="panel"><div class="wideform"><div class="field"><label>نوع الحركة</label><select id="ledgerType" onchange="toggleLedgerFields()"><option value="transfer">تحويل بين حسابين</option><option value="adjust">تسوية رصيد</option></select></div><div class="field"><label>المبلغ</label><input id="ledgerAmount" type="number" inputmode="decimal" placeholder="0"></div><div class="field"><label>من حساب</label><select id="ledgerFrom"></select></div><div class="field" id="ledgerToWrap"><label>إلى حساب</label><select id="ledgerTo"></select></div><div class="field"><label>رسوم التحويل (اختياري)</label><input id="ledgerFee" type="number" placeholder="0"></div><div class="field full"><label>السبب / البيان</label><input id="ledgerNote" placeholder="سبب التسوية أو التحويل"></div></div><button class="primary" onclick="saveLedgerMovement()">حفظ الحركة</button></div><div class="panel" id="allActivity"></div></section>
-<section id="debts" class="screen"><div class="greeting">تابع التزاماتك بدون مفاجآت</div><h1>الديون والادخار</h1><div class="panel"><div class="rowline"><span>إجمالي الديون المسجلة</span><b id="debtTotalLabel">0 ج.م</b></div><div class="rowline"><span>المسدد فعليًا</span><b id="debtPaid2">0 ج.م</b></div><div class="rowline"><span>المتبقي</span><b class="red" id="debtRemain2">0 ج.م</b></div><div class="actions"><button class="primary" onclick="openModal('payment')">تسجيل سداد</button></div></div><div class="section-head"><h2>الادخار</h2><span>الرصيد الحالي</span></div><div class="hero"><label>رصيد الادخار الحالي</label><div class="amount" id="savingBig">0 ج.م</div><div class="sub">يتغير بناءً على الحركات التي تسجلها</div></div></section>
+<section id="debts" class="screen"><div class="greeting">تابع التزاماتك بدون مفاجآت</div><h1>الديون والادخار</h1>
+<div class="panel"><div class="rowline"><span>إجمالي الديون المسجلة</span><b id="debtTotalLabel">0 ج.م</b></div><div class="rowline"><span>المسدد فعليًا</span><b id="debtPaid2">0 ج.م</b></div><div class="rowline"><span>المتبقي</span><b class="red" id="debtRemain2">0 ج.م</b></div></div>
+<div class="section-head"><h2>إضافة دين</h2></div>
+<div class="panel"><div class="wideform">
+<div class="field"><label>اسم / جهة الدين</label><input id="debtTitle" placeholder="مثال: دين لأحمد"></div>
+<div class="field"><label>المبلغ</label><input id="debtAmount" type="number" step="0.01" inputmode="decimal" placeholder="0"></div>
+<div class="field full"><label>ملاحظة (اختياري)</label><input id="debtNote" placeholder="تفاصيل إضافية"></div>
+</div><button class="primary" onclick="addDebt()">إضافة الدين</button></div>
+<div class="section-head"><h2>الديون المسجلة</h2></div>
+<div class="panel" id="debtsList"><div class="empty">لا توجد ديون مسجلة.</div></div>
+<div class="section-head"><h2>الادخار</h2><span>الرصيد الحالي</span></div>
+<div class="hero"><label>رصيد الادخار الحالي</label><div class="amount" id="savingBig">0 ج.م</div><div class="sub">يتغير بناءً على الحركات التي تسجلها</div></div></section>
 <section id="reports" class="screen"><div class="greeting">قراءة أعمق لأموالك</div><h1>التقارير</h1><div class="panel"><div class="rowline"><span>دخل الشهر المحدد</span><b id="reportIncome">0 ج.م</b></div><div class="rowline"><span>مصروفات الشهر المحدد</span><b id="reportExpense">0 ج.م</b></div><div class="rowline"><span>صافي الشهر</span><b id="reportNet">0 ج.م</b></div></div><div class="section-head"><h2>أكبر مصادر الإنفاق (الشهر)</h2></div><div class="panel" id="topSpend"></div><div class="section-head"><h2>توزيع المصروفات</h2></div><div class="panel" id="categories"></div><div class="section-head"><h2>ملخص السنة</h2><span id="yearSummaryLabel"></span></div><div class="panel" id="yearSummary"></div><div class="section-head"><h2>مقارنة الأشهر</h2></div><div class="chartbox"><div class="bars" id="yearBars"></div></div></section>
 <section id="salary" class="screen"><div class="greeting">حساب المرتب الشهري</div><h1>المرتبات</h1>
 <div class="panel"><div class="section-head"><h2>إعدادات السنة</h2><span>ثابتة خلال السنة</span></div><div class="wideform">
@@ -71,6 +82,8 @@
 <div class="grid"><div class="metric"><small>إجمالي مديونية البطاقات</small><strong id="cardDebtTotal">0</strong></div><div class="metric"><small>مستحق هذا الشهر</small><strong id="cardDueTotal">0</strong></div></div>
 <div class="panel" style="margin-top:12px"><h2 style="font-size:15px">إضافة بنك / بطاقة</h2><div class="wideform">
 <div class="field"><label>اسم البنك أو البطاقة</label><input id="cardName" placeholder="مثال: QNB" onblur="applyKnownBankTerms()"></div>
+<div class="field"><label>الرصيد / المديونية الحالية</label><input id="cardBalance" type="number" step="0.01" inputmode="decimal" placeholder="0"></div>
+<div class="field"><label>يوم السداد الشهري</label><input id="cardPayDay" type="number" min="1" max="28" value="3"></div>
 
 
 </div>
@@ -118,13 +131,15 @@
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
 <script>
 const KEY='raseed_mobile_v2';let pendingWorkbookTransactions=null;const monthNames=['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
-let state;try{state=JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){state=null}if(!state||!Array.isArray(state.transactions))state={transactions:[],paid:0,savings:0,debtTotal:0};state.salaryConfig=state.salaryConfig||{};state.salaryMonths=state.salaryMonths||{};state.cards=state.cards||[];state.cardOps=state.cardOps||[];state.cardPayments=state.cardPayments||[];state.commitments=state.commitments||[];state.commitmentPayments=state.commitmentPayments||[];state.accounts=state.accounts||[];state.ledger=state.ledger||[];state.importBatches=state.importBatches||[];state.categories=state.categories||['أسرة','فواتير','مواصلات','تعليم','صحة','تسوق','ترفيه','أقساط','راتب','أرباح','أخرى','قرض مستلم','قبض جمعية'];
+let state;try{state=JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){state=null}if(!state||!Array.isArray(state.transactions))state={transactions:[],paid:0,savings:0,debtTotal:0};state.salaryConfig=state.salaryConfig||{};state.salaryMonths=state.salaryMonths||{};state.cards=state.cards||[];state.cardOps=state.cardOps||[];state.cardPayments=state.cardPayments||[];state.commitments=state.commitments||[];state.commitmentPayments=state.commitmentPayments||[];state.accounts=state.accounts||[];state.ledger=state.ledger||[];state.importBatches=state.importBatches||[];state.debts=state.debts||[];
+if(!state.debts.length&&Number(state.debtTotal)>0){state.debts.push({id:'debt-legacy',title:'دين مسجل سابقًا',amount:Number(state.debtTotal)||0,paid:Number(state.paid)||0,note:''});}
+state.categories=state.categories||['أسرة','فواتير','مواصلات','تعليم','صحة','تسوق','ترفيه','أقساط','راتب','أرباح','أخرى','قرض مستلم','قبض جمعية'];
 const fmt=n=>(Math.round((Number(n)||0)*100)/100).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});const egp=n=>fmt(n)+' ج.م';const today=()=>new Date().toISOString().slice(0,10);const monthKey=d=>String(d||'').slice(0,7);const selected=()=>document.getElementById('yearSelect').value+'-'+String(Number(document.getElementById('monthSelect').value)).padStart(2,'0');
 function persist(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){toast('تعذر حفظ البيانات على هذا المتصفح')}render()}
 function go(id,btn){document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active');document.querySelectorAll('.nav').forEach(x=>x.classList.toggle('active',x.dataset.page===id));if(btn)btn.classList.add('active');window.scrollTo(0,0)}
 function init(){let ms=document.getElementById('monthSelect'),ys=document.getElementById('yearSelect');monthNames.forEach((n,i)=>ms.add(new Option(n,String(i+1))));let current=new Date().getFullYear();for(let y=current-5;y<=current+15;y++)ys.add(new Option(y,String(y)));ys.value=String(current);ms.value=String(new Date().getMonth()+1);document.getElementById('date').value=today();document.getElementById('paymentDate').value=today();render()}
 function monthTx(m){return state.transactions.filter(t=>monthKey(t.date)===m)}function totals(m){let a=monthTx(m),inc=a.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0),exp=a.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0),fund=a.filter(t=>t.type==='fund').reduce((s,t)=>s+t.amount,0);return{a,inc,exp,fund,net:inc-exp}}
-function render(){let m=selected(),t=totals(m),all=state.transactions;document.getElementById('remaining').textContent=egp(t.net);document.getElementById('incomeHero').textContent=egp(t.inc);document.getElementById('expenseHero').textContent=egp(t.exp);document.getElementById('incomeCard').textContent=fmt(t.inc);document.getElementById('expenseCard').textContent=fmt(t.exp);document.getElementById('debtCard').textContent=fmt((state.cardOps||[]).reduce((s,o)=>s+opOutstanding(o),0));document.getElementById('savingCard').textContent=fmt((Number(state.savings)||0)+t.net);document.getElementById('savingBig').textContent=egp((Number(state.savings)||0)+t.net);document.getElementById('friendDebt').textContent=egp(Math.max(0,(Number(state.debtTotal)||0)-(Number(state.paid)||0)));document.getElementById('debtTotalLabel').textContent=egp(Number(state.debtTotal)||0);document.getElementById('fundTotal').textContent=egp(all.filter(x=>x.type==='fund').reduce((a,x)=>a+x.amount,0));document.getElementById('paidDebt').textContent=egp(state.paid);document.getElementById('debtPaid2').textContent=egp(state.paid);document.getElementById('debtRemain2').textContent=egp(Math.max(0,(Number(state.debtTotal)||0)-(Number(state.paid)||0)));document.getElementById('debtProgress').style.width=Math.min(100,(Number(state.debtTotal)?state.paid/state.debtTotal*100:0))+'%';document.getElementById('reportIncome').textContent=egp(t.inc);document.getElementById('reportExpense').textContent=egp(t.exp);document.getElementById('reportNet').textContent=egp(t.net);
+function render(){let m=selected(),t=totals(m),all=state.transactions;document.getElementById('remaining').textContent=egp(t.net);document.getElementById('incomeHero').textContent=egp(t.inc);document.getElementById('expenseHero').textContent=egp(t.exp);document.getElementById('incomeCard').textContent=fmt(t.inc);document.getElementById('expenseCard').textContent=fmt(t.exp);document.getElementById('debtCard').textContent=fmt((state.cardOps||[]).reduce((s,o)=>s+opOutstanding(o),0));document.getElementById('savingCard').textContent=fmt((Number(state.savings)||0)+t.net);document.getElementById('savingBig').textContent=egp((Number(state.savings)||0)+t.net);document.getElementById('friendDebt').textContent=egp(Math.max(0,(Number(state.debtTotal)||0)-(Number(state.paid)||0)));document.getElementById('debtTotalLabel').textContent=egp(Number(state.debtTotal)||0);document.getElementById('fundTotal').textContent=egp(all.filter(x=>x.type==='fund').reduce((a,x)=>a+x.amount,0));document.getElementById('paidDebt').textContent=egp(state.paid);document.getElementById('debtPaid2').textContent=egp(state.paid);document.getElementById('debtRemain2').textContent=egp(Math.max(0,(Number(state.debtTotal)||0)-(Number(state.paid)||0)));document.getElementById('debtProgress').style.width=Math.min(100,(Number(state.debtTotal)?state.paid/state.debtTotal*100:0))+'%';document.getElementById('reportIncome').textContent=egp(t.inc);document.getElementById('reportExpense').textContent=egp(t.exp);document.getElementById('reportNet').textContent=egp(t.net);if(typeof renderDebts==='function')renderDebts();
 let ledgerItems=(state.ledger||[]).map(l=>{let from=state.accounts.find(a=>a.id===l.from),to=state.accounts.find(a=>a.id===l.to);return l.type==='transfer'?{id:l.id,type:'transfer',title:'تحويل من '+(from?.name||'حساب')+' إلى '+(to?.name||'حساب'),category:'تحويل بين الحسابات',amount:Number(l.amount)||0,date:l.date}:{id:l.id,type:'adjust',title:'تسوية رصيد '+(from?.name||'حساب'),category:l.note||'تسوية رصيد',amount:Number(l.delta??l.amount)||0,date:l.date}});let activityItems=[...all,...ledgerItems].sort((a,b)=>String(b.date).localeCompare(String(a.date)));let recent=activityItems.slice(0,4);document.getElementById('recent').innerHTML=recent.length?recent.map(itemHTML).join(''):'<div class="empty">لسه مفيش حركات مسجلة. ابدأ بإضافة أول حركة.</div>';window._allActivityItems=activityItems;filterActivity();
 const af=document.getElementById('actAccountFilter');
 if(af){const cur=af.value;af.innerHTML='<option value="">كل الحسابات</option>'+state.accounts.map(a=>`<option value="${a.id}">${esc(a.name)}</option>`).join('');if([...af.options].some(o=>o.value===cur))af.value=cur}
@@ -206,9 +221,72 @@ pendingWorkbookTransactions=tx;document.getElementById('importSummary').innerHTM
 function confirmWorkbookImport(){if(!pendingWorkbookTransactions)return;let ids=new Set(state.transactions.map(x=>String(x.id)));let add=pendingWorkbookTransactions.filter(x=>!ids.has(String(x.id)));state.transactions.push(...add);persist();pendingWorkbookTransactions=null;closeImport();toast('تمت إضافة '+add.length+' حركة دون حذف بياناتك')}
 function closeImport(){document.getElementById('importModal').classList.remove('show');pendingWorkbookTransactions=null}
 
-function backup(){let b=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='raseed-backup.json';a.click();URL.revokeObjectURL(a.href)}function restore(e){let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{let v=JSON.parse(r.result);if(!Array.isArray(v.transactions))throw 0;state=v;persist();toast('تم استرجاع النسخة')}catch{toast('ملف النسخة غير صالح')}};r.readAsText(f)}function resetApp(){if(confirm('متأكد إنك عايز تمسح كل الحركات والبيانات؟')){state={transactions:[],paid:0,savings:0,debtTotal:0,salaryConfig:{},salaryMonths:{},cards:[],cardOps:[],cardPayments:[],commitments:[],commitmentPayments:[]};persist();renderModules();toast('تمت إعادة الضبط')}}
+function backup(){let b=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='raseed-backup.json';a.click();URL.revokeObjectURL(a.href)}function restore(e){let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{let v=JSON.parse(r.result);if(!Array.isArray(v.transactions))throw 0;state=v;persist();toast('تم استرجاع النسخة')}catch{toast('ملف النسخة غير صالح')}};r.readAsText(f)}
+function syncDebtTotals(){
+  const debts=state.debts||[];
+  state.debtTotal=debts.reduce((s,d)=>s+(Number(d.amount)||0),0);
+  state.paid=debts.reduce((s,d)=>s+(Number(d.paid)||0),0);
+}
+function renderDebts(){
+  syncDebtTotals();
+  const list=document.getElementById('debtsList');
+  if(!list)return;
+  const debts=state.debts||[];
+  list.innerHTML=debts.length?debts.map(d=>{
+    const left=Math.max(0,(Number(d.amount)||0)-(Number(d.paid)||0));
+    return `<div class="listitem"><div class="info"><b>${esc(d.title)}</b><small>${esc(d.note||'')} · أصلي ${egp(d.amount)} · مدفوع ${egp(d.paid||0)} · متبقي ${egp(left)}</small><div class="tx-actions"><button class="smallbtn" onclick="payDebtItem('${d.id}')">سداد</button><button class="smallbtn" onclick="editDebt('${d.id}')">تعديل</button><button class="smallbtn danger" onclick="deleteDebt('${d.id}')">حذف</button></div></div><strong class="${left?'red':''}">${egp(left)}</strong></div>`;
+  }).join(''):'<div class="empty">لا توجد ديون مسجلة.</div>';
+}
+function addDebt(){
+  const title=val('debtTitle').trim(),amount=num('debtAmount'),note=val('debtNote').trim();
+  if(!title||amount<=0)return toast('أدخل اسم الدين والمبلغ');
+  state.debts=state.debts||[];
+  state.debts.push({id:'debt-'+Date.now(),title,amount,paid:0,note});
+  setv('debtTitle','');setv('debtAmount','');setv('debtNote','');
+  syncDebtTotals();persist();renderDebts();toast('تمت إضافة الدين');
+}
+function editDebt(id){
+  const d=(state.debts||[]).find(x=>x.id===id);if(!d)return;
+  ensureActionDialog();
+  document.getElementById('actionTitle').textContent='تعديل الدين';
+  document.getElementById('actionBody').innerHTML=`<div class="field"><label>الاسم</label><input id="eDebtTitle" value="${esc(d.title)}"></div><div class="field"><label>المبلغ الأصلي</label><input id="eDebtAmount" type="number" step="0.01" value="${d.amount}"></div><div class="field"><label>المسدد</label><input id="eDebtPaid" type="number" step="0.01" value="${d.paid||0}"></div><div class="field"><label>ملاحظة</label><input id="eDebtNote" value="${esc(d.note||'')}"></div>`;
+  document.getElementById('actionOk').textContent='حفظ';
+  document.getElementById('actionOk').onclick=()=>{
+    d.title=document.getElementById('eDebtTitle').value.trim()||d.title;
+    d.amount=Number(document.getElementById('eDebtAmount').value)||0;
+    d.paid=Number(document.getElementById('eDebtPaid').value)||0;
+    d.note=document.getElementById('eDebtNote').value.trim();
+    syncDebtTotals();persist();closeActionDialog();renderDebts();toast('تم التعديل');
+  };
+  document.getElementById('actionDialog').classList.add('show');
+}
+function deleteDebt(id){
+  if(!confirm('حذف هذا الدين؟'))return;
+  state.debts=(state.debts||[]).filter(x=>x.id!==id);
+  syncDebtTotals();persist();renderDebts();toast('تم الحذف');
+}
+function payDebtItem(id){
+  const d=(state.debts||[]).find(x=>x.id===id);if(!d)return;
+  const left=Math.max(0,(Number(d.amount)||0)-(Number(d.paid)||0));
+  if(left<=0)return toast('الدين مسدد بالكامل');
+  ensureActionDialog();
+  document.getElementById('actionTitle').textContent='سداد: '+d.title;
+  document.getElementById('actionBody').innerHTML=`<div class="field"><label>المبلغ (المتبقي ${egp(left)})</label><input id="payDebtAmt" type="number" step="0.01" value="${left}"></div><div class="field"><label>حساب السداد</label><select id="payDebtAcc">${state.accounts.map(a=>`<option value="${a.id}">${esc(a.name)}</option>`).join('')||'<option value="">—</option>'}</select></div><div class="field"><label>التاريخ</label><input id="payDebtDate" type="date" value="${today()}"></div>`;
+  document.getElementById('actionOk').textContent='تسجيل السداد';
+  document.getElementById('actionOk').onclick=()=>{
+    const n=Number(document.getElementById('payDebtAmt').value)||0;
+    if(n<=0||n>left)return toast('راجع المبلغ');
+    d.paid=(Number(d.paid)||0)+n;
+    const acc=document.getElementById('payDebtAcc').value||null;
+    state.transactions.push({id:'debtpay-'+Date.now(),type:'expense',title:'سداد دين: '+d.title,category:'سداد دين',amount:n,date:document.getElementById('payDebtDate').value||today(),accountId:acc});
+    syncDebtTotals();persist();closeActionDialog();renderDebts();renderAccounts();toast('تم تسجيل السداد');
+  };
+  document.getElementById('actionDialog').classList.add('show');
+}
 
-const APP_VERSION='8.1';
+function resetApp(){if(confirm('متأكد إنك عايز تمسح كل الحركات والبيانات؟')){state={transactions:[],paid:0,savings:0,debtTotal:0,salaryConfig:{},salaryMonths:{},cards:[],cardOps:[],cardPayments:[],commitments:[],commitmentPayments:[]};persist();renderModules();toast('تمت إعادة الضبط')}}
+
+const APP_VERSION='8.2';
 const APP_BUILD='2026-11-11';
 function checkForUpdate(){
   const st=document.getElementById('updateStatus');
@@ -368,9 +446,37 @@ function refreshModuleSelects(){let opts=state.cards.map(c=>`<option value="${c.
 function applyKnownBankTerms(){let n=val('cardName').trim().toLowerCase();[3,6,9,12,15,18,24,36].forEach(m=>{setv('ir'+m,0);setv('fee'+m,0)});if(n.includes('qnb')){[3,6,9,12].forEach(m=>setv('ir'+m,2.18));[15,18,24].forEach(m=>setv('ir'+m,1.98));setv('ir36',1.81)}else if(n.includes('suez')||n.includes('قناة السويس')){[[3,5],[6,8],[9,12],[12,17],[15,21],[18,25],[24,2],[36,2]].forEach(([m,v])=>setv('fee'+m,v))}}
 function addCard(){
  let name=val('cardName').trim();if(!name)return toast('اكتب اسم البنك');
- let terms={};[3,6,9,12,15,18,24,36].forEach(n=>terms[n]={monthlyRate:num('ir'+n)/100,adminRate:num('fee'+n)/100});
- state.cards.push({id:'card-'+Date.now(),name,payDay:3,terms});
- persist();setv('cardName','');refreshModuleSelects();renderModules();toast('تم حفظ البنك وشروطه');
+ let terms={};[3,6,9,12,15,18,24,36].forEach(n=>terms[n]={monthlyRate:round2(num('ir'+n)/100),adminRate:round2(num('fee'+n)/100)});
+ const balance=num('cardBalance'),payDay=num('cardPayDay')||3;
+ state.cards.push({id:'card-'+Date.now(),name,payDay,balance,terms});
+ persist();setv('cardName','');setv('cardBalance','');refreshModuleSelects();renderModules();toast('تم حفظ البنك وشروطه');
+}
+function editCard(id){
+ const c=state.cards.find(x=>x.id===id);if(!c)return;
+ ensureActionDialog();
+ document.getElementById('actionTitle').textContent='تعديل البطاقة / البنك';
+ let termsHtml=[3,6,9,12,15,18,24,36].map(n=>{
+  const t=(c.terms||{})[n]||{};
+  return `<div class="wideform"><div class="field"><label>${n}ش فائدة %</label><input id="eIr${n}" type="number" step="0.01" value="${round2((t.monthlyRate||0)*100)}"></div><div class="field"><label>${n}ش رسوم %</label><input id="eFee${n}" type="number" step="0.01" value="${round2((t.adminRate||0)*100)}"></div></div>`;
+ }).join('');
+ document.getElementById('actionBody').innerHTML=`<div class="field"><label>الاسم</label><input id="eCardName" value="${esc(c.name)}"></div><div class="field"><label>الرصيد / المديونية الحالية</label><input id="eCardBal" type="number" step="0.01" value="${c.balance??0}"></div><div class="field"><label>يوم السداد</label><input id="eCardPayDay" type="number" min="1" max="28" value="${c.payDay||3}"></div><p class="hint">جدول الفوائد والرسوم (اختياري — اتركه 0 إن لم تستخدم التقسيط)</p>${termsHtml}`;
+ document.getElementById('actionOk').textContent='حفظ';
+ document.getElementById('actionOk').onclick=()=>{
+  const name=document.getElementById('eCardName').value.trim();if(!name)return toast('اكتب الاسم');
+  c.name=name;c.balance=Number(document.getElementById('eCardBal').value)||0;c.payDay=Number(document.getElementById('eCardPayDay').value)||3;
+  c.terms=c.terms||{};
+  [3,6,9,12,15,18,24,36].forEach(n=>{c.terms[n]={monthlyRate:round2((Number(document.getElementById('eIr'+n).value)||0)/100),adminRate:round2((Number(document.getElementById('eFee'+n).value)||0)/100)}});
+  persist();closeActionDialog();refreshModuleSelects();renderModules();toast('تم تعديل البطاقة');
+ };
+ document.getElementById('actionDialog').classList.add('show');
+}
+function deleteCard(id){
+ const c=state.cards.find(x=>x.id===id);if(!c)return;
+ if(!confirm('حذف «'+c.name+'» وكل عملياته؟'))return;
+ state.cards=state.cards.filter(x=>x.id!==id);
+ state.cardOps=(state.cardOps||[]).filter(o=>o.cardId!==id);
+ state.cardPayments=(state.cardPayments||[]).filter(p=>p.cardId!==id);
+ persist();refreshModuleSelects();renderModules();toast('تم الحذف');
 }
 function dueDateFor(card,date){let d=new Date(date+'T12:00:00'),y=d.getFullYear(),m=d.getMonth()+1,day=card.payDay||3;let due=new Date(y,m,day);return due.getFullYear()+'-'+String(due.getMonth()+1).padStart(2,'0')+'-'+String(due.getDate()).padStart(2,'0')}
 function creditQuote(){
@@ -409,7 +515,7 @@ function payCard(){
 function addCommitment(){let title=val('comTitle').trim(),amount=num('comAmount'),start=val('comStart');if(!title||amount<=0||!start)return toast('أكمل بيانات الالتزام');state.commitments.push({id:'com-'+Date.now(),title,type:val('comType'),amount,start,end:val('comEnd'),day:num('comDay')||1});persist();setv('comTitle','');renderModules();toast('تم إضافة الالتزام')}
 function commitmentDue(c,month){return month>=c.start&&(!c.end||month<=c.end)}
 function markCommitmentPaid(id){let c=state.commitments.find(x=>x.id===id),m=selected();if(!c)return;let already=state.commitmentPayments.filter(p=>p.commitmentId===id&&p.month===m).reduce((s,p)=>s+p.amount,0),remain=Math.max(0,c.amount-already);if(!remain)return toast('الالتزام مدفوع بالكامل');let amount=Number(prompt('المبلغ المدفوع من '+c.title+' (المتبقي '+remain+')',remain));if(!amount||amount<=0||amount>remain)return toast('مبلغ غير صحيح');let date=prompt('تاريخ الدفع YYYY-MM-DD',today())||today();state.commitmentPayments.push({id:'cmp-'+Date.now(),commitmentId:id,month:m,amount,date});state.transactions.push({id:'com-pay-'+Date.now(),type:'expense',title:'سداد '+c.title,category:c.type,amount,date,source:'commitment-payment'});persist();renderModules()}
-function renderModules(){let m=selected(),due=0,debt=0;state.cardOps.forEach(o=>{debt+=opOutstanding(o);if(o.type==='swipe'){if(o.dueDate&&o.dueDate.slice(0,7)===m)due+=opOutstanding(o)}else {if(o.feeMonth===m)due+=Math.max(0,(o.feeDue||0)-(o.feePaid||0));o.schedules.forEach(sc=>{if(sc.month===m)due+=Math.max(0,sc.amount-sc.paid)})}});let e=document.getElementById('cardDebtTotal');if(e)e.textContent=fmt(debt);e=document.getElementById('cardDueTotal');if(e)e.textContent=fmt(due);e=document.getElementById('cardsList');if(e)e.innerHTML=state.cards.length?state.cards.map(c=>`<div class="listitem"><div class="info"><b>${esc(c.name)}</b><small>السداد يوم ${c.payDay} من الشهر التالي · مدد التقسيط: ${Object.keys(c.terms||{}).filter(n=>(c.terms[n].monthlyRate||0)||(c.terms[n].adminRate||0)).join('، ')||'لم تُحدد نسب بعد'} شهر</small><small>${[3,6,9,12,15,18,24,36].map(n=>n+'ش: '+(((c.terms||{})[n]?.monthlyRate||0)*100)+'% شهري / '+(((c.terms||{})[n]?.adminRate||0)*100)+'% رسوم').join(' · ')}</small></div></div>`).join(''):'لا توجد بطاقات مسجلة.';e=document.getElementById('cardOpsList');if(e)e.innerHTML=state.cardOps.length?state.cardOps.map(o=>{let c=state.cards.find(x=>x.id===o.cardId),remaining=opOutstanding(o),sub=o.type==='swipe'?`مسحوبات · تستحق ${o.dueDate}`:`تقسيط ${o.months} شهر · ${fmt(o.installment)} شهريًا · رسوم ${fmt(o.adminFee||0)} في ${o.feeMonth||'الشهر الأول'}`;return `<div class="listitem"><div class="info"><b>${esc(o.title)} — ${esc(c?.name||'بطاقة')}</b><small>${sub} · ${o.date}</small><small>الأصل ${fmt(o.amount)} · المتبقي ${fmt(remaining)}</small></div><span class="tag">${o.type==='swipe'?'مسحوبات':'تقسيط'}</span></div>`}).join(''):'<div class="empty">لا توجد عمليات.</div>';let coms=state.commitments.filter(c=>commitmentDue(c,m));e=document.getElementById('comMonthLabel');if(e)e.textContent=m;e=document.getElementById('commitmentsList');if(e)e.innerHTML=coms.length?coms.map(c=>{let paid=state.commitmentPayments.filter(p=>p.commitmentId===c.id&&p.month===m).reduce((s,p)=>s+p.amount,0),left=Math.max(0,c.amount-paid);return `<div class="listitem"><div class="info"><b>${esc(c.title)}</b><small>${esc(c.type)} · يوم ${c.day} · مستحق ${fmt(c.amount)} · مدفوع ${fmt(paid)} · متبقي ${fmt(left)}</small></div><button class="smallbtn" onclick="markCommitmentPaid('${c.id}')">${left?'تسجيل دفع':'مدفوع'}</button></div>`}).join(''):'<div class="empty">لا توجد التزامات مستحقة في هذا الشهر.</div>';}
+function renderModules(){let m=selected(),due=0,debt=0;state.cardOps.forEach(o=>{debt+=opOutstanding(o);if(o.type==='swipe'){if(o.dueDate&&o.dueDate.slice(0,7)===m)due+=opOutstanding(o)}else {if(o.feeMonth===m)due+=Math.max(0,(o.feeDue||0)-(o.feePaid||0));o.schedules.forEach(sc=>{if(sc.month===m)due+=Math.max(0,sc.amount-sc.paid)})}});let e=document.getElementById('cardDebtTotal');if(e)e.textContent=fmt(debt);e=document.getElementById('cardDueTotal');if(e)e.textContent=fmt(due);e=document.getElementById('cardsList');if(e)e.innerHTML=state.cards.length?state.cards.map(c=>{const bal=Number(c.balance)||0;const termsOn=Object.keys(c.terms||{}).filter(n=>((c.terms[n].monthlyRate||0)||(c.terms[n].adminRate||0)));return `<div class="listitem"><div class="info"><b>${esc(c.name)}</b><small>الرصيد الحالي: ${egp(bal)} · السداد يوم ${c.payDay||3}${termsOn.length?(' · مدد مفعّلة: '+termsOn.join('، ')+' شهر'):''}</small><div class="tx-actions"><button class="smallbtn" onclick="editCard('${c.id}')">تعديل</button><button class="smallbtn danger" onclick="deleteCard('${c.id}')">حذف</button></div></div><strong>${egp(bal)}</strong></div>`}).join(''):'<div class="empty">لا توجد بطاقات مسجلة.</div>';e=document.getElementById('cardOpsList');if(e)e.innerHTML=state.cardOps.length?state.cardOps.map(o=>{let c=state.cards.find(x=>x.id===o.cardId),remaining=opOutstanding(o),sub=o.type==='swipe'?`مسحوبات · تستحق ${o.dueDate}`:`تقسيط ${o.months} شهر · ${fmt(o.installment)} شهريًا · رسوم ${fmt(o.adminFee||0)} في ${o.feeMonth||'الشهر الأول'}`;return `<div class="listitem"><div class="info"><b>${esc(o.title)} — ${esc(c?.name||'بطاقة')}</b><small>${sub} · ${o.date}</small><small>الأصل ${fmt(o.amount)} · المتبقي ${fmt(remaining)}</small></div><span class="tag">${o.type==='swipe'?'مسحوبات':'تقسيط'}</span></div>`}).join(''):'<div class="empty">لا توجد عمليات.</div>';let coms=state.commitments.filter(c=>commitmentDue(c,m));e=document.getElementById('comMonthLabel');if(e)e.textContent=m;e=document.getElementById('commitmentsList');if(e)e.innerHTML=coms.length?coms.map(c=>{let paid=state.commitmentPayments.filter(p=>p.commitmentId===c.id&&p.month===m).reduce((s,p)=>s+p.amount,0),left=Math.max(0,c.amount-paid);return `<div class="listitem"><div class="info"><b>${esc(c.title)}</b><small>${esc(c.type)} · يوم ${c.day} · مستحق ${fmt(c.amount)} · مدفوع ${fmt(paid)} · متبقي ${fmt(left)}</small></div><button class="smallbtn" onclick="markCommitmentPaid('${c.id}')">${left?'تسجيل دفع':'مدفوع'}</button></div>`}).join(''):'<div class="empty">لا توجد التزامات مستحقة في هذا الشهر.</div>';}
 function toggleInstallmentFields(){document.querySelectorAll('.installment-only').forEach(e=>e.style.display=val('opType')==='installment'?'block':'none');showCreditQuote()}
 
 
@@ -417,7 +523,30 @@ function toggleInstallmentFields(){document.querySelectorAll('.installment-only'
 function migrateCreditAccounting(){let changed=false;for(const t of state.transactions){if(t.source==='card-payment'&&t.type==='expense'){t.type='credit_payment';changed=true}}if(changed)persist()}
 function accountBalance(a){let n=Number(a.opening)||0;for(const t of state.transactions){if(t.accountId===a.id){if(t.type==='income'||t.type==='fund')n+=Number(t.amount)||0;else if(t.type==='expense'||t.type==='credit_payment')n-=Number(t.amount)||0;}}for(const l of state.ledger){if(l.type==='adjust'){if(l.from===a.id)n+=Number(l.delta??l.amount)||0;continue;}if(l.from===a.id)n-=Number(l.amount)||0;if(l.to===a.id)n+=Number(l.amount)||0;}return round2(n)}
 function addAccount(){let name=val('accName').trim(),opening=num('accOpening');if(!name)return toast('اكتب اسم الحساب');if(state.accounts.some(a=>a.name.toLowerCase()===name.toLowerCase()))return toast('الحساب موجود بالفعل');state.accounts.push({id:'acc-'+Date.now(),name,type:val('accType'),opening});persist();setv('accName','');setv('accOpening','');renderAccounts();refreshAccountSelects();toast('تمت إضافة الحساب')}
-function renderAccounts(){let list=document.getElementById('accountsList');if(!list)return;let total=state.accounts.filter(a=>a.type!=='credit').reduce((s,a)=>s+accountBalance(a),0);document.getElementById('accountsTotal').textContent=egp(total);list.innerHTML=state.accounts.length?state.accounts.map(a=>`<div class="listitem clickable" onclick="showAccountStatement('${a.id}')"><div class="actico">${a.type==='cash'?'👛':a.type==='bank'?'🏦':a.type==='wallet'?'📱':'💳'}</div><div class="info"><b>${esc(a.name)}</b><small>${({cash:'كاش',bank:'حساب بنكي',wallet:'محفظة إلكترونية',prepaid:'بطاقة مسبقة الدفع'})[a.type]||a.type} · اضغط لكشف الحساب</small></div><strong>${egp(accountBalance(a))}</strong></div>`).join(''):'<div class="empty">أضف أول حساب لتتبع أرصدتك.</div>';refreshAccountSelects()}
+function renderAccounts(){let list=document.getElementById('accountsList');if(!list)return;let total=state.accounts.filter(a=>a.type!=='credit').reduce((s,a)=>s+accountBalance(a),0);document.getElementById('accountsTotal').textContent=egp(total);list.innerHTML=state.accounts.length?state.accounts.map(a=>`<div class="listitem"><div class="actico" onclick="showAccountStatement('${a.id}')">${a.type==='cash'?'👛':a.type==='bank'?'🏦':a.type==='wallet'?'📱':'💳'}</div><div class="info" onclick="showAccountStatement('${a.id}')" style="cursor:pointer"><b>${esc(a.name)}</b><small>${({cash:'كاش',bank:'حساب بنكي',wallet:'محفظة إلكترونية',prepaid:'بطاقة مسبقة الدفع'})[a.type]||a.type} · اضغط لكشف الحساب</small><div class="tx-actions"><button class="smallbtn" onclick="event.stopPropagation();editAccount('${a.id}')">تعديل</button><button class="smallbtn danger" onclick="event.stopPropagation();deleteAccount('${a.id}')">حذف</button></div></div><strong onclick="showAccountStatement('${a.id}')">${egp(accountBalance(a))}</strong></div>`).join(''):'<div class="empty">أضف أول حساب لتتبع أرصدتك.</div>';refreshAccountSelects()}
+function editAccount(id){
+  const a=state.accounts.find(x=>x.id===id);if(!a)return;
+  ensureActionDialog();
+  document.getElementById('actionTitle').textContent='تعديل الحساب';
+  document.getElementById('actionBody').innerHTML=`<div class="field"><label>اسم الحساب</label><input id="editAccName" value="${esc(a.name)}"></div><div class="field"><label>النوع</label><select id="editAccType"><option value="cash">كاش</option><option value="bank">حساب بنكي</option><option value="wallet">محفظة إلكترونية</option><option value="prepaid">بطاقة مسبقة الدفع</option></select></div><div class="field"><label>الرصيد الافتتاحي</label><input id="editAccOpening" type="number" step="0.01" value="${a.opening??0}"></div><p class="hint">تعديل الرصيد الافتتاحي يغيّر الرصيد المحسوب مع الحركات.</p>`;
+  document.getElementById('editAccType').value=a.type||'cash';
+  document.getElementById('actionOk').textContent='حفظ';
+  document.getElementById('actionOk').onclick=()=>{
+    const name=document.getElementById('editAccName').value.trim();
+    if(!name)return toast('اكتب اسم الحساب');
+    if(state.accounts.some(x=>x.id!==id&&x.name.toLowerCase()===name.toLowerCase()))return toast('الاسم مستخدم');
+    a.name=name;a.type=document.getElementById('editAccType').value;a.opening=Number(document.getElementById('editAccOpening').value)||0;
+    persist();closeActionDialog();renderAccounts();toast('تم تعديل الحساب');
+  };
+  document.getElementById('actionDialog').classList.add('show');
+}
+function deleteAccount(id){
+  const a=state.accounts.find(x=>x.id===id);if(!a)return;
+  const used=state.transactions.some(t=>t.accountId===id)||(state.ledger||[]).some(l=>l.from===id||l.to===id);
+  if(!confirm('حذف الحساب «'+a.name+'»؟'+(used?'\\nملاحظة: الحركات المرتبطة ستبقى لكن بدون حساب.':'')))return;
+  state.accounts=state.accounts.filter(x=>x.id!==id);
+  persist();renderAccounts();toast('تم حذف الحساب');
+}
 function showAccountStatement(accId){
   const a=state.accounts.find(x=>x.id===accId);if(!a)return;
   const txs=state.transactions.filter(t=>t.accountId===accId).map(t=>({...t,kind:'tx'}));
@@ -597,7 +726,7 @@ function closeActionDialog(){let d=document.getElementById('actionDialog');if(d)
 let pendingCommitmentId=null;
 function markCommitmentPaid(id){let c=state.commitments.find(x=>x.id===id),m=selected();if(!c)return;let already=state.commitmentPayments.filter(p=>p.commitmentId===id&&p.month===m).reduce((s,p)=>s+p.amount,0),remain=Math.max(0,c.amount-already);if(!remain)return toast('الالتزام مدفوع بالكامل');pendingCommitmentId=id;ensureActionDialog();document.getElementById('actionTitle').textContent='تسجيل سداد الالتزام';document.getElementById('actionBody').innerHTML=`<div class="field"><label>المبلغ المدفوع (المتبقي ${fmt(remain)} جنيه)</label><input id="commitPaidAmount" type="number" value="${remain}" inputmode="decimal"></div><div class="field"><label>تاريخ الدفع</label><input id="commitPaidDate" type="date" value="${today()}"></div><div class="field"><label>حساب السداد</label><select id="commitPaidAccount">${state.accounts.map(a=>`<option value="${a.id}">${esc(a.name)}</option>`).join('')}</select></div>`;document.getElementById('actionOk').onclick=saveCommitmentPayment;document.getElementById('actionDialog').classList.add('show')}
 function saveCommitmentPayment(){let id=pendingCommitmentId,c=state.commitments.find(x=>x.id===id),m=selected(),already=state.commitmentPayments.filter(p=>p.commitmentId===id&&p.month===m).reduce((s,p)=>s+p.amount,0),remain=Math.max(0,c.amount-already),amount=num('commitPaidAmount'),date=val('commitPaidDate')||today(),accountId=val('commitPaidAccount');if(amount<=0||amount>remain)return toast('راجع مبلغ السداد');if(state.accounts.length&&!accountId)return toast('حدد حساب السداد');state.commitmentPayments.push({id:'cmp-'+Date.now(),commitmentId:id,month:m,amount,date,accountId});state.transactions.push({id:'com-pay-'+Date.now(),type:'expense',title:'سداد '+c.title,category:c.type,amount,date,accountId,source:'commitment-payment'});persist();closeActionDialog();renderModules();renderAccounts();toast('تم تسجيل السداد')}
-function resetApp(){ensureActionDialog();document.getElementById('actionTitle').textContent='إعادة ضبط التطبيق';document.getElementById('actionBody').textContent='سيتم حذف الحركات والحسابات المحفوظة على هذا الجهاز. تأكد من تصدير نسخة احتياطية أولًا.';document.getElementById('actionOk').onclick=()=>{state={transactions:[],paid:0,savings:0,debtTotal:0,salaryConfig:{},salaryMonths:{},cards:[],cardOps:[],cardPayments:[],commitments:[],commitmentPayments:[],accounts:[],ledger:[]};persist();closeActionDialog();renderModules();renderAccounts();toast('تمت إعادة الضبط')};document.getElementById('actionDialog').classList.add('show')}
+function resetApp(){ensureActionDialog();document.getElementById('actionTitle').textContent='إعادة ضبط التطبيق';document.getElementById('actionBody').textContent='سيتم حذف الحركات والحسابات المحفوظة على هذا الجهاز. تأكد من تصدير نسخة احتياطية أولًا.';document.getElementById('actionOk').onclick=()=>{state={transactions:[],paid:0,savings:0,debtTotal:0,salaryConfig:{},salaryMonths:{},cards:[],cardOps:[],cardPayments:[],commitments:[],commitmentPayments:[],accounts:[],ledger:[],debts:[]};persist();closeActionDialog();renderModules();renderAccounts();toast('تمت إعادة الضبط')};document.getElementById('actionDialog').classList.add('show')}
 
 // Ensure initial render and correct conditional fields on first load
 try{state.accounts=state.accounts||[];state.ledger=state.ledger||[];state.importBatches=state.importBatches||[];migrateCreditAccounting();addSalaryAccountField();addCardPayAccount();renderAccounts();toggleInstallmentFields();}catch(e){console.warn(e)}
