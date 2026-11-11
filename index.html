@@ -25,59 +25,61 @@
 <div class="section-head"><h2>الديون والالتزامات</h2><span>الموقف الحالي</span></div><div class="panel"><div class="rowline"><span>إجمالي الديون المتبقية</span><b id="friendDebt">0 ج.م</b></div><div class="progress"><i id="debtProgress" style="width:0%"></i></div><div class="rowline"><span>تم سداده فعليًا</span><b id="paidDebt">0 ج.م</b></div><div class="rowline"><span>تمويلات / جمعيات مسجلة</span><b class="orange" id="fundTotal">0 ج.م</b></div></div>
 <div class="section-head"><h2>آخر الحركات</h2><span onclick="go('activity')">عرض الكل ←</span></div><div class="panel" id="recent"></div>
 </section>
-<section id="accounts" class="screen"><div class="greeting">أرصدتك وحركات أموالك</div><h1>حساباتي</h1><div class="hero"><label>إجمالي الأموال المتاحة</label><div class="amount" id="accountsTotal">0 ج.م</div></div><div class="panel" style="margin-top:12px"><h2 style="font-size:15px">إضافة حساب</h2><div class="wideform"><div class="field"><label>اسم الحساب</label><input id="accName" placeholder="مثال: المحفظة النقدية"></div><div class="field"><label>النوع</label><select id="accType"><option value="cash">كاش</option><option value="bank">حساب بنكي</option><option value="wallet">محفظة إلكترونية</option><option value="prepaid">بطاقة مسبقة الدفع</option></select></div><div class="field full"><label>الرصيد الافتتاحي</label><input id="accOpening" type="number" inputmode="decimal" placeholder="0"></div></div><button class="primary" onclick="addAccount()">إضافة الحساب</button></div><div class="section-head"><h2>أرصدتي</h2></div><div class="panel" id="accountsList"></div><div class="section-head"><h2>استيراد Money Manager</h2></div><div class="panel"><p class="hint">ارفع ملف .mmbak، ثم اختر الحسابات المطلوبة وراجع الحركات قبل الاستيراد. لن تُحذف بيانات رصيد الحالية.</p><input id="mmbakFile" type="file" accept=".mmbak,.db,.sqlite" style="width:100%;margin:8px 0" onchange="readMmbak(event)"><div id="mmbakPreview"></div></div></section><section id="activity" class="screen"><div class="greeting">سجل كل حركة مالية</div><h1>الحركات</h1><div class="section-head"><h2>تحويل / تسوية</h2></div><div class="panel"><div class="wideform"><div class="field"><label>نوع الحركة</label><select id="ledgerType" onchange="toggleLedgerFields()"><option value="transfer">تحويل بين حسابين</option><option value="adjust">تسوية رصيد</option></select></div><div class="field"><label>المبلغ</label><input id="ledgerAmount" type="number" inputmode="decimal" placeholder="0"></div><div class="field"><label>من حساب</label><select id="ledgerFrom"></select></div><div class="field" id="ledgerToWrap"><label>إلى حساب</label><select id="ledgerTo"></select></div><div class="field"><label>رسوم التحويل (اختياري)</label><input id="ledgerFee" type="number" placeholder="0"></div><div class="field full"><label>السبب / البيان</label><input id="ledgerNote" placeholder="سبب التسوية أو التحويل"></div></div><button class="primary" onclick="saveLedgerMovement()">حفظ الحركة</button></div><div class="panel" id="allActivity"></div></section>
+<section id="accounts" class="screen"><div class="greeting">أرصدتك وحركات أموالك</div><h1>حساباتي</h1><div class="hero"><label>إجمالي الأموال المتاحة</label><div class="amount" id="accountsTotal">0 ج.م</div></div><div class="panel" style="margin-top:12px"><h2 style="font-size:15px">إضافة حساب</h2><div class="wideform"><div class="field"><label>اسم الحساب</label><input id="accName" placeholder="مثال: المحفظة النقدية"></div><div class="field"><label>النوع</label><select id="accType"><option value="cash">كاش</option><option value="bank">حساب بنكي</option><option value="wallet">محفظة إلكترونية</option><option value="prepaid">بطاقة مسبقة الدفع</option></select></div><div class="field full"><label>الرصيد الافتتاحي</label><input id="accOpening" type="number" inputmode="decimal" placeholder="0"></div></div><button class="primary" onclick="addAccount()">إضافة الحساب</button></div><div class="section-head"><h2>أرصدتي</h2></div><div class="panel" id="accountsList"></div></section><section id="activity" class="screen"><div class="greeting">سجل كل حركة مالية</div><h1>الحركات</h1><div class="section-head"><h2>تحويل / تسوية</h2></div><div class="panel"><div class="wideform"><div class="field"><label>نوع الحركة</label><select id="ledgerType" onchange="toggleLedgerFields()"><option value="transfer">تحويل بين حسابين</option><option value="adjust">تسوية رصيد</option></select></div><div class="field"><label>المبلغ</label><input id="ledgerAmount" type="number" inputmode="decimal" placeholder="0"></div><div class="field"><label>من حساب</label><select id="ledgerFrom"></select></div><div class="field" id="ledgerToWrap"><label>إلى حساب</label><select id="ledgerTo"></select></div><div class="field"><label>رسوم التحويل (اختياري)</label><input id="ledgerFee" type="number" placeholder="0"></div><div class="field full"><label>السبب / البيان</label><input id="ledgerNote" placeholder="سبب التسوية أو التحويل"></div></div><button class="primary" onclick="saveLedgerMovement()">حفظ الحركة</button></div><div class="panel" id="allActivity"></div></section>
 <section id="debts" class="screen"><div class="greeting">تابع التزاماتك بدون مفاجآت</div><h1>الديون والادخار</h1><div class="panel"><div class="rowline"><span>إجمالي الديون المسجلة</span><b id="debtTotalLabel">0 ج.م</b></div><div class="rowline"><span>المسدد فعليًا</span><b id="debtPaid2">0 ج.م</b></div><div class="rowline"><span>المتبقي</span><b class="red" id="debtRemain2">0 ج.م</b></div><div class="actions"><button class="primary" onclick="openModal('payment')">تسجيل سداد</button></div></div><div class="section-head"><h2>الادخار</h2><span>الرصيد الحالي</span></div><div class="hero"><label>رصيد الادخار الحالي</label><div class="amount" id="savingBig">0 ج.م</div><div class="sub">يتغير بناءً على الحركات التي تسجلها</div></div><p class="hint">القروض وقبض الجمعيات لا تُحسب دخلًا مكتسبًا. سجّلها كتمويل حتى لا تعطيك صورة مضللة عن دخلك.</p></section>
 <section id="reports" class="screen"><div class="greeting">قراءة أعمق لأموالك</div><h1>التقارير</h1><div class="panel"><div class="rowline"><span>دخل الشهر المحدد</span><b id="reportIncome">0 ج.م</b></div><div class="rowline"><span>مصروفات الشهر المحدد</span><b id="reportExpense">0 ج.م</b></div><div class="rowline"><span>صافي الشهر</span><b id="reportNet">0 ج.م</b></div></div><div class="section-head"><h2>توزيع المصروفات</h2></div><div class="panel" id="categories"></div></section>
-<section id="salary" class="screen"><div class="greeting">حساب المرتب طبقًا لمعادلات شهر نوفمبر من شيت Bank 2027 - Nee</div><h1>المرتبات</h1>
+<section id="salary" class="screen"><div class="greeting">حساب المرتب الشهري</div><h1>المرتبات</h1>
 <div class="panel"><div class="section-head"><h2>إعدادات السنة</h2><span>ثابتة خلال السنة</span></div><div class="wideform">
-<div class="field"><label>السنة</label><select id="salYear" onchange="loadSalaryConfig()"></select></div><div class="field"><label>يوم قبض المرتب</label><select id="salPayDay"><option value="2">يوم 2</option><option value="3" selected>يوم 3</option></select></div>
-<div class="field"><label>الراتب الأساسي (I)</label><input id="salBasic" type="number" oninput="updateHourlyPreview()"></div>
-<div class="field"><label>الحضور الكامل (P)</label><input id="salAttendance" type="number"></div>
-<div class="field"><label>سنوات الأجور (Q)</label><input id="salYears" type="number"></div>
+<div class="field"><label>السنة</label><select id="salYear" onchange="loadSalaryConfig()"></select></div>
+<div class="field"><label>الراتب الأساسي</label><input id="salBasic" type="number" oninput="updateHourlyPreview()"></div>
+<div class="field"><label>الحضور الكامل</label><input id="salAttendance" type="number"></div>
+<div class="field"><label>سنوات الأجور</label><input id="salYears" type="number"></div>
 <div class="field"><label>أيام الشهر الحسابية</label><input id="salWorkDays" type="number" value="30" oninput="updateHourlyPreview()"></div>
 <div class="field"><label>ساعات العمل اليومية</label><input id="salWorkHours" type="number" value="8" oninput="updateHourlyPreview()"></div>
 <div class="field"><label>معامل البدل</label><input id="salAllowanceRate" type="number" step="0.1" value="1" oninput="updateHourlyPreview()"></div>
-<div class="field"><label>معامل الراحة</label><input id="salRestRate" type="number" step="0.1" value="1.5" oninput="updateHourlyPreview()"></div>
+<div class="field"><label>معامل الراحة</label><input id="salRestRate" type="number" step="0.1" value="2" oninput="updateHourlyPreview()"></div>
 <div class="field"><label>معامل الإضافي</label><input id="salOTRate" type="number" step="0.1" value="1.5" oninput="updateHourlyPreview()"></div>
 <div class="field"><label>معامل العيد</label><input id="salHolidayRate" type="number" step="0.1" value="2" oninput="updateHourlyPreview()"></div>
-<div class="field"><label>وجبة 8 ساعات (جنيه)</label><input id="salMeal8" type="number" value="70"></div>
-<div class="field"><label>وجبة 12 ساعة (جنيه)</label><input id="salMeal12" type="number" value="140"></div>
+<div class="field"><label>سعر الوجبة</label><input id="salMealPrice" type="number" value="70" min="0"></div>
 <div class="field"><label>إضافة التأمين الثابتة الأولى</label><input id="salInsAdd1" type="number" value="1400"></div>
 <div class="field"><label>إضافة التأمين الثابتة الثانية</label><input id="salInsAdd2" type="number" value="800"></div>
 <div class="field"><label>نسبة التأمين من أساس التأمين %</label><input id="salInsuranceBaseRate" type="number" step="0.1" value="10"></div>
 <div class="field"><label>نسبة التأمين الطبي من الشامل %</label><input id="salMedicalRate" type="number" step="0.1" value="6"></div>
 <div class="field"><label>صندوق الشهداء %</label><input id="salMartyrsRate" type="number" step="0.001" value="0.05"></div>
-<div class="field full"><div id="salHourlyPreview" class="mutednote">سعر الساعة الأساسي: —</div></div>
+
 </div><button class="primary" onclick="saveSalaryConfig()">حفظ إعدادات السنة</button></div>
 <div class="panel" style="margin-top:12px"><div class="section-head"><h2>مدخلات الشهر</h2><span>تتغير كل شهر</span></div><div class="wideform">
 <div class="field"><label>الشهر</label><select id="salMonth" onchange="loadSalaryConfig()"></select></div>
-<div class="field"><label>التقييم (J)</label><input id="salRating" type="number"></div>
-<div class="field"><label>ساعات البدل (B)</label><input id="salAllowanceHours" type="number"></div>
-<div class="field"><label>ساعات الراحة (C)</label><input id="salRestHours" type="number"></div>
-<div class="field"><label>ساعات الإضافي (D)</label><input id="salOvertime" type="number"></div>
-<div class="field"><label>ساعات العيد (E)</label><input id="salHoliday" type="number"></div>
-<div class="field"><label>أيام الشهر (F)</label><input id="salDays" type="number" oninput="updateMealPreview()"></div>
-<div class="field"><label>ساعات 12 ساعة (H)</label><input id="sal12H" type="number" oninput="updateMealPreview()"></div>
-<div class="field full"><div id="salMealPreview" class="mutednote">سيتم حساب 8H تلقائيًا = Days − (بدل ÷ 8) − 12H، والوجبة = 8H × 70 + 12H × 140.</div></div>
-<div class="field"><label>مكافآت / خصومات أخرى (R)</label><input id="salOther" type="number"></div>
+<div class="field"><label>يوم القبض الفعلي</label><select id="salPayDay"><option value="1">يوم 1</option><option value="2">يوم 2</option><option value="3">يوم 3</option></select></div>
+<div class="field"><label>التقييم</label><input id="salRating" type="number"></div>
+<div class="field"><label>ساعات البدل</label><input id="salAllowanceHours" type="number"></div>
+<div class="field"><label>ساعات الراحة</label><input id="salRestHours" type="number"></div>
+<div class="field"><label>ساعات الإضافي</label><input id="salOvertime" type="number"></div>
+<div class="field"><label>ساعات العيد</label><input id="salHoliday" type="number"></div>
+<div class="field"><label>أيام الحضور</label><input id="salDays" type="number" min="0" oninput="updateMealPreview()"></div>
+<div class="field"><label>حضور 12 ساعة</label><input id="sal12H" type="number" min="0" oninput="updateMealPreview()"></div>
+<div class="field"><label>حضور 8 ساعات</label><input id="sal8Days" type="number" readonly></div>
+<div class="field"><label>مكافآت / خصومات أخرى</label><input id="salOther" type="number"></div>
 </div><button class="primary" onclick="saveSalaryMonth()">احسب واحفظ الشهر</button><div id="salaryResult" class="panel" style="margin-top:12px"><div class="empty">أدخل بيانات الشهر واضغط احسب.</div></div></div></section>
 <section id="cards" class="screen"><div class="greeting">إدارة البنوك والبطاقات ودورات السداد</div><h1>البنوك والكريديت</h1>
 <div class="grid"><div class="metric"><small>إجمالي مديونية البطاقات</small><strong id="cardDebtTotal">0</strong></div><div class="metric"><small>مستحق هذا الشهر</small><strong id="cardDueTotal">0</strong></div></div>
 <div class="panel" style="margin-top:12px"><h2 style="font-size:15px">إضافة بنك / بطاقة</h2><div class="wideform">
-<div class="field"><label>اسم البنك أو البطاقة</label><input id="cardName" placeholder="مثال: QNB"></div>
-<div class="field"><label>يوم السداد</label><select id="cardPayDay"><option value="2">يوم 2</option><option value="3" selected>يوم 3</option></select></div>
+<div class="field"><label>اسم البنك أو البطاقة</label><input id="cardName" placeholder="مثال: QNB" onblur="applyKnownBankTerms()"></div>
+
 
 </div>
 
 <h3 style="font-size:14px">جدول الفوائد والرسوم حسب مدة التقسيط</h3>
-<p class="mutednote">أدخل نسبة الفائدة الشهرية أو الرسوم الإدارية لمرة واحدة لكل مدة. اترك الخانة صفرًا إذا لم تنطبق.</p>
+
 <div class="wideform">
 <div class="field"><label>3 شهور – فائدة شهرية %</label><input id="ir3" type="number" step="0.01" value="0"></div><div class="field"><label>3 شهور – رسوم إدارية %</label><input id="fee3" type="number" step="0.01" value="0"></div>
 <div class="field"><label>6 شهور – فائدة شهرية %</label><input id="ir6" type="number" step="0.01" value="0"></div><div class="field"><label>6 شهور – رسوم إدارية %</label><input id="fee6" type="number" step="0.01" value="0"></div>
 <div class="field"><label>9 شهور – فائدة شهرية %</label><input id="ir9" type="number" step="0.01" value="0"></div><div class="field"><label>9 شهور – رسوم إدارية %</label><input id="fee9" type="number" step="0.01" value="0"></div>
 <div class="field"><label>12 شهر – فائدة شهرية %</label><input id="ir12" type="number" step="0.01" value="0"></div><div class="field"><label>12 شهر – رسوم إدارية %</label><input id="fee12" type="number" step="0.01" value="0"></div>
+<div class="field"><label>15 شهر – فائدة شهرية %</label><input id="ir15" type="number" step="0.01" value="0"></div><div class="field"><label>15 شهر – رسوم إدارية %</label><input id="fee15" type="number" step="0.01" value="0"></div>
 <div class="field"><label>18 شهر – فائدة شهرية %</label><input id="ir18" type="number" step="0.01" value="0"></div><div class="field"><label>18 شهر – رسوم إدارية %</label><input id="fee18" type="number" step="0.01" value="0"></div>
 <div class="field"><label>24 شهر – فائدة شهرية %</label><input id="ir24" type="number" step="0.01" value="0"></div><div class="field"><label>24 شهر – رسوم إدارية %</label><input id="fee24" type="number" step="0.01" value="0"></div>
+<div class="field"><label>36 شهر – فائدة شهرية %</label><input id="ir36" type="number" step="0.01" value="0"></div><div class="field"><label>36 شهر – رسوم إدارية %</label><input id="fee36" type="number" step="0.01" value="0"></div>
 </div><button class="primary" onclick="addCard()">حفظ البنك وجدول شروطه</button><div id="cardsList" class="mutednote" style="margin-top:12px">لا توجد بطاقات مسجلة.</div></div>
 <div class="panel" style="margin-top:12px"><h2 style="font-size:15px">تسجيل عملية على البطاقة</h2><div class="wideform">
 <div class="field"><label>البنك / البطاقة</label><select id="opCard"></select></div>
@@ -85,14 +87,14 @@
 <div class="field full"><label>وصف العملية</label><input id="opTitle" placeholder="مثال: موبايل"></div>
 <div class="field"><label>قيمة العملية</label><input id="opAmount" type="number" min="1"></div>
 <div class="field"><label>تاريخ العملية</label><input id="opDate" type="date"></div>
-<div class="field installment-only"><label>مدة التقسيط</label><select id="opMonths" onchange="showCreditQuote()"><option>3</option><option>6</option><option>9</option><option selected>12</option><option>18</option><option>24</option></select></div>
+<div class="field installment-only"><label>مدة التقسيط</label><select id="opMonths" onchange="showCreditQuote()"><option>3</option><option>6</option><option>9</option><option selected>12</option><option>15</option><option>18</option><option>24</option><option>36</option></select></div>
 <div class="field installment-only"><label>شهر الرسوم الإدارية</label><input id="opStart" type="month"></div>
 </div><div id="creditQuote" class="panel" style="margin-top:10px"><div class="empty">اختر البنك والمبلغ والمدة لعرض القسط والفائدة والرسوم.</div></div>
-<button class="primary" onclick="addCardOperation()">تسجيل العملية</button><p class="mutednote">المشتريات تظهر كمديونية فورًا، ولا تُسجل مصروفًا نقديًا. عند السداد فقط يخرج المبلغ من رصيدك ويسجل مصروفًا.</p></div>
+<button class="primary" onclick="addCardOperation()">تسجيل العملية</button></div>
 <div class="panel" style="margin-top:12px"><h2 style="font-size:15px">سداد بطاقة</h2><div class="wideform"><div class="field"><label>البطاقة</label><select id="payCard"></select></div><div class="field"><label>المبلغ المدفوع</label><input id="cardPaymentAmount" type="number" min="1"></div><div class="field"><label>تاريخ الدفع</label><input id="cardPaymentDate" type="date"></div><div class="field full"><label>حساب السداد</label><select id="cardPayAccount"></select></div></div><button class="primary" onclick="payCard()">تسجيل السداد</button></div>
 <div class="section-head"><h2>عمليات البطاقات</h2><span>مديونية وجدول استحقاق</span></div><div class="panel" id="cardOpsList"><div class="empty">لا توجد عمليات.</div></div></section>
 <section id="commitments" class="screen"><div class="greeting">المستحق والمدفوع والمتبقي</div><h1>الالتزامات</h1><div class="panel"><div class="wideform"><div class="field"><label>اسم الالتزام</label><input id="comTitle" placeholder="قسط الشقة / جمعية"></div><div class="field"><label>النوع</label><select id="comType"><option>قسط شقة</option><option>جمعية</option><option>قسط بنك</option><option>التزام شهري</option><option>فاتورة</option><option>أخرى</option></select></div><div class="field"><label>القيمة الشهرية</label><input id="comAmount" type="number" min="1"></div><div class="field"><label>تاريخ البداية</label><input id="comStart" type="month"></div><div class="field"><label>تاريخ النهاية (اختياري)</label><input id="comEnd" type="month"></div><div class="field"><label>يوم الاستحقاق</label><input id="comDay" type="number" min="1" max="31" value="1"></div></div><button class="primary" onclick="addCommitment()">إضافة الالتزام</button></div><div class="section-head"><h2>التزامات الشهر</h2><span id="comMonthLabel"></span></div><div class="panel" id="commitmentsList"><div class="empty">لا توجد التزامات.</div></div></section>
-<section id="settings" class="screen"><div class="greeting">بياناتك محفوظة على الجهاز</div><h1>الإعدادات</h1><div class="panel"><div class="listitem"><div class="actico">🔒</div><div class="info"><b>خصوصية البيانات</b><small>التخزين محلي داخل المتصفح على هذا الجهاز</small></div><span class="tag">محلي</span></div><div class="listitem"><div class="actico">⬇</div><div class="info"><b>نسخة احتياطية</b><small>صدّر بياناتك في ملف JSON</small></div><button class="secondary" onclick="backup()">تصدير</button></div><div class="listitem"><div class="actico">📊</div><div class="info"><b>استيراد ملف Excel</b><small>ارفع ملف Bank 2027 لنقل الدخل والمصروفات والتمويل تلقائيًا</small></div><button class="secondary" onclick="openFilePicker('excelImport')">رفع الملف</button><input id="excelImport" type="file" accept=".xlsx,.xls" onchange="importWorkbook(event)" style="position:absolute;width:1px;height:1px;opacity:0.01;pointer-events:none"></div><div class="listitem"><div class="actico">↥</div><div class="info"><b>استعادة نسخة</b><small>استرجع بيانات سبق تصديرها</small></div><button class="secondary" onclick="openFilePicker('restore')">استيراد</button><input id="restore" type="file" accept="application/json" onchange="restore(event)" style="position:absolute;width:1px;height:1px;opacity:0.01;pointer-events:none"></div><div class="listitem"><div class="actico">⚠</div><div class="info"><b>إعادة ضبط التطبيق</b><small>حذف الحركات المسجلة على هذا الجهاز</small></div><button class="secondary" onclick="resetApp()">مسح</button></div></div><p class="hint">لا يوجد ربط مباشر بالبنوك أو مزامنة سحابية. البيانات محفوظة محليًا على جهازك. احتفظ بنسخة احتياطية عند تغيير الجهاز أو حذف بيانات المتصفح.</p></section>
+<section id="settings" class="screen"><div class="greeting">بياناتك محفوظة على الجهاز</div><h1>الإعدادات</h1><div class="panel"><div class="listitem"><div class="actico">🔒</div><div class="info"><b>خصوصية البيانات</b><small>التخزين محلي داخل المتصفح على هذا الجهاز</small></div><span class="tag">محلي</span></div><div class="listitem"><div class="actico">⬇</div><div class="info"><b>نسخة احتياطية</b><small>صدّر بياناتك في ملف JSON</small></div><button class="secondary" onclick="backup()">تصدير</button></div><div class="listitem"><div class="actico">📊</div><div class="info"><b>استيراد ملف Excel</b><small>ارفع ملف Bank 2027 لنقل الدخل والمصروفات والتمويل تلقائيًا</small></div><button class="secondary" onclick="openFilePicker('excelImport')">رفع الملف</button><input id="excelImport" type="file" accept=".xlsx,.xls" onchange="importWorkbook(event)" style="position:absolute;width:1px;height:1px;opacity:0.01;pointer-events:none"></div><div class="section-head"><h2>استيراد Money Manager</h2></div><div class="panel"><p class="hint">استيراد حسابات وحركات محددة من نسخة Money Manager، مع معاينة قبل الإضافة.</p><input id="mmbakFile" type="file" accept=".mmbak,.db,.sqlite" style="width:100%;margin:8px 0" onchange="readMmbak(event)"><div class="wideform"><div class="field"><label>من تاريخ</label><input id="mmFrom" type="date" value="2021-01-01"></div><div class="field"><label>إلى تاريخ</label><input id="mmTo" type="date" value=""></div></div><div id="mmbakPreview"></div></div><div class="listitem"><div class="actico">↥</div><div class="info"><b>استعادة نسخة</b><small>استرجع بيانات سبق تصديرها</small></div><button class="secondary" onclick="openFilePicker('restore')">استيراد</button><input id="restore" type="file" accept="application/json" onchange="restore(event)" style="position:absolute;width:1px;height:1px;opacity:0.01;pointer-events:none"></div><div class="listitem"><div class="actico">⚠</div><div class="info"><b>إعادة ضبط التطبيق</b><small>حذف الحركات المسجلة على هذا الجهاز</small></div><button class="secondary" onclick="resetApp()">مسح</button></div></div><p class="hint">لا يوجد ربط مباشر بالبنوك أو مزامنة سحابية. البيانات محفوظة محليًا على جهازك. احتفظ بنسخة احتياطية عند تغيير الجهاز أو حذف بيانات المتصفح.</p></section>
 </div>
 <button class="fab" onclick="openModal('transaction')">＋</button>
 <nav class="bottom"><button class="nav active" data-page="home" onclick="go('home',this)"><span>⌂</span>الرئيسية</button><button class="nav" data-page="accounts" onclick="go('accounts',this)"><span>▣</span>حساباتي</button><button class="nav" data-page="activity" onclick="go('activity',this)"><span>⇄</span>الحركات</button><button class="nav" data-page="debts" onclick="go('debts',this)"><span>▤</span>الديون</button><button class="nav" data-page="salary" onclick="go('salary',this)"><span>₪</span>المرتب</button><button class="nav" data-page="cards" onclick="go('cards',this)"><span>▣</span>الكريديت</button><button class="nav" data-page="commitments" onclick="go('commitments',this)"><span>◷</span>الالتزامات</button><button class="nav" data-page="reports" onclick="go('reports',this)"><span>▥</span>التقارير</button><button class="nav" data-page="settings" onclick="go('settings',this)"><span>⚙</span>الإعدادات</button></nav>
@@ -100,7 +102,7 @@
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
 <script>
 const KEY='raseed_mobile_v2';let pendingWorkbookTransactions=null;const monthNames=['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
-let state;try{state=JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){state=null}if(!state||!Array.isArray(state.transactions))state={transactions:[],paid:0,savings:0,debtTotal:0};state.salaryConfig=state.salaryConfig||{};state.salaryMonths=state.salaryMonths||{};state.cards=state.cards||[];state.cardOps=state.cardOps||[];state.cardPayments=state.cardPayments||[];state.commitments=state.commitments||[];state.commitmentPayments=state.commitmentPayments||[];state.accounts=state.accounts||[];state.ledger=state.ledger||[];
+let state;try{state=JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){state=null}if(!state||!Array.isArray(state.transactions))state={transactions:[],paid:0,savings:0,debtTotal:0};state.salaryConfig=state.salaryConfig||{};state.salaryMonths=state.salaryMonths||{};state.cards=state.cards||[];state.cardOps=state.cardOps||[];state.cardPayments=state.cardPayments||[];state.commitments=state.commitments||[];state.commitmentPayments=state.commitmentPayments||[];state.accounts=state.accounts||[];state.ledger=state.ledger||[];state.importBatches=state.importBatches||[];
 const fmt=n=>Math.round(Number(n)||0).toLocaleString('en-US');const egp=n=>fmt(n)+' ج.م';const today=()=>new Date().toISOString().slice(0,10);const monthKey=d=>String(d||'').slice(0,7);const selected=()=>document.getElementById('yearSelect').value+'-'+String(Number(document.getElementById('monthSelect').value)).padStart(2,'0');
 function persist(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){toast('تعذر حفظ البيانات على هذا المتصفح')}render()}
 function go(id,btn){document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active');document.querySelectorAll('.nav').forEach(x=>x.classList.toggle('active',x.dataset.page===id));if(btn)btn.classList.add('active');window.scrollTo(0,0)}
@@ -136,17 +138,21 @@ const ymNow=()=>selected();
 function initModules(){let y=document.getElementById('salYear'),m=document.getElementById('salMonth');if(!y||!m)return;for(let i=new Date().getFullYear()-5;i<=new Date().getFullYear()+15;i++)y.add(new Option(i,String(i)));monthNames.forEach((n,i)=>m.add(new Option(n,String(i+1))));y.value=String(new Date().getFullYear());m.value=String(new Date().getMonth()+1);setv('opDate',today());setv('cardPaymentDate',today());setv('comStart',ymNow());setv('opStart',ymNow());loadSalaryConfig();refreshModuleSelects();renderModules()}
 function loadSalaryConfig(){
  let y=val('salYear'),c=state.salaryConfig[y]||{};
- const cfg={Basic:0,Attendance:0,Years:0,PayDay:3,WorkHours:8,WorkDays:30,AllowanceRate:1,RestRate:1.5,OTRate:1.5,HolidayRate:2,Meal8:70,Meal12:140,InsAdd1:1400,InsAdd2:800,InsuranceBaseRate:10,MedicalRate:6,MartyrsRate:0.05};
- Object.entries(cfg).forEach(([k,v])=>setv('sal'+k,c[k]??v));
+ const cfg={Basic:0,Attendance:0,Years:0,WorkHours:8,WorkDays:30,AllowanceRate:1,RestRate:2,OTRate:1.5,HolidayRate:2,MealPrice:70,InsAdd1:1400,InsAdd2:800,InsuranceBaseRate:10,MedicalRate:6,MartyrsRate:0.05};
+ Object.entries(cfg).forEach(([k,v])=>setv('sal'+k,c[k]??(k==='MealPrice'?(c.Meal8??v):v)));
+ if(c.RestRate===undefined)setv('salRestRate',2);
  updateHourlyPreview();
  let k=y+'-'+String(Number(val('salMonth')||1)).padStart(2,'0'),d=state.salaryMonths[k]||{};
  let map={salRating:'Rating',salAllowanceHours:'AllowanceHours',salRestHours:'RestHours',salOvertime:'Overtime',salHoliday:'Holiday',salDays:'Days',sal12H:'Hours12',salOther:'Other'};
  Object.entries(map).forEach(([id,key])=>setv(id,d[key]??0));
+ let salaryKey=k,oldSalaryTx=state.transactions.find(t=>t.source==='salary:'+salaryKey);
+ let savedPayDay=d.PayDay ?? (oldSalaryTx?.date ? Number(oldSalaryTx.date.slice(8,10)) : (c.PayDay||1));
+ setv('salPayDay',[1,2,3].includes(Number(savedPayDay))?Number(savedPayDay):1);
  updateMealPreview();showSalaryResult();
 }
 function saveSalaryConfig(){
  let y=val('salYear');
- state.salaryConfig[y]={Basic:num('salBasic'),Attendance:num('salAttendance'),Years:num('salYears'),PayDay:num('salPayDay')||3,WorkHours:num('salWorkHours')||8,WorkDays:num('salWorkDays')||30,AllowanceRate:num('salAllowanceRate'),RestRate:num('salRestRate'),OTRate:num('salOTRate'),HolidayRate:num('salHolidayRate'),Meal8:num('salMeal8'),Meal12:num('salMeal12'),InsAdd1:num('salInsAdd1'),InsAdd2:num('salInsAdd2'),InsuranceBaseRate:num('salInsuranceBaseRate'),MedicalRate:num('salMedicalRate'),MartyrsRate:num('salMartyrsRate')};
+ state.salaryConfig[y]={Basic:num('salBasic'),Attendance:num('salAttendance'),Years:num('salYears'),WorkHours:num('salWorkHours')||8,WorkDays:num('salWorkDays')||30,AllowanceRate:num('salAllowanceRate'),RestRate:num('salRestRate'),OTRate:num('salOTRate'),HolidayRate:num('salHolidayRate'),MealPrice:num('salMealPrice'),InsAdd1:num('salInsAdd1'),InsAdd2:num('salInsAdd2'),InsuranceBaseRate:num('salInsuranceBaseRate'),MedicalRate:num('salMedicalRate'),MartyrsRate:num('salMartyrsRate')};
  persist();updateHourlyPreview();toast('تم حفظ إعدادات '+y);
 }
 function round2(x){return Math.round((Number(x)||0)*100)/100}
@@ -175,11 +181,12 @@ function calcSalary(d,c){
  const workDays=+c.WorkDays||30,workHours=+c.WorkHours||8;
  const hourly=B/workDays/workHours;
  const allowancePay=round0(hourly*(+c.AllowanceRate||0)*allowanceHours);
- const restPay=round0((rating/30/8)*(+c.RestRate||0)*restHours);
+ const restPay=round0(hourly*(+c.RestRate||0)*restHours);
  const overtimePay=round0(hourly*(+c.OTRate||0)*otHours);
  const holidayPay=round0(hourly*(+c.HolidayRate||0)*holidayHours);
- const hours8=days-(allowanceHours/8)-hours12;
- const meal=round2(hours12*(+c.Meal12||0)+hours8*(+c.Meal8||0));
+ const hours8=Math.max(0,days-hours12);
+ const mealPrice=Number(c.MealPrice??c.Meal8??70)||0;
+ const meal=round2(hours8*mealPrice+hours12*mealPrice*2);
  const attendance=+c.Attendance||0,years=+c.Years||0,other=+d.Other||0;
  const gross=round2(B+rating+allowancePay+restPay+overtimePay+holidayPay+meal+attendance+years+other);
  const martyrs=round2(gross*((+c.MartyrsRate||0)/100));
@@ -193,35 +200,37 @@ function updateHourlyPreview(){
  let el=document.getElementById('salHourlyPreview');if(!el)return;
  let b=num('salBasic'),days=num('salWorkDays')||30,hours=num('salWorkHours')||8,rate=id=>num(id);
  let h=b/days/hours;
- el.textContent='سعر الساعة الأساسي: '+fmt(h)+' جنيه.';
+ el.textContent='';
 }
 function updateMealPreview(){
  let el=document.getElementById('salMealPreview');if(!el)return;
- let days=num('salDays'),b=num('salAllowanceHours'),h12=num('sal12H'),h8=days-b/8-h12;
- el.textContent='قيمة الوجبة المحسوبة: '+fmt(h8*num('salMeal8')+h12*num('salMeal12'))+' جنيه.';
+ let days=num('salDays'),h12=num('sal12H'),h8=Math.max(0,days-h12);
+ setv('sal8Days',h8); el.textContent='';
 }
-function collectSalary(){return{Rating:num('salRating'),AllowanceHours:num('salAllowanceHours'),RestHours:num('salRestHours'),Overtime:num('salOvertime'),Holiday:num('salHoliday'),Days:num('salDays'),Hours12:num('sal12H'),Other:num('salOther')}}
+function collectSalary(){return{Rating:num('salRating'),AllowanceHours:num('salAllowanceHours'),RestHours:num('salRestHours'),Overtime:num('salOvertime'),Holiday:num('salHoliday'),Days:num('salDays'),Hours12:num('sal12H'),Hours8:Math.max(0,num('salDays')-num('sal12H')),Other:num('salOther'),PayDay:num('salPayDay')||1}}
 function saveSalaryMonth(){
  let key=val('salYear')+'-'+String(num('salMonth')).padStart(2,'0'),d=collectSalary(),c=state.salaryConfig[val('salYear')]||{};
  if(!c.Basic)return toast('أدخل الراتب الأساسي واحفظ إعدادات السنة أولًا');
  let result=calcSalary(d,c);state.salaryMonths[key]={...d,result};
  let existing=state.transactions.find(t=>t.source==='salary:'+key);
- let [yy,mm]=key.split('-').map(Number),day=Number(c.PayDay)||3,payDate=new Date(yy,mm,day);
- let date=payDate.getFullYear()+'-'+String(payDate.getMonth()+1).padStart(2,'0')+'-'+String(day).padStart(2,'0');
+ let [yy,mm]=key.split('-').map(Number),day=Number(d.PayDay)||1,payDate=new Date(yy,mm,day);
+ let date=payDate.getFullYear()+'-'+String(payDate.getMonth()+1).padStart(2,'0')+'-'+String(payDate.getDate()).padStart(2,'0');
  if(existing){existing.amount=result.net;existing.date=date}else state.transactions.push({id:'salary-'+key,type:'income',title:'صافي المرتب',amount:result.net,category:'راتب',date,source:'salary:'+key});
  persist();showSalaryResult();toast('تم حساب وحفظ صافي المرتب');
 }
 function showSalaryResult(){
  let key=val('salYear')+'-'+String(Number(val('salMonth')||1)).padStart(2,'0'),d=state.salaryMonths[key],el=document.getElementById('salaryResult');if(!el)return;
  if(!d){el.innerHTML='<div class="empty">لم يتم حفظ حساب هذا الشهر بعد.</div>';return}
- let r=d.result||calcSalary(d,state.salaryConfig[val('salYear')]||{});
- el.innerHTML=`<div class="rowline"><span>سعر الساعة الأساسي</span><b>${egp(r.hourly)}</b></div><div class="rowline"><span>مكافأة البدل</span><b>${egp(r.allowancePay)}</b></div><div class="rowline"><span>مكافأة الراحة</span><b>${egp(r.restPay)}</b></div><div class="rowline"><span>مكافأة الإضافي</span><b>${egp(r.overtimePay)}</b></div><div class="rowline"><span>مكافأة العيد</span><b>${egp(r.holidayPay)}</b></div><div class="rowline"><span>الوجبة (${fmt(r.hours8)} × 8H + ${fmt(r.hours12)} × 12H)</span><b>${egp(r.meal)}</b></div><div class="rowline"><span>إجمالي المرتب (S)</span><b>${egp(r.gross)}</b></div><div class="rowline"><span>أساس التأمين المحسوب</span><b>${egp(r.insuranceBase)}</b></div><div class="rowline"><span>صندوق الشهداء (T)</span><b>${egp(r.martyrs)}</b></div><div class="rowline"><span>التأمين (U)</span><b>${egp(r.insurance)}</b></div><div class="rowline"><span>ضريبة الدخل (W)</span><b>${egp(r.tax)}</b></div><div class="hero" style="margin-top:12px"><label>صافي المرتب (Y)</label><div class="amount">${egp(r.net)}</div></div>`;
+ let r=calcSalary(d,state.salaryConfig[val('salYear')]||{});d.result=r;
+ el.innerHTML=`<div class="rowline"><span>سعر الساعة الأساسي</span><b>${egp(r.hourly)}</b></div><div class="rowline"><span>مكافأة البدل</span><b>${egp(r.allowancePay)}</b></div><div class="rowline"><span>مكافأة الراحة</span><b>${egp(r.restPay)}</b></div><div class="rowline"><span>مكافأة الإضافي</span><b>${egp(r.overtimePay)}</b></div><div class="rowline"><span>مكافأة العيد</span><b>${egp(r.holidayPay)}</b></div><div class="rowline"><span>الوجبة</span><b>${egp(r.meal)}</b></div><div class="rowline"><span>إجمالي المرتب</span><b>${egp(r.gross)}</b></div><div class="rowline"><span>أساس التأمين المحسوب</span><b>${egp(r.insuranceBase)}</b></div><div class="rowline"><span>صندوق الشهداء</span><b>${egp(r.martyrs)}</b></div><div class="rowline"><span>التأمين</span><b>${egp(r.insurance)}</b></div><div class="rowline"><span>ضريبة الدخل</span><b>${egp(r.tax)}</b></div><div class="hero" style="margin-top:12px"><label>صافي المرتب</label><div class="amount">${egp(r.net)}</div></div>`;
 }
 function refreshModuleSelects(){let opts=state.cards.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('')||'<option value="">لا توجد بطاقة</option>';['opCard','payCard'].forEach(id=>{let e=document.getElementById(id);if(e)e.innerHTML=opts});let oc=document.getElementById('opCard');if(oc)oc.onchange=showCreditQuote;let oa=document.getElementById('opAmount');if(oa)oa.oninput=showCreditQuote;}
+
+function applyKnownBankTerms(){let n=val('cardName').trim().toLowerCase();[3,6,9,12,15,18,24,36].forEach(m=>{setv('ir'+m,0);setv('fee'+m,0)});if(n.includes('qnb')){[3,6,9,12].forEach(m=>setv('ir'+m,2.18));[15,18,24].forEach(m=>setv('ir'+m,1.98));setv('ir36',1.81)}else if(n.includes('suez')||n.includes('قناة السويس')){[[3,5],[6,8],[9,12],[12,17],[15,21],[18,25],[24,2],[36,2]].forEach(([m,v])=>setv('fee'+m,v))}}
 function addCard(){
  let name=val('cardName').trim();if(!name)return toast('اكتب اسم البنك');
- let terms={};[3,6,9,12,18,24].forEach(n=>terms[n]={monthlyRate:num('ir'+n)/100,adminRate:num('fee'+n)/100});
- state.cards.push({id:'card-'+Date.now(),name,payDay:num('cardPayDay')||3,closeDay:num('cardClose')||25,terms});
+ let terms={};[3,6,9,12,15,18,24,36].forEach(n=>terms[n]={monthlyRate:num('ir'+n)/100,adminRate:num('fee'+n)/100});
+ state.cards.push({id:'card-'+Date.now(),name,payDay:3,terms});
  persist();setv('cardName','');refreshModuleSelects();renderModules();toast('تم حفظ البنك وشروطه');
 }
 function dueDateFor(card,date){let d=new Date(date+'T12:00:00'),y=d.getFullYear(),m=d.getMonth()+1,day=card.payDay||3;let due=new Date(y,m,day);return due.getFullYear()+'-'+String(due.getMonth()+1).padStart(2,'0')+'-'+String(due.getDate()).padStart(2,'0')}
@@ -232,7 +241,7 @@ function creditQuote(){
  let interest=round2(amount*t.monthlyRate*months),fee=round2(amount*t.adminRate),base=round2((amount+interest)/months);
  return {months,interest,fee,base,first:round2(base+fee),total:round2(amount+interest+fee),rate:t.monthlyRate,adminRate:t.adminRate};
 }
-function showCreditQuote(){let el=document.getElementById('creditQuote');if(!el)return;let q=creditQuote();el.innerHTML=q?`<div class="rowline"><span>إجمالي الفائدة</span><b>${fmt(q.interest)} ج</b></div><div class="rowline"><span>الرسوم الإدارية (مرة واحدة)</span><b>${fmt(q.fee)} ج</b></div><div class="rowline"><span>القسط الشهري</span><b>${fmt(q.base)} ج</b></div><div class="rowline"><span>أول دفعة شامل الرسوم</span><b>${fmt(q.first)} ج</b></div><div class="rowline"><span>إجمالي المبلغ</span><b>${fmt(q.total)} ج</b></div>`:'<div class="empty">اختر البنك والمبلغ والمدة لعرض القسط والفائدة والرسوم.</div>'}
+function showCreditQuote(){let el=document.getElementById('creditQuote');if(!el)return;let q=creditQuote();el.innerHTML=q?`<div class="rowline"><span>إجمالي الفائدة</span><b>${fmt(q.interest)} ج</b></div><div class="rowline"><span>الرسوم الإدارية (مرة واحدة)</span><b>${fmt(q.fee)} ج</b></div><div class="rowline"><span>القسط الشهري</span><b>${fmt(q.base)} ج</b></div><div class="rowline"><span>الرسوم الإدارية في شهر مستقل</span><b>${fmt(q.fee)} ج</b></div><div class="rowline"><span>القسط الشهري ابتداءً من الشهر التالي</span><b>${fmt(q.base)} ج</b></div><div class="rowline"><span>إجمالي المبلغ</span><b>${fmt(q.total)} ج</b></div>`:'<div class="empty">اختر البنك والمبلغ والمدة لعرض القسط والفائدة والرسوم.</div>'}
 function addCardOperation(){
  let card=state.cards.find(c=>c.id===val('opCard')),type=val('opType'),amount=num('opAmount'),date=val('opDate'),title=val('opTitle').trim();
  if(!card||!amount||!date||!title)return toast('أكمل بيانات العملية');
@@ -240,8 +249,9 @@ function addCardOperation(){
  if(type==='installment'){
   let q=creditQuote();if(!q)return toast('راجع شروط البنك');
   let start=val('opStart')||dueDateFor(card,date).slice(0,7);
-  op.months=q.months;op.interest=q.interest;op.adminFee=q.fee;op.installment=q.base;op.total=q.total;op.start=start;
-  op.schedules=Array.from({length:q.months},(_,i)=>{let [y,m]=start.split('-').map(Number),dt=new Date(y,m-1+i,1);return{month:dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0'),amount:q.base+(i===0?q.fee:0),principalAndInterest:q.base,fee:i===0?q.fee:0,paid:0}});
+  op.months=q.months;op.interest=q.interest;op.adminFee=q.fee;op.installment=q.base;op.total=q.total;op.feeMonth=start;
+  let [sy,sm]=start.split('-').map(Number);op.feeDue=q.fee;op.feePaid=0;
+  op.schedules=Array.from({length:q.months},(_,i)=>{let dt=new Date(sy,sm+i,1);return{month:dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0'),amount:q.base,principalAndInterest:q.base,fee:0,paid:0}});
  }
  state.cardOps.push(op);persist();setv('opTitle','');setv('opAmount','');renderModules();showCreditQuote();toast('تم تسجيل العملية كمديونية على البطاقة');
 }
@@ -260,7 +270,7 @@ function payCard(){
 function addCommitment(){let title=val('comTitle').trim(),amount=num('comAmount'),start=val('comStart');if(!title||amount<=0||!start)return toast('أكمل بيانات الالتزام');state.commitments.push({id:'com-'+Date.now(),title,type:val('comType'),amount,start,end:val('comEnd'),day:num('comDay')||1});persist();setv('comTitle','');renderModules();toast('تم إضافة الالتزام')}
 function commitmentDue(c,month){return month>=c.start&&(!c.end||month<=c.end)}
 function markCommitmentPaid(id){let c=state.commitments.find(x=>x.id===id),m=selected();if(!c)return;let already=state.commitmentPayments.filter(p=>p.commitmentId===id&&p.month===m).reduce((s,p)=>s+p.amount,0),remain=Math.max(0,c.amount-already);if(!remain)return toast('الالتزام مدفوع بالكامل');let amount=Number(prompt('المبلغ المدفوع من '+c.title+' (المتبقي '+remain+')',remain));if(!amount||amount<=0||amount>remain)return toast('مبلغ غير صحيح');let date=prompt('تاريخ الدفع YYYY-MM-DD',today())||today();state.commitmentPayments.push({id:'cmp-'+Date.now(),commitmentId:id,month:m,amount,date});state.transactions.push({id:'com-pay-'+Date.now(),type:'expense',title:'سداد '+c.title,category:c.type,amount,date,source:'commitment-payment'});persist();renderModules()}
-function renderModules(){let m=selected(),due=0,debt=0;state.cardOps.forEach(o=>{debt+=opOutstanding(o);if(o.type==='swipe'){if(o.dueDate&&o.dueDate.slice(0,7)===m)due+=opOutstanding(o)}else {if(o.feeMonth===m)due+=Math.max(0,(o.feeDue||0)-(o.feePaid||0));o.schedules.forEach(sc=>{if(sc.month===m)due+=Math.max(0,sc.amount-sc.paid)})}});let e=document.getElementById('cardDebtTotal');if(e)e.textContent=fmt(debt);e=document.getElementById('cardDueTotal');if(e)e.textContent=fmt(due);e=document.getElementById('cardsList');if(e)e.innerHTML=state.cards.length?state.cards.map(c=>`<div class="listitem"><div class="info"><b>${esc(c.name)}</b><small>السداد يوم ${c.payDay} من الشهر التالي · مدد التقسيط: ${Object.keys(c.terms||{}).filter(n=>(c.terms[n].monthlyRate||0)||(c.terms[n].adminRate||0)).join('، ')||'لم تُحدد نسب بعد'} شهر</small><small>${[3,6,9,12,18,24].map(n=>n+'ش: '+(((c.terms||{})[n]?.monthlyRate||0)*100)+'% شهري / '+(((c.terms||{})[n]?.adminRate||0)*100)+'% رسوم').join(' · ')}</small></div></div>`).join(''):'لا توجد بطاقات مسجلة.';e=document.getElementById('cardOpsList');if(e)e.innerHTML=state.cardOps.length?state.cardOps.map(o=>{let c=state.cards.find(x=>x.id===o.cardId),remaining=opOutstanding(o),sub=o.type==='swipe'?`مسحوبات · تستحق ${o.dueDate}`:`تقسيط ${o.months} شهر · ${fmt(o.installment)} شهريًا · رسوم ${fmt(o.adminFee||0)}${o.feeDue?' في '+o.feeMonth:''}`;return `<div class="listitem"><div class="info"><b>${esc(o.title)} — ${esc(c?.name||'بطاقة')}</b><small>${sub} · ${o.date}</small><small>الأصل ${fmt(o.amount)} · المتبقي ${fmt(remaining)}</small></div><span class="tag">${o.type==='swipe'?'مسحوبات':'تقسيط'}</span></div>`}).join(''):'<div class="empty">لا توجد عمليات.</div>';let coms=state.commitments.filter(c=>commitmentDue(c,m));e=document.getElementById('comMonthLabel');if(e)e.textContent=m;e=document.getElementById('commitmentsList');if(e)e.innerHTML=coms.length?coms.map(c=>{let paid=state.commitmentPayments.filter(p=>p.commitmentId===c.id&&p.month===m).reduce((s,p)=>s+p.amount,0),left=Math.max(0,c.amount-paid);return `<div class="listitem"><div class="info"><b>${esc(c.title)}</b><small>${esc(c.type)} · يوم ${c.day} · مستحق ${fmt(c.amount)} · مدفوع ${fmt(paid)} · متبقي ${fmt(left)}</small></div><button class="smallbtn" onclick="markCommitmentPaid('${c.id}')">${left?'تسجيل دفع':'مدفوع'}</button></div>`}).join(''):'<div class="empty">لا توجد التزامات مستحقة في هذا الشهر.</div>';}
+function renderModules(){let m=selected(),due=0,debt=0;state.cardOps.forEach(o=>{debt+=opOutstanding(o);if(o.type==='swipe'){if(o.dueDate&&o.dueDate.slice(0,7)===m)due+=opOutstanding(o)}else {if(o.feeMonth===m)due+=Math.max(0,(o.feeDue||0)-(o.feePaid||0));o.schedules.forEach(sc=>{if(sc.month===m)due+=Math.max(0,sc.amount-sc.paid)})}});let e=document.getElementById('cardDebtTotal');if(e)e.textContent=fmt(debt);e=document.getElementById('cardDueTotal');if(e)e.textContent=fmt(due);e=document.getElementById('cardsList');if(e)e.innerHTML=state.cards.length?state.cards.map(c=>`<div class="listitem"><div class="info"><b>${esc(c.name)}</b><small>السداد يوم ${c.payDay} من الشهر التالي · مدد التقسيط: ${Object.keys(c.terms||{}).filter(n=>(c.terms[n].monthlyRate||0)||(c.terms[n].adminRate||0)).join('، ')||'لم تُحدد نسب بعد'} شهر</small><small>${[3,6,9,12,15,18,24,36].map(n=>n+'ش: '+(((c.terms||{})[n]?.monthlyRate||0)*100)+'% شهري / '+(((c.terms||{})[n]?.adminRate||0)*100)+'% رسوم').join(' · ')}</small></div></div>`).join(''):'لا توجد بطاقات مسجلة.';e=document.getElementById('cardOpsList');if(e)e.innerHTML=state.cardOps.length?state.cardOps.map(o=>{let c=state.cards.find(x=>x.id===o.cardId),remaining=opOutstanding(o),sub=o.type==='swipe'?`مسحوبات · تستحق ${o.dueDate}`:`تقسيط ${o.months} شهر · ${fmt(o.installment)} شهريًا · رسوم ${fmt(o.adminFee||0)} في ${o.feeMonth||'الشهر الأول'}`;return `<div class="listitem"><div class="info"><b>${esc(o.title)} — ${esc(c?.name||'بطاقة')}</b><small>${sub} · ${o.date}</small><small>الأصل ${fmt(o.amount)} · المتبقي ${fmt(remaining)}</small></div><span class="tag">${o.type==='swipe'?'مسحوبات':'تقسيط'}</span></div>`}).join(''):'<div class="empty">لا توجد عمليات.</div>';let coms=state.commitments.filter(c=>commitmentDue(c,m));e=document.getElementById('comMonthLabel');if(e)e.textContent=m;e=document.getElementById('commitmentsList');if(e)e.innerHTML=coms.length?coms.map(c=>{let paid=state.commitmentPayments.filter(p=>p.commitmentId===c.id&&p.month===m).reduce((s,p)=>s+p.amount,0),left=Math.max(0,c.amount-paid);return `<div class="listitem"><div class="info"><b>${esc(c.title)}</b><small>${esc(c.type)} · يوم ${c.day} · مستحق ${fmt(c.amount)} · مدفوع ${fmt(paid)} · متبقي ${fmt(left)}</small></div><button class="smallbtn" onclick="markCommitmentPaid('${c.id}')">${left?'تسجيل دفع':'مدفوع'}</button></div>`}).join(''):'<div class="empty">لا توجد التزامات مستحقة في هذا الشهر.</div>';}
 function toggleInstallmentFields(){document.querySelectorAll('.installment-only').forEach(e=>e.style.display=val('opType')==='installment'?'block':'none');showCreditQuote()}
 
 
@@ -286,8 +296,50 @@ function addCardPayAccount(){let box=document.querySelector('#cards .panel:nth-o
 function openFilePicker(id){let e=document.getElementById(id);if(!e)return;e.style.pointerEvents='auto';e.style.position='static';e.style.width='100%';e.style.height='38px';e.style.opacity='1';e.click()}
 // Money Manager backup import using SQL.js; account selection precedes transaction import
 let mmPending=null;
-function readMmbak(ev){let file=ev.target.files&&ev.target.files[0];if(!file)return;let out=document.getElementById('mmbakPreview');out.textContent='جارٍ قراءة النسخة الاحتياطية…';if(!window.initSqlJs){out.textContent='مكتبة قراءة قاعدة البيانات غير متاحة حاليًا. افتح التطبيق مع اتصال بالإنترنت ثم أعد المحاولة.';return}let reader=new FileReader();reader.onload=async e=>{try{let SQL=await initSqlJs({locateFile:f=>'https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/'+f});let db=new SQL.Database(new Uint8Array(e.target.result));let assets=db.exec("SELECT uid,NIC_NAME,currencyUid FROM ASSETS")[0]?.values||[];let tx=db.exec("SELECT uid,assetUid,toAssetUid,ZDATE,DO_TYPE,ZMONEY,ZCONTENT,ctgUid,currencyUid FROM INOUTCOME WHERE COALESCE(IS_DEL,0)=0")[0]?.values||[];mmPending={assets,tx};out.innerHTML='<p>تم العثور على '+assets.length+' حساب و'+tx.length+' حركة. اختر الحسابات المراد نقلها:</p>'+assets.map((a,i)=>`<label style="display:flex;gap:8px;padding:7px 0"><input type="checkbox" class="mmasset" value="${i}" checked> ${esc(a[1]||'حساب')} <small>${esc(a[2]||'')}</small></label>`).join('')+'<button class="primary" onclick="confirmMmbak()">معاينة واستيراد الحسابات المحددة</button>'}catch(err){out.textContent='تعذر قراءة الملف: '+err.message} };reader.readAsArrayBuffer(file)}
-function confirmMmbak(){if(!mmPending)return;let chosen=[...document.querySelectorAll('.mmasset:checked')].map(x=>mmPending.assets[Number(x.value)]),map=new Map(),newAccounts=[],foreign=[];for(const a of chosen){let name=String(a[1]||'حساب').trim(),currency=String(a[2]||'EGP_EGP'),type=/cash/i.test(name)?'cash':/credit/i.test(name)?'credit':/debit|account/i.test(name)?'bank':/vodafone|wallet|wechat/i.test(name)?'wallet':'bank';if(!/EGP_EGP/i.test(currency)){foreign.push(name);continue}let existing=state.accounts.find(x=>x.name.toLowerCase()===name.toLowerCase());let dest=existing||{id:'mm-'+String(a[0]),name,type,opening:0};if(!existing)newAccounts.push(dest);map.set(a[0],dest.id)}let txs=[];for(const r of mmPending.tx){let [uid,asset,to,date,kind,money,content,cat,currency]=r;if(!map.has(asset))continue;let n=Math.abs(Number(money)||0);if(!n)continue;let dt=new Date(Number(date));let ds=isNaN(dt)?String(date).slice(0,10):dt.toISOString().slice(0,10);let t=String(kind)==='1'?'expense':String(kind)==='0'?'income':String(kind)==='3'||String(kind)==='4'?'transfer':'expense';if(t==='transfer'&&!map.has(to))continue;txs.push({id:'mm-'+uid,type:t==='transfer'?'transfer':t,title:String(content||'حركة مستوردة'),category:String(cat||'مستورد'),amount:n,date:ds,accountId:map.get(asset),toAccountId:t==='transfer'?map.get(to):null,importSource:'mmbak'})}let seen=new Set(state.transactions.map(x=>String(x.id)));let fresh=txs.filter(x=>!seen.has(String(x.id)));state.accounts.push(...newAccounts);state.transactions.push(...fresh.filter(x=>x.type!=='transfer'));state.ledger.push(...fresh.filter(x=>x.type==='transfer').map(x=>({id:x.id,type:'transfer',from:x.accountId,to:x.toAccountId,amount:x.amount,fee:0,date:x.date,note:x.title,importSource:'mmbak'})));persist();mmPending=null;renderAccounts();document.getElementById('mmbakPreview').textContent='تم استيراد '+newAccounts.length+' حساب و'+fresh.length+' حركة. لم تُستورد الحسابات بعملات غير الجنيه: '+foreign.join('، ')+'. راجع الأرصدة قبل الاعتماد عليها.';toast('اكتمل الاستيراد')}
+function readMmbak(ev){let file=ev.target.files&&ev.target.files[0];if(!file)return;let out=document.getElementById('mmbakPreview');out.textContent='جارٍ قراءة النسخة الاحتياطية…';if(!window.initSqlJs){out.textContent='مكتبة قراءة قاعدة البيانات غير متاحة حاليًا. افتح التطبيق مع اتصال بالإنترنت ثم أعد المحاولة.';return}let reader=new FileReader();reader.onload=async e=>{try{let SQL=await initSqlJs({locateFile:f=>'https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/'+f});let db=new SQL.Database(new Uint8Array(e.target.result));let assets=db.exec("SELECT uid,NIC_NAME,currencyUid FROM ASSETS")[0]?.values||[];let tx=db.exec("SELECT uid,assetUid,toAssetUid,ZDATE,DO_TYPE,ZMONEY,ZCONTENT,ctgUid,currencyUid,WDATE FROM INOUTCOME WHERE COALESCE(IS_DEL,0)=0")[0]?.values||[];mmPending={assets,tx};out.innerHTML='<p>تم العثور على '+assets.length+' حساب و'+tx.length+' حركة. اختر الحسابات المراد نقلها:</p>'+assets.map((a,i)=>`<label style="display:flex;gap:8px;padding:7px 0"><input type="checkbox" class="mmasset" value="${i}" checked> ${esc(a[1]||'حساب')} <small>${esc(a[2]||'')}</small></label>`).join('')+'<button class="primary" onclick="confirmMmbak()">معاينة واستيراد الحسابات المحددة</button>'}catch(err){out.textContent='تعذر قراءة الملف: '+err.message} };reader.readAsArrayBuffer(file)}
+function confirmMmbak(){
+ if(!mmPending)return;
+ const chosen=[...document.querySelectorAll('.mmasset:checked')].map(x=>mmPending.assets[Number(x.value)]);
+ if(!chosen.length)return toast('اختر حسابًا واحدًا على الأقل');
+ const map=new Map(),newAccounts=[],foreign=[],creditSkipped=[];
+ for(const a of chosen){
+  const name=String(a[1]||'حساب').trim(),currency=String(a[2]||'EGP_EGP');
+  if(!/EGP_EGP/i.test(currency)){foreign.push(name);continue}
+  const type=/cash/i.test(name)?'cash':/credit/i.test(name)?'credit':/debit|account/i.test(name)?'bank':/vodafone|wallet|wechat/i.test(name)?'wallet':'bank';
+  if(type==='credit'){creditSkipped.push(name);continue}
+  const existing=state.accounts.find(x=>x.name.trim().toLowerCase()===name.toLowerCase());
+  const dest=existing||{id:'mm-'+String(a[0]),name,type,opening:0};
+  if(!existing)newAccounts.push(dest);
+  map.set(a[0],dest.id);
+ }
+ const txs=[];
+ for(const r of mmPending.tx){
+  const [uid,asset,to,date,kind,money,content,cat,currency,wdate]=r;
+  if(!map.has(asset))continue;
+  const n=Math.abs(Number(money)||0);if(!n)continue;
+  let ds=String(wdate||'').slice(0,10);
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(ds)){const raw=Number(date);ds=Number.isFinite(raw)&&raw>100000000000?new Date(raw).toISOString().slice(0,10):String(date).slice(0,10)}
+  const from=val('mmFrom')||'0000-01-01',dateTo=val('mmTo')||'9999-12-31';if(ds<from||ds>dateTo)continue;
+  const t=String(kind)==='1'?'expense':String(kind)==='0'?'income':String(kind)==='3'||String(kind)==='4'?'transfer':null;
+  if(!t)continue;
+  if(t==='transfer'&&!map.has(to))continue;
+  txs.push({id:'mm-'+uid,type:t,title:String(content||'حركة مستوردة'),category:String(cat||'مستورد'),amount:n,date:ds,accountId:map.get(asset),toAccountId:t==='transfer'?map.get(to):null,importSource:'mmbak'});
+ }
+ const seen=new Set([...state.transactions,...state.ledger].map(x=>String(x.id)));
+ const fresh=txs.filter(x=>!seen.has(String(x.id)));
+ const batchId='mmbatch-'+Date.now();
+ newAccounts.forEach(a=>{a.importBatch=batchId});
+ fresh.forEach(x=>x.importBatch=batchId);
+ state.accounts.push(...newAccounts);
+ state.transactions.push(...fresh.filter(x=>x.type!=='transfer'));
+ state.ledger.push(...fresh.filter(x=>x.type==='transfer').map(x=>({id:x.id,type:'transfer',from:x.accountId,to:x.toAccountId,amount:x.amount,fee:0,date:x.date,note:x.title,importSource:'mmbak',importBatch:batchId})));
+ state.importBatches.push({id:batchId,accountIds:newAccounts.map(a=>a.id),transactionIds:fresh.filter(x=>x.type!=='transfer').map(x=>x.id),ledgerIds:fresh.filter(x=>x.type==='transfer').map(x=>x.id),dateFrom:val('mmFrom'),dateTo:val('mmTo')});
+ persist();mmPending=null;renderAccounts();
+ document.getElementById('mmbakPreview').innerHTML='تم استيراد '+newAccounts.length+' حساب و'+fresh.length+' حركة. لم تُستورد عملات أجنبية: '+foreign.length+' حساب، وبطاقات ائتمان: '+creditSkipped.length+' حساب. <button class="secondary" onclick="undoLastMmbak()">التراجع عن آخر استيراد</button>';
+ toast('اكتمل الاستيراد');
+}
+function undoLastMmbak(){const b=state.importBatches?.pop();if(!b)return toast('لا توجد دفعة استيراد للتراجع عنها');const ids=new Set([...(b.transactionIds||[]),...(b.ledgerIds||[])]);state.transactions=state.transactions.filter(x=>!ids.has(x.id));state.ledger=state.ledger.filter(x=>!ids.has(x.id));const used=new Set([...state.transactions.map(x=>x.accountId),...state.ledger.flatMap(x=>[x.from,x.to])]);state.accounts=state.accounts.filter(a=>!(b.accountIds||[]).includes(a.id)||used.has(a.id));persist();renderAccounts();document.getElementById('mmbakPreview').textContent='تم التراجع عن آخر عملية استيراد.';toast('تم التراجع عن الاستيراد')}
+
 
 // Arabic in-app confirmation/payment dialogs (no browser prompts)
 function ensureActionDialog(){if(document.getElementById('actionDialog'))return;let d=document.createElement('div');d.id='actionDialog';d.className='modal';d.innerHTML='<div class="sheet"><h3 id="actionTitle"></h3><div id="actionBody"></div><div class="actions"><button class="primary" id="actionOk">تأكيد</button><button class="secondary" onclick="closeActionDialog()">إلغاء</button></div></div>';document.body.appendChild(d)}
@@ -298,7 +350,7 @@ function saveCommitmentPayment(){let id=pendingCommitmentId,c=state.commitments.
 function resetApp(){ensureActionDialog();document.getElementById('actionTitle').textContent='إعادة ضبط التطبيق';document.getElementById('actionBody').textContent='سيتم حذف الحركات والحسابات المحفوظة على هذا الجهاز. تأكد من تصدير نسخة احتياطية أولًا.';document.getElementById('actionOk').onclick=()=>{state={transactions:[],paid:0,savings:0,debtTotal:0,salaryConfig:{},salaryMonths:{},cards:[],cardOps:[],cardPayments:[],commitments:[],commitmentPayments:[],accounts:[],ledger:[]};persist();closeActionDialog();renderModules();renderAccounts();toast('تمت إعادة الضبط')};document.getElementById('actionDialog').classList.add('show')}
 
 // Ensure initial render and correct conditional fields on first load
-try{state.accounts=state.accounts||[];state.ledger=state.ledger||[];addSalaryAccountField();addCardPayAccount();renderAccounts();toggleInstallmentFields();}catch(e){console.warn(e)}
+try{state.accounts=state.accounts||[];state.ledger=state.ledger||[];state.importBatches=state.importBatches||[];addSalaryAccountField();addCardPayAccount();renderAccounts();toggleInstallmentFields();}catch(e){console.warn(e)}
 
 try{init();initModules()}catch(e){document.body.insertAdjacentHTML('afterbegin','<div style="padding:24px;color:white;background:#7f1d1d;text-align:center;font:16px system-ui">حصل خطأ أثناء تشغيل التطبيق. حدّث الصفحة أو افتحها في متصفح آخر.</div>');console.error(e)}
 </script><script>document.addEventListener('focusin',e=>{const x=e.target;if(x.matches('input[type=number]')&&x.value==='0')x.dataset.zero='1'});document.addEventListener('input',e=>{const x=e.target;if(x.matches('input[type=number]')&&x.dataset.zero==='1'&&/^0\d/.test(x.value))x.value=x.value.replace(/^0+/, '');x.dataset.zero='0'});document.addEventListener('input',e=>{if(['salBasic','salWorkHours','salWorkDays','salOTRate','salHolidayRate'].includes(e.target.id))updateHourlyPreview()});</script></body></html>
