@@ -662,7 +662,7 @@ details.fold .fold-body{padding:12px 14px}
     <summary><span>⟳ التحديثات</span><span>▼</span></summary>
     <div class="fold-body">
       <div class="c-list">
-        <div class="c-row"><span class="c-lbl">الإصدار الحالي :</span><span class="tag" id="appVersionTag">V11.3</span></div>
+        <div class="c-row"><span class="c-lbl">الإصدار الحالي :</span><span class="tag" id="appVersionTag">V11.4</span></div>
         <div class="c-row">
           <span class="c-lbl">التحديثات :</span>
           <div class="c-row-btns">
@@ -671,7 +671,9 @@ details.fold .fold-body{padding:12px 14px}
           </div>
         </div>
       </div>
-      <div class="hint" id="updateStatus">بياناتك محفوظة محليًا ولا تتأثر بالتحديث.</div>
+      <div id="updateDetailsBox" style="margin-top:8px;background:var(--surface);border:1px solid var(--line2);border-radius:12px;padding:10px">
+        <div class="hint" id="updateStatus" style="margin:0">بياناتك محفوظة محليًا ولا تتأثر بالتحديث.</div>
+      </div>
     </div>
   </details>
 
@@ -819,11 +821,23 @@ details.fold .fold-body{padding:12px 14px}
   </div>
 </div>
 
+<!-- Exit Confirmation Modal -->
+<div class="modal center-modal" id="exitConfirmModal" onclick="if(event.target===this)cancelExitApp()">
+  <div class="sheet" style="max-width:340px;text-align:center">
+    <h3 style="justify-content:center;margin-bottom:8px">تأكيد الخروج</h3>
+    <p class="hint" style="font-size:.8rem;margin:0 0 14px">هل تريد الخروج من تطبيق X-Wallet؟</p>
+    <div class="actions">
+      <button type="button" class="primary" style="background:var(--red);color:#fff" onclick="confirmExitApp()">نعم، خروج</button>
+      <button type="button" class="secondary" onclick="cancelExitApp()">البقاء في التطبيق</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
 <script>
-const APP_VERSION='11.3';
+const APP_VERSION='11.4';
 const APP_BUILD='2026-11-13';
 const KEY='raseed_mobile_v2';
 
@@ -927,39 +941,56 @@ function persist(){
   renderAll();
 }
 
-/* Exit Confirmation & Back-Button Handling */
-let _lastBackPress = 0;
+/* Exit Confirmation & Back-Button Handling (Chrome & Installed PWA) */
+let _allowExit = false;
 window.addEventListener('beforeunload', function(e){
+  if(_allowExit) return;
   e.preventDefault();
-  e.returnValue = '';
+  e.returnValue = 'هل تريد الخروج من X-Wallet؟';
+  return 'هل تريد الخروج من X-Wallet؟';
 });
-try{
-  if(!history.state || !history.state.xwGuard){
-    history.replaceState({xwGuard:true, page:'trans'}, '');
-    history.pushState({xwGuard:true, page:'trans'}, '');
+function armBackGuard(){
+  try{
+    history.replaceState({xwGuard:1}, '');
+    history.pushState({xwGuard:2}, '');
+  }catch(_){}
+}
+function cancelExitApp(){
+  const m = document.getElementById('exitConfirmModal');
+  if(m) m.classList.remove('show');
+  try{ history.pushState({xwGuard:2}, ''); }catch(_){}
+}
+function confirmExitApp(){
+  _allowExit = true;
+  const m = document.getElementById('exitConfirmModal');
+  if(m) m.classList.remove('show');
+  try{ window.close(); }catch(_){}
+  try{ history.go(-2); }catch(_){}
+}
+armBackGuard();
+document.addEventListener('pointerdown', function _onceArm(){
+  armBackGuard();
+  document.removeEventListener('pointerdown', _onceArm);
+}, {passive:true});
+window.addEventListener('popstate', function(){
+  if(_allowExit) return;
+  const qm = document.getElementById('quickModal');
+  const am = document.getElementById('accountModal');
+  const ym = document.getElementById('ymModal');
+  const em = document.getElementById('exitConfirmModal');
+  if(qm && qm.classList.contains('show')){ closeQuickModal(); try{history.pushState({xwGuard:2},'');}catch(_){} return; }
+  if(am && am.classList.contains('show')){ closeAccountModal(); try{history.pushState({xwGuard:2},'');}catch(_){} return; }
+  if(ym && ym.classList.contains('show')){ ym.classList.remove('show'); try{history.pushState({xwGuard:2},'');}catch(_){} return; }
+  const activePage = document.querySelector('.screen.active')?.id;
+  if(activePage && activePage !== 'trans'){
+    go('trans', document.querySelector('.nav[data-page="trans"]'));
+    try{history.pushState({xwGuard:2},'');}catch(_){}
+    return;
   }
-  window.addEventListener('popstate', function(){
-    const qm = document.getElementById('quickModal');
-    const am = document.getElementById('accountModal');
-    const ym = document.getElementById('ymModal');
-    if(qm && qm.classList.contains('show')){ closeQuickModal(); history.pushState({xwGuard:true}, ''); return; }
-    if(am && am.classList.contains('show')){ closeAccountModal(); history.pushState({xwGuard:true}, ''); return; }
-    if(ym && ym.classList.contains('show')){ ym.classList.remove('show'); history.pushState({xwGuard:true}, ''); return; }
-    const activePage = document.querySelector('.screen.active')?.id;
-    if(activePage && activePage !== 'trans'){
-      go('trans', document.querySelector('.nav[data-page="trans"]'));
-      history.pushState({xwGuard:true}, '');
-      return;
-    }
-    const now = Date.now();
-    if(now - _lastBackPress < 2200){
-      return;
-    }
-    _lastBackPress = now;
-    toast('اضغط رجوع مرة أخرى للخروج من التطبيق');
-    history.pushState({xwGuard:true}, '');
-  });
-}catch(_){}
+  if(em && !em.classList.contains('show')){
+    em.classList.add('show');
+  }
+});
 
 /* Auto-Collapse: Opening any <details class="fold"> closes all other open folds in the same page */
 document.addEventListener('toggle', function(e){
@@ -1768,65 +1799,85 @@ function readMmbak(ev){
         assets = (db.exec("SELECT uid,NIC_NAME,currencyUid FROM ASSETS")[0]?.values||[]).map(r=>[r[0],r[1],r[2],0]);
       }
 
-      // Parse all category tables in Money Manager (ZCATEGORY, CATEGORY, CTG, ZSUBCATEGORY, etc.)
-      let catInfoMap = {}; // any key (uid, C_UID, Z_PK) -> { name, parentName, doType }
+      // Deep Parse of ALL Money Manager Category Tables & Columns (ZCATEGORY, CATEGORY, CTG, etc.)
+      let catInfoMap = {}; // any key (uid, C_UID, Z_PK, NAME) -> { name, parentName, doType }
       let expTree = {};
       let incTree = {};
       try{
         const tables = (db.exec("SELECT name FROM sqlite_master WHERE type='table'")[0]?.values||[]).map(x=>String(x[0]));
-        const catTables = tables.filter(tn=>/^(Z?CATEGORY|CTG|Z?SUBCATEGORY)$/i.test(tn) || (/cat|ctg/i.test(tn) && !/android|sqlite/i.test(tn)));
+        const catTables = tables.filter(tn=>/^(Z?CATEGORY|CTG|Z?SUBCATEGORY|Z?CTG)$/i.test(tn) || (/cat|ctg/i.test(tn) && !/android|sqlite|inoutcome|asset/i.test(tn)));
         const rawByKey = {};
         const allNodes = [];
         for(const catTable of catTables){
-          const cols = (db.exec(`PRAGMA table_info("${catTable}")`)[0]?.values||[]).map(x=>String(x[1]));
-          const idCols = cols.filter(c=>/^(uid|c_uid|z_pk|id|category_uid)$/i.test(c));
-          const nameCol = cols.find(c=>/^(name|zname|nic_name|c_name|title|ztitle|ctg_name)$/i.test(c));
-          const typeCol = cols.find(c=>/^(do_type|type|ztype|kind|zdotype|c_type)$/i.test(c));
-          const parentCol = cols.find(c=>/^(p_uid|parent_uid|parent|zparent|zcategory|cat_uid|ctg_uid|pc_uid)$/i.test(c));
+          const pragma = db.exec(`PRAGMA table_info("${catTable}")`)[0]?.values || [];
+          const cols = pragma.map(x=>String(x[1]));
+          const idCols = cols.filter(c=>/^(uid|c_uid|z_pk|id|category_uid|ctg_uid)$/i.test(c));
+          const nameCol = cols.find(c=>/^(name|zname|nic_name|c_name|title|ztitle|ctg_name|zctg_name)$/i.test(c))
+                       || cols.find(c=>/name|title/i.test(c));
+          const typeCol = cols.find(c=>/^(do_type|type|ztype|kind|zdotype|c_type|in_out|zin_out)$/i.test(c));
+          const parentCol = cols.find(c=>/^(p_uid|parent_uid|parent|zparent|zcategory|cat_uid|ctg_uid|pc_uid|zp_uid|parent_id|zparent_id)$/i.test(c));
           const delCol = cols.find(c=>/^(is_del|zis_del|deleted)$/i.test(c));
-          if(idCols.length && nameCol){
-            const selList = [...idCols, nameCol, typeCol||"''", parentCol||"''", delCol||"0"].map(c=>(c.startsWith("'")||c==="0")?c:`"${c}"`).join(',');
-            const rows = db.exec(`SELECT ${selList} FROM "${catTable}"`)[0]?.values || [];
+          const orderCol = cols.find(c=>/^(order_seq|zorder|seq|sort|zsort|z_opt)$/i.test(c));
+          if(nameCol){
+            const useIds = idCols.length ? idCols : [cols[0]];
+            const selList = [...useIds, nameCol, typeCol||"''", parentCol||"''", delCol||"0"].map(c=>(c.startsWith("'")||c==="0")?c:`"${c}"`).join(',');
+            const ordSql = orderCol ? ` ORDER BY "${orderCol}" ASC` : '';
+            const rows = db.exec(`SELECT ${selList} FROM "${catTable}"${ordSql}`)[0]?.values || [];
             for(const r of rows){
-              const keys = r.slice(0, idCols.length).map(v=>String(v??'').trim()).filter(Boolean);
-              const nm = String(r[idCols.length]??'').trim();
-              const tp = String(r[idCols.length+1]??'').trim();
-              let pid = String(r[idCols.length+2]??'').trim();
-              const isDel = Number(r[idCols.length+3]) === 1;
-              if(!keys.length || !nm) continue;
-              if(pid === '0' || pid === '-1' || pid === 'null' || pid === 'NULL' || keys.includes(pid)) pid = '';
+              const keys = r.slice(0, useIds.length).map(v=>String(v??'').trim()).filter(Boolean);
+              const nm = String(r[useIds.length]??'').trim();
+              const tp = String(r[useIds.length+1]??'').trim();
+              let pid = String(r[useIds.length+2]??'').trim();
+              const isDel = Number(r[useIds.length+3]) === 1;
+              if(!nm || /^[0-9a-f-]{20,}$/i.test(nm)) continue;
+              if(pid === '0' || pid === '-1' || pid === 'null' || pid === 'NULL' || pid === 'None' || keys.includes(pid)) pid = '';
               const node = {keys, name:nm, type:tp, parentId:pid, isDel};
               allNodes.push(node);
               for(const k of keys) rawByKey[k] = node;
             }
           }
         }
+        // Resolve parent chain (up to root)
         for(const obj of allNodes){
-          const parentObj = obj.parentId && rawByKey[obj.parentId] ? rawByKey[obj.parentId] : null;
-          const effType = obj.type || (parentObj ? parentObj.type : '1');
+          let root = obj;
+          const visited = new Set([obj]);
+          while(root.parentId && rawByKey[root.parentId] && !visited.has(rawByKey[root.parentId])){
+            visited.add(rawByKey[root.parentId]);
+            root = rawByKey[root.parentId];
+          }
+          const isSub = (root !== obj);
+          const effType = obj.type || root.type || '1';
           const isIncome = (effType === '0' || /inc/i.test(effType));
           const targetTree = isIncome ? incTree : expTree;
 
           if(!obj.isDel){
-            if(parentObj){
-              targetTree[parentObj.name] = targetTree[parentObj.name] || [];
-              if(!targetTree[parentObj.name].includes(obj.name)) targetTree[parentObj.name].push(obj.name);
+            if(isSub){
+              targetTree[root.name] = targetTree[root.name] || [];
+              if(!targetTree[root.name].includes(obj.name)) targetTree[root.name].push(obj.name);
             } else {
               targetTree[obj.name] = targetTree[obj.name] || [];
             }
           }
-          const info = { name: obj.name, parentName: parentObj ? parentObj.name : '', doType: effType };
+          const info = { name: obj.name, parentName: isSub ? root.name : '', doType: effType };
           for(const k of obj.keys) catInfoMap[k] = info;
+          catInfoMap[obj.name] = info;
         }
       }catch(err){ console.warn('MM Category parse:', err); }
 
-      let tx = db.exec("SELECT uid,assetUid,toAssetUid,ZDATE,DO_TYPE,ZMONEY,ZCONTENT,ctgUid,currencyUid,WDATE,txUidTrans FROM INOUTCOME WHERE COALESCE(IS_DEL,0)=0 ORDER BY CASE WHEN DO_TYPE='3' THEN 0 ELSE 1 END")[0]?.values || [];
+      // Inspect INOUTCOME columns dynamically so we catch ctgUid, subCtgUid, categoryName, etc.
+      const ioCols = (db.exec(`PRAGMA table_info("INOUTCOME")`)[0]?.values||[]).map(x=>String(x[1]));
+      const subCol = ioCols.find(c=>/^(sub_?ctg|sub_?cat|zsub|subctg)/i.test(c));
+      const catNameCol = ioCols.find(c=>/^(ctg_?name|cat_?name|category_?name)/i.test(c));
+      const extraSel = [subCol ? `"${subCol}"` : "''", catNameCol ? `"${catNameCol}"` : "''"].join(',');
+
+      let tx = db.exec(`SELECT uid,assetUid,toAssetUid,ZDATE,DO_TYPE,ZMONEY,ZCONTENT,ctgUid,currencyUid,WDATE,txUidTrans,${extraSel} FROM INOUTCOME WHERE COALESCE(IS_DEL,0)=0 ORDER BY CASE WHEN DO_TYPE='3' THEN 0 ELSE 1 END`)[0]?.values || [];
       mmPending = {assets, tx, catInfoMap, expTree, incTree};
 
       const totalCats = Object.keys(expTree).length + Object.keys(incTree).length;
       const totalSubs = Object.values(expTree).reduce((s,a)=>s+a.length,0) + Object.values(incTree).reduce((s,a)=>s+a.length,0);
 
       out.innerHTML = `<p class="hint">تم العثور على <b>${assets.length}</b> حساب، <b>${tx.length}</b> حركة، <b>${totalCats}</b> قسم رئيسي، و<b>${totalSubs}</b> قسم فرعي:</p>` +
+        `<label style="display:flex;align-items:center;gap:8px;font-size:.74rem;color:var(--mint);margin:6px 0 8px;cursor:pointer"><input type="checkbox" id="mmReplaceCatsChk" checked> استبدال الأقسام الافتراضية بأقسام Money Manager وتحديث المعاملات السابقة</label>` +
         assets.map((a,i)=>`<div style="display:grid;grid-template-columns:auto 1fr;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)"><input type="checkbox" class="mmasset" value="${i}" checked><div><b style="font-size:.78rem">${esc(a[1]||'حساب')}</b><small style="display:block;color:var(--muted);font-size:.66rem">${esc(a[2]||'')} · رصيد: ${esc(String(a[3]??0))}</small>${mmTypeSelect(i,mmDefaultType(a[1],a[2]))}</div></div>`).join('') +
         `<button class="primary" style="margin-top:10px" onclick="commitMmbakDirect()">استيراد الحسابات والأقسام والحركات الآن</button>`;
     }catch(err){ out.textContent = 'تعذر قراءة الملف: ' + err.message; }
@@ -1839,14 +1890,24 @@ function commitMmbakDirect(){
   const chosen = [...document.querySelectorAll('.mmasset:checked')].map(x=>Number(x.value));
   if(!chosen.length) return toast('اختر حسابًا واحدًا على الأقل');
 
-  syncCategoryTrees();
-  for(const [main, subs] of Object.entries(mmPending.expTree||{})){
-    state.categoryTree.expense[main] = [...new Set([...(state.categoryTree.expense[main]||[]), ...subs])];
-    if(!state.categories.includes(main)) state.categories.push(main);
-  }
-  for(const [main, subs] of Object.entries(mmPending.incTree||{})){
-    state.categoryTree.income[main] = [...new Set([...(state.categoryTree.income[main]||[]), ...subs])];
-    if(!state.incomeCategories.includes(main)) state.incomeCategories.push(main);
+  const replaceCats = document.getElementById('mmReplaceCatsChk')?.checked;
+  if(replaceCats && (Object.keys(mmPending.expTree||{}).length || Object.keys(mmPending.incTree||{}).length)){
+    state.categoryTree = {
+      expense: JSON.parse(JSON.stringify(mmPending.expTree||{})),
+      income: JSON.parse(JSON.stringify(mmPending.incTree||{}))
+    };
+    state.categories = Object.keys(state.categoryTree.expense);
+    state.incomeCategories = Object.keys(state.categoryTree.income);
+  } else {
+    syncCategoryTrees();
+    for(const [main, subs] of Object.entries(mmPending.expTree||{})){
+      state.categoryTree.expense[main] = [...new Set([...(state.categoryTree.expense[main]||[]), ...subs])];
+      if(!state.categories.includes(main)) state.categories.push(main);
+    }
+    for(const [main, subs] of Object.entries(mmPending.incTree||{})){
+      state.categoryTree.income[main] = [...new Set([...(state.categoryTree.income[main]||[]), ...subs])];
+      if(!state.incomeCategories.includes(main)) state.incomeCategories.push(main);
+    }
   }
 
   const map = new Map(), newAccounts = [];
@@ -1862,9 +1923,10 @@ function commitMmbakDirect(){
   }
 
   const txs = [], seenTransferKeys = new Set();
+  const existingTxById = new Map(state.transactions.map(x=>[String(x.id), x]));
   const seen = new Set([...state.transactions, ...state.ledger].map(x=>String(x.id)));
   for(const r of mmPending.tx){
-    const [uid,asset,to,date,kind,money,content,cat,currency,wdate,txUidTrans] = r;
+    const [uid,asset,to,date,kind,money,content,cat,currency,wdate,txUidTrans,subCtgRaw,catNameRaw] = r;
     if(!map.has(asset)) continue;
     const n = Math.abs(Number(money)||0); if(!n) continue;
     let ds = String(wdate||'').slice(0,10);
@@ -1880,28 +1942,42 @@ function commitMmbakDirect(){
     if(t==='transfer') seenTransferKeys.add(transferKey);
     if(t==='transfer' && !map.has(to)) continue;
 
-    const id = t==='transfer' ? 'mm-xfer-'+transferKey : 'mm-'+uid;
-    if(seen.has(id)) continue;
-    seen.add(id);
-
     const rawCatKey = String(cat??'').trim();
-    const cInfo = mmPending.catInfoMap[rawCatKey];
+    const rawSubKey = String(subCtgRaw??'').trim();
+    const rawCatName = String(catNameRaw??'').trim();
+    const cInfo = mmPending.catInfoMap[rawSubKey] || mmPending.catInfoMap[rawCatKey] || mmPending.catInfoMap[rawCatName];
     const cleanMemo = String(content??'').trim();
     const isMemoUuid = /^[0-9a-f-]{16,}$/i.test(cleanMemo);
     const usableMemo = (cleanMemo && !isMemoUuid) ? cleanMemo : '';
 
-    // Never fallback blindly to 'أخرى' if category name is directly in cat or memo
-    let mainCat = 'أخرى';
+    let mainCat = '';
     let subCat = '';
     if(cInfo){
       mainCat = cInfo.parentName || cInfo.name;
       subCat = cInfo.parentName ? cInfo.name : '';
+    } else if(rawCatName && !/^\d+$/.test(rawCatName) && !/^[0-9a-f-]{16,}$/i.test(rawCatName)){
+      mainCat = rawCatName;
     } else if(rawCatKey && !/^\d+$/.test(rawCatKey) && !/^[0-9a-f-]{16,}$/i.test(rawCatKey)){
       mainCat = rawCatKey;
     } else if(usableMemo){
       mainCat = usableMemo;
+    } else {
+      mainCat = 'أخرى';
     }
     const titleText = usableMemo || subCat || mainCat;
+
+    const id = t==='transfer' ? 'mm-xfer-'+transferKey : 'mm-'+uid;
+    if(seen.has(id)){
+      // Update existing imported transaction's category & subCategory if it was previously 'أخرى'
+      const prev = existingTxById.get(id);
+      if(prev && t !== 'transfer'){
+        prev.category = mainCat;
+        prev.subCategory = subCat;
+        if(!prev.title || prev.title === 'أخرى') prev.title = titleText;
+      }
+      continue;
+    }
+    seen.add(id);
 
     txs.push({
       id,
@@ -2594,11 +2670,35 @@ function openPasteRestoreModal(){
   }catch{ toast('النص غير صالح'); }
 }
 function checkForUpdate(){
+  const box = document.getElementById('updateDetailsBox');
+  if(box) box.innerHTML = '<div class="hint" style="margin:0">جاري البحث عن تحديثات…</div>';
   fetch('./version.json?t='+Date.now(),{cache:'no-store'}).then(r=>r.json()).then(v=>{
-    const rem=String(v.version||'').trim();
-    document.getElementById('updateStatus').textContent = rem===APP_VERSION ? 'أنت على آخر إصدار (V'+APP_VERSION+')' : 'يتوفر إصدار جديد: V'+rem;
-    toast(rem===APP_VERSION ? 'أنت على آخر إصدار' : 'يتوفر تحديث جديد V'+rem);
-  }).catch(()=>toast('تعذر فحص التحديث'));
+    const rem = String(v.version||v.appVersion||'').trim();
+    const notes = String(v.notes||'تحسينات عامة في الأداء والاستقرار').trim();
+    const notesHtml = notes.split(/\n|\+/).map(s=>s.trim()).filter(Boolean).map(s=>`<div style="margin:3px 0">• ${esc(s.replace(/^•\s*/,''))}</div>`).join('');
+    if(!rem || rem === APP_VERSION){
+      if(box) box.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <b style="color:var(--mint);font-size:.8rem">✓ أنت على أحدث إصدار (V${esc(APP_VERSION)})</b>
+        </div>
+        <div class="hint" style="margin:0;font-size:.7rem">${notesHtml}</div>
+      `;
+      toast('أنت على آخر إصدار V' + APP_VERSION);
+    } else {
+      if(box) box.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <b style="color:var(--orange);font-size:.82rem">🚀 يتوفر تحديث جديد: V${esc(rem)}</b>
+          <span class="tag">الحالي: V${esc(APP_VERSION)}</span>
+        </div>
+        <div class="hint" style="margin:0 0 10px;font-size:.72rem;color:var(--text-sub)"><b>أهم التحسينات:</b>${notesHtml}</div>
+        <button type="button" class="primary" style="padding:9px" onclick="forceAppUpdate()">تحديث الآن إلى V${esc(rem)}</button>
+      `;
+      toast('يتوفر تحديث جديد V' + rem);
+    }
+  }).catch(()=>{
+    if(box) box.innerHTML = '<div class="hint" style="margin:0;color:var(--red)">تعذر الاتصال للبحث عن تحديث. تأكد من الإنترنت.</div>';
+    toast('تعذر فحص التحديث');
+  });
 }
 async function forceAppUpdate(){
   toast('جاري التحديث…');
