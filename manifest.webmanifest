@@ -1,8 +1,8 @@
 {
-  "name": "المحفظة | Wallet",
-  "short_name": "المحفظة",
+  "name": "X-Wallet",
+  "short_name": "X-Wallet",
   "description": "مديرك المالي الشخصي",
-  "id": "/Raseed/",
+  "id": "/X-Wallet/",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
