@@ -176,6 +176,14 @@ details.subfold .subfold-body{padding:10px 12px}
 .backup-banner b{color:var(--orange);display:block;margin-bottom:2px}
 .calc-pill{background:#0e1929;border:1px solid #283b54;border-radius:12px;padding:9px 12px;margin-top:8px;display:flex;justify-content:space-between;align-items:center;font-size:.75rem}
 </style>
+<script>
+window.__deferredInstallPrompt = null;
+window.addEventListener('beforeinstallprompt', function(e) {
+  e.preventDefault();
+  window.__deferredInstallPrompt = e;
+  if (typeof updateInstallUI === 'function') updateInstallUI();
+});
+</script>
 </head>
 <body>
 <div class="app">
@@ -564,7 +572,7 @@ details.subfold .subfold-body{padding:10px 12px}
   <h1 data-i18n="navSettings">الإعدادات</h1>
 
   <!-- القسم 1: إعدادات عامة -->
-  <details class="fold" open>
+  <details class="fold">
     <summary>
       <div class="fold-left"><span class="fold-ico">🎨</span><span data-i18n="setGeneral">إعدادات عامة</span></div>
       <span class="chev">▼</span>
@@ -581,6 +589,7 @@ details.subfold .subfold-body{padding:10px 12px}
         <div class="field">
           <label data-i18n="setFont">حجم الخط</label>
           <select id="prefFontSize" onchange="updatePreference('fontSize', this.value)">
+            <option value="0.84">صغير جدًا</option>
             <option value="0.92">صغير</option>
             <option value="1">متوسط (افتراضي)</option>
             <option value="1.1">كبير</option>
@@ -626,6 +635,19 @@ details.subfold .subfold-body{padding:10px 12px}
           <input type="checkbox" id="prefPrivacy" onchange="updatePreference('privacy', this.checked)" style="width:20px;height:20px;accent-color:var(--mint)">
         </div>
       </div>
+
+      <div class="set-card" id="installAppCard">
+        <div class="set-head">
+          <div class="set-ico">📲</div>
+          <div class="set-title">
+            <b>تثبيت التطبيق على الشاشة الرئيسية</b>
+            <small id="installAppStatus">اضغط لتثبيت التطبيق كبرنامج مستقل بدون شريط المتصفح.</small>
+          </div>
+        </div>
+        <div class="set-actions">
+          <button class="primary" id="installAppBtn" onclick="installPWA()">تثبيت التطبيق الآن</button>
+        </div>
+      </div>
     </div>
   </details>
 
@@ -665,12 +687,13 @@ details.subfold .subfold-body{padding:10px 12px}
           <div class="set-ico">↥</div>
           <div class="set-title">
             <b>استعادة نسخة احتياطية</b>
-            <small>استرجع بياناتك من ملف JSON سبق تصديره.</small>
+            <small>استرجع بياناتك من ملف JSON سبق تصديره أو بلصق النص.</small>
           </div>
         </div>
-        <input id="restore" class="file-hidden" type="file" accept="application/json,.json" onchange="restore(event)">
+        <input id="restore" class="file-hidden" type="file" onchange="restore(event)">
         <div class="set-actions">
-          <button class="secondary" onclick="openFilePicker('restore')">اختيار ملف الاستعادة (JSON)</button>
+          <button class="secondary" onclick="openFilePicker('restore')">اختيار ملف (JSON)</button>
+          <button class="secondary" onclick="openPasteRestoreModal()">لصق نص النسخة</button>
         </div>
       </div>
 
@@ -716,48 +739,6 @@ details.subfold .subfold-body{padding:10px 12px}
       <span class="chev">▼</span>
     </summary>
     <div class="fold-body">
-      <div class="set-card" id="installAppCard">
-        <div class="set-head">
-          <div class="set-ico">📲</div>
-          <div class="set-title">
-            <b>تثبيت التطبيق على الشاشة الرئيسية</b>
-            <small id="installAppStatus">ثبّت التطبيق ليفتح في نافذة مستقلة بدون شريط المتصفح.</small>
-          </div>
-        </div>
-        <div class="set-actions">
-          <button class="primary" id="installAppBtn" onclick="installPWA()">تثبيت التطبيق الآن</button>
-        </div>
-      </div>
-
-      <div class="set-card">
-        <div class="set-head">
-          <div class="set-ico">ℹ</div>
-          <div class="set-title">
-            <b>المحفظة (Wallet) — حول التطبيق</b>
-            <small id="appVersionDetail">V9.3 · 2026-11-12</small>
-          </div>
-          <span class="tag" id="appVersionTag">V9.3</span>
-        </div>
-        <div class="hint" id="updateStatus">بياناتك المالية تبقى على الجهاز. التحديث يخص ملفات التطبيق فقط.</div>
-        <div class="set-actions">
-          <button class="secondary" onclick="checkForUpdate()">فحص التحديثات</button>
-          <button class="primary" onclick="forceAppUpdate()">تحديث الآن</button>
-        </div>
-      </div>
-
-      <div class="set-card" style="border-color:#75404b55">
-        <div class="set-head">
-          <div class="set-ico" style="background:#4a2631;color:#ffdbe1">⚠</div>
-          <div class="set-title">
-            <b>إعادة ضبط التطبيق</b>
-            <small>حذف جميع الحركات والحسابات المسجلة على هذا الجهاز نهائيًا.</small>
-          </div>
-        </div>
-        <div class="set-actions">
-          <button class="secondary danger-fill" onclick="resetApp()">مسح جميع البيانات</button>
-        </div>
-      </div>
-    </div>
   </details>
 </section>
 </div>
@@ -828,7 +809,7 @@ details.subfold .subfold-body{padding:10px 12px}
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
 <script>
-const APP_VERSION='9.3';
+const APP_VERSION='9.4';
 const APP_BUILD='2026-11-12';
 const KEY='raseed_mobile_v2';
 let pendingWorkbookTransactions=null;
@@ -2448,67 +2429,92 @@ function resetApp(){
 }
 
 
-/* PWA Install Prompt & Standalone Detection */
-let deferredInstallPrompt = null;
+/* Paste JSON Backup Fallback */
+function openPasteRestoreModal(){
+  ensureActionDialog(false);
+  document.getElementById('actionTitle').textContent = 'لصق نص النسخة الاحتياطية';
+  document.getElementById('actionBody').innerHTML = `
+    <div class="field">
+      <label>الصق محتوى ملف wallet-backup.json هنا:</label>
+      <textarea id="pasteJsonArea" rows="6" style="width:100%;background:#0e1929;border:1px solid #30445e;border-radius:13px;padding:10px;color:white;font-family:monospace;font-size:11px" placeholder='{"transactions":[...]}'></textarea>
+    </div>
+  `;
+  const okBtn = document.getElementById('actionOk');
+  okBtn.textContent = 'استرجاع البيانات';
+  okBtn.className = 'primary';
+  okBtn.onclick = () => {
+    try{
+      const raw = document.getElementById('pasteJsonArea').value.trim();
+      const v = JSON.parse(raw);
+      if(!Array.isArray(v.transactions)) throw 0;
+      state = v;
+      state.prefs = state.prefs || {lang:'ar',fontSize:'1',theme:'mint',userName:'',defaultAccount:'',privacy:false,homeDecimals:false};
+      migrateLegacyDebtsToCommitments();
+      applyPreferences();
+      persist(); renderAccounts(); renderModules(); closeActionDialog();
+      toast('تم استرجاع النسخة بنجاح');
+    }catch(e){
+      toast('النص غير صالح، تأكد من نسخ الملف بالكامل');
+    }
+  };
+  const dlg = document.getElementById('actionDialog');
+  dlg.classList.add('show'); dlg.scrollTop = 0;
+}
+
+/* PWA Install Prompt (Direct Action) */
 function updateInstallUI(){
   const statusEl = document.getElementById('installAppStatus');
   const btnEl = document.getElementById('installAppBtn');
   if(!statusEl || !btnEl) return;
   const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
   if(isStandalone){
-    statusEl.textContent = 'التطبيق مثبّت ويعمل حاليًا في وضع التطبيق المستقل ✓';
+    statusEl.textContent = 'التطبيق مثبّت ويعمل حاليًا كبرنامج مستقل ✓';
     btnEl.textContent = 'مثبّت بالفعل ✓';
     btnEl.disabled = true;
     btnEl.style.opacity = '0.6';
-  } else if(deferredInstallPrompt){
-    statusEl.textContent = 'جاهز للتثبيت كتطبيق مستقل على جهازك.';
+  } else if(window.__deferredInstallPrompt){
+    statusEl.textContent = 'جاهز للتثبيت الفوري كبرنامج مستقل.';
     btnEl.textContent = 'تثبيت التطبيق الآن';
     btnEl.disabled = false;
     btnEl.style.opacity = '1';
   } else {
-    statusEl.textContent = 'اضغط للتثبيت أو اتبع خطوات المتصفح لفتحه بدون شريط العنوان.';
+    statusEl.textContent = 'اضغط لتشغيل التثبيت المستقل (بدون شريط المتصفح).';
   }
 }
-window.addEventListener('beforeinstallprompt', (e) => {
-  e.preventDefault();
-  deferredInstallPrompt = e;
-  updateInstallUI();
-});
 window.addEventListener('appinstalled', () => {
-  deferredInstallPrompt = null;
+  window.__deferredInstallPrompt = null;
   updateInstallUI();
   toast('تم تثبيت التطبيق بنجاح على الشاشة الرئيسية');
 });
 async function installPWA(){
   const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
   if(isStandalone) return toast('التطبيق مثبّت ويعمل كبرنامج مستقل بالفعل ✓');
-  if(deferredInstallPrompt){
-    deferredInstallPrompt.prompt();
-    const choice = await deferredInstallPrompt.userChoice;
+  if(window.__deferredInstallPrompt){
+    window.__deferredInstallPrompt.prompt();
+    const choice = await window.__deferredInstallPrompt.userChoice;
     if(choice && choice.outcome === 'accepted'){
-      deferredInstallPrompt = null;
+      window.__deferredInstallPrompt = null;
       updateInstallUI();
     }
     return;
   }
+  // If current browser hasn't fired prompt yet (e.g., Xiaomi Mi Browser or already dismissed),
+  // trigger direct Android Chrome Intent to open & install natively, or show 1-tap action!
+  const cleanUrl = location.href.split('#')[0].split('?')[0];
+  const noProto = cleanUrl.replace(/^https?:\/\//, '');
+  const chromeIntent = `intent://${noProto}#Intent;scheme=https;package=com.android.chrome;end`;
   ensureActionDialog(true);
-  document.getElementById('actionTitle').textContent = 'تثبيت التطبيق بدون شريط المتصفح';
+  document.getElementById('actionTitle').textContent = 'تثبيت التطبيق المستقل';
   document.getElementById('actionBody').innerHTML = `
-    <p class="hint" style="color:#dce8f8;font-size:12px">لو الزرار مظهرش نافذة التثبيت التلقائية، نفّذ الخطوة دي حسب متصفحك:</p>
-    <div class="set-card" style="margin-top:8px">
-      <b style="color:var(--mint);font-size:12px">1. في متصفح Edge أو Chrome (الأضمن):</b>
-      <small style="display:block;color:#cbd8ea;font-size:11px;margin-top:4px">افتح الرابط فيه ← اضغط القائمة (⋮ أو ≡) ← اختر <b>«تثبيت التطبيق» (Install app)</b>.</small>
-    </div>
-    <div class="set-card">
-      <b style="color:var(--orange);font-size:12px">2. في متصفح شاومي الافتراضي:</b>
-      <small style="display:block;color:#cbd8ea;font-size:11px;margin-top:4px">اعمل تحديث للصفحة 3 مرات واضغط جوه الشاشة، هتظهرلك رسالة الصيني للتثبيت (安装) دوس موافق.</small>
-    </div>
-    <p class="hint" style="margin-top:6px">تأكد من تفعيل إذن <b>«اختصارات الشاشة الرئيسية»</b> للمتصفح من إعدادات الجهاز.</p>
+    <p class="hint" style="color:#dce8f8;font-size:12px">متصفح شاومي يمنع نافذة التثبيت التلقائية قبل تفاعل كافٍ. اضغط الزرار بالأسفل لفتح التطبيق في محرك التثبيت المباشر (Chrome) وتثبيته فورًا:</p>
   `;
   const okBtn = document.getElementById('actionOk');
-  okBtn.textContent = 'تمام';
+  okBtn.textContent = 'فتح للتثبيت الفوري 📲';
   okBtn.className = 'primary';
-  okBtn.onclick = closeActionDialog;
+  okBtn.onclick = () => {
+    closeActionDialog();
+    location.href = chromeIntent;
+  };
   document.getElementById('actionDialog').classList.add('show');
 }
 
