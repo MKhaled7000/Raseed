@@ -9,7 +9,7 @@
   --bg:#0b1220;--bg-grad:radial-gradient(ellipse at 80% -10%,#1b3450 0,transparent 42%);
   --panel:#121d2e;--panel2:#18263a;--surface:#0e1929;--surface2:#142136;
   --line:#25354b;--line2:#2f4562;--muted:#91a2b9;--text:#f4f7fb;--text-sub:#dce8f8;
-  --nav-bg:#0d1726f2;--modal-bg:#050a12e0;--scheme:dark;
+  --nav-bg:#0d1726f2;--modal-bg:#050a12e6;--scheme:dark;
   --mint:#43d6b2;--mint2:#1a9c94;--hero1:#1b8f83;--hero2:#145e68;--hero3:#174b63;
   --blue:#73a7ff;--orange:#ffbd69;--red:#ff7285;--purple:#b69aff;--radius:20px;--scale:1
 }
@@ -71,7 +71,7 @@ button{cursor:pointer}
 .mm-stat-box small{display:block;font-size:.66rem;color:var(--muted)}
 .mm-stat-box b{display:block;font-size:.86rem;margin-top:3px;direction:ltr}
 
-/* Daily Grouped Transaction List (Money Manager Style: Amount Right, Cat/Memo Left) */
+/* Daily Grouped Transaction List (Amount Right, Cat/SubCat & Memo Left) */
 .day-group{background:linear-gradient(150deg,var(--panel2),var(--panel));border:1px solid var(--line);border-radius:18px;margin-bottom:10px;overflow:hidden}
 .day-head{background:var(--surface);padding:8px 13px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--line);font-size:.74rem}
 .day-head-right{display:flex;align-items:center;gap:7px}
@@ -80,12 +80,11 @@ button{cursor:pointer}
 .day-ym{color:var(--muted);font-size:.68rem}
 .day-totals{display:flex;gap:12px;direction:ltr;font-weight:800;font-size:.76rem}
 
-/* Row layout: Right side = Amount (first in RTL), Left side = Category + Memo/Account (last in RTL) */
 .tx-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 13px;border-bottom:1px solid var(--line);cursor:pointer}
 .tx-row:last-child{border-bottom:0}
 .tx-amt-right{font-size:.86rem;font-weight:900;direction:ltr;white-space:nowrap;text-align:right;flex-shrink:0;min-width:88px}
 .tx-left-info{flex:1;min-width:0;display:flex;align-items:center;justify-content:space-between;gap:8px}
-.tx-cat-box{min-width:74px;max-width:115px}
+.tx-cat-box{min-width:74px;max-width:120px}
 .tx-cat-box b{display:block;font-size:.76rem;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tx-cat-box small{display:block;font-size:.63rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tx-memo-box{flex:1;min-width:0;text-align:left}
@@ -145,7 +144,8 @@ button{cursor:pointer}
 .c-row > label,.c-row > .c-lbl{font-size:.76rem;font-weight:700;color:var(--text-sub);white-space:nowrap;width:36%;flex-shrink:0}
 .c-row input,.c-row select,.c-row .picker-trigger,.c-row .seg-group{width:64%;max-width:64%;min-width:0;height:36px;background:var(--surface2);border:1px solid var(--line2);border-radius:10px;padding:0 10px;color:var(--text);font-size:.76rem;outline:none;color-scheme:var(--scheme)}
 .c-row input,.c-row select{text-align:right}
-.c-row .picker-trigger{display:flex;align-items:center;justify-content:space-between;text-align:right}
+.c-row .picker-trigger{display:flex;align-items:center;justify-content:space-between;text-align:right;transition:border-color .15s}
+.c-row .picker-trigger.focused-field{border-color:var(--mint);box-shadow:0 0 0 2px #43d6b233}
 .c-row .picker-trigger span{color:var(--mint);font-size:.68rem}
 .c-row .seg-group{display:grid;grid-template-columns:1fr 1fr;padding:0;overflow:hidden}
 .seg-btn{border:0;background:transparent;color:var(--muted);font-size:.74rem;font-weight:800;height:100%}
@@ -155,33 +155,48 @@ button{cursor:pointer}
 .c-row .theme-dot.active{border-color:var(--text);transform:scale(1.15);box-shadow:0 0 0 2px var(--mint)}
 .c-row-btns{width:64%;display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap}
 
-/* Money Manager Style Quick Entry Modal & 2-Column Category/Subcategory Picker */
-.modal{display:none;position:fixed;inset:0;background:var(--modal-bg);z-index:40;align-items:flex-start;justify-content:center;padding:12px 12px 45vh;overflow-y:auto;-webkit-overflow-scrolling:touch}
+/* Bottom-Sheet Ergonomic Quick Entry Modal (Thumb-Friendly Lower Half) */
+.modal{display:none;position:fixed;inset:0;background:var(--modal-bg);z-index:40;align-items:flex-end;justify-content:center;padding:0}
 .modal.show{display:flex}
 .modal.center-modal{align-items:center;padding:16px}
-.sheet{width:100%;max-width:500px;background:var(--panel);border:1px solid var(--line2);border-radius:22px;padding:16px;box-shadow:0 20px 50px #0009;margin-top:4px}
-.modal.center-modal .sheet{max-width:380px;margin-top:0}
-.sheet h3{margin:0 0 12px;font-size:.98rem;display:flex;justify-content:space-between;align-items:center}
+.sheet{width:100%;max-width:520px;background:var(--panel);border-top:1px solid var(--line2);border-radius:24px 24px 0 0;padding:14px 14px calc(14px + env(safe-area-inset-bottom));box-shadow:0 -12px 40px #000a;max-height:94vh;display:flex;flex-direction:column}
+.modal.center-modal .sheet{max-width:420px;border-radius:22px;border:1px solid var(--line2);padding:16px}
+.sheet h3{margin:0 0 10px;font-size:.96rem;display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
 
-.mm-type-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:12px}
-.mm-tab{background:var(--surface);border:1px solid var(--line2);color:var(--muted);border-radius:11px;padding:9px 4px;font-size:.78rem;font-weight:800;text-align:center}
+.qm-form-scroll{flex-shrink:0;display:flex;flex-direction:column;gap:6px}
+.qm-form-scroll .c-row{min-height:40px;padding:5px 10px}
+.qm-form-scroll .c-row input,.qm-form-scroll .c-row select,.qm-form-scroll .c-row .picker-trigger,.qm-form-scroll .c-row .seg-group{height:32px}
+
+.mm-type-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:8px;flex-shrink:0}
+.mm-tab{background:var(--surface);border:1px solid var(--line2);color:var(--muted);border-radius:10px;padding:7px 4px;font-size:.76rem;font-weight:800;text-align:center}
 .mm-tab.active.exp{border-color:var(--red);color:var(--red);background:#ff728518}
 .mm-tab.active.inc{border-color:var(--blue);color:var(--blue);background:#73a7ff18}
 .mm-tab.active.trn{border-color:var(--mint);color:var(--mint);background:#43d6b218}
 
-/* Quick 3-Column Grid for Accounts */
-.quick-grid-box{background:var(--surface);border:1px solid var(--line2);border-radius:14px;padding:8px;margin-top:8px;max-height:220px;overflow-y:auto}
-.quick-grid-head{display:flex;justify-content:space-between;align-items:center;font-size:.7rem;color:var(--muted);margin-bottom:6px;padding:0 4px}
-.quick-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
-.qg-item{background:var(--surface2);border:1px solid var(--line);color:var(--text-sub);border-radius:10px;padding:9px 5px;font-size:.72rem;font-weight:700;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* Lower-Half Thumb-Zone Picker Container (Fills bottom half down to action bar) */
+.qm-bottom-dock{margin-top:8px;background:var(--surface);border:1px solid var(--line2);border-radius:16px;padding:8px;min-height:230px;max-height:42vh;display:flex;flex-direction:column;overflow:hidden}
+.quick-grid-head{display:flex;justify-content:space-between;align-items:center;font-size:.7rem;color:var(--muted);margin-bottom:6px;padding:0 4px;flex-shrink:0}
+.quick-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;overflow-y:auto;padding:2px}
+.qg-item{background:var(--surface2);border:1px solid var(--line);color:var(--text-sub);border-radius:10px;padding:11px 5px;font-size:.74rem;font-weight:700;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .qg-item.selected{border-color:var(--mint);background:#43d6b222;color:var(--mint)}
 
-/* Money Manager 2-Column Side-by-Side Category & Subcategory Picker */
-.mm-cat-split{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px}
-.mm-cat-col{background:var(--panel2);border:1px solid var(--line);border-radius:11px;padding:5px;max-height:175px;overflow-y:auto;display:flex;flex-direction:column;gap:4px}
-.mm-cat-col-title{font-size:.64rem;color:var(--muted);text-align:center;padding:2px 0 4px;border-bottom:1px solid var(--line);font-weight:800}
-.mm-cat-item{background:transparent;border:1px solid transparent;color:var(--text-sub);border-radius:8px;padding:7px 8px;font-size:.74rem;font-weight:700;text-align:right;width:100%;display:flex;justify-content:space-between;align-items:center}
+/* Money Manager 2-Column Side-by-Side Category & Subcategory Picker in Lower Half */
+.mm-cat-split{display:grid;grid-template-columns:1fr 1fr;gap:8px;flex:1;min-height:0;overflow:hidden}
+.mm-cat-col{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:5px;overflow-y:auto;display:flex;flex-direction:column;gap:4px;-webkit-overflow-scrolling:touch}
+.mm-cat-col-title{font-size:.65rem;color:var(--muted);text-align:center;padding:3px 0 5px;border-bottom:1px solid var(--line);font-weight:800;position:sticky;top:0;background:var(--panel2);z-index:1}
+.mm-cat-item{background:transparent;border:1px solid transparent;color:var(--text-sub);border-radius:9px;padding:9px 8px;font-size:.76rem;font-weight:700;text-align:right;width:100%;display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
 .mm-cat-item.active{background:#43d6b222;border-color:var(--mint);color:var(--mint)}
+
+/* Structured Category Manager Tree in Settings */
+.cat-mgr-row{background:var(--surface);border:1px solid var(--line);border-radius:12px;margin-bottom:6px;overflow:hidden}
+.cat-mgr-main{display:flex;align-items:center;justify-content:space-between;padding:9px 11px;gap:8px}
+.cat-mgr-main-title{flex:1;min-width:0;cursor:pointer}
+.cat-mgr-main-title b{font-size:.8rem;color:var(--text);display:block}
+.cat-mgr-main-title small{font-size:.65rem;color:var(--muted);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cat-mgr-icons{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.icon-act-btn{width:28px;height:28px;border-radius:8px;border:1px solid var(--line2);background:var(--surface2);color:var(--text);display:grid;place-items:center;font-size:.78rem;padding:0}
+.cat-mgr-subs{background:var(--panel2);border-top:1px solid var(--line);padding:6px 12px 6px 8px;display:flex;flex-direction:column;gap:4px}
+.cat-mgr-sub-row{display:flex;align-items:center;justify-content:space-between;padding:5px 8px;background:var(--surface);border-radius:8px;font-size:.74rem}
 
 /* Sub-tabs inside screens */
 .sub-tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
@@ -202,7 +217,7 @@ details.fold > summary::-webkit-details-marker{display:none}
 details.fold[open] > summary{border-bottom:1px solid var(--line);background:var(--surface)}
 details.fold .fold-body{padding:12px 14px}
 
-.actions{display:flex;gap:8px;margin-top:14px}
+.actions{display:flex;gap:8px;margin-top:10px;flex-shrink:0}
 .primary,.secondary{border:0;border-radius:12px;padding:11px 14px;font-weight:800;flex:1;font-size:.8rem}
 .primary{background:var(--mint);color:#06221e;width:100%}
 .secondary{background:var(--surface2);color:var(--text-sub);border:1px solid var(--line)}
@@ -245,7 +260,7 @@ details.fold .fold-body{padding:12px 14px}
   </div>
 </header>
 
-<!-- 1. الشاشة الرئيسية: المعاملات (Money Manager Style) -->
+<!-- 1. الشاشة الرئيسية: المعاملات -->
 <section id="trans" class="screen active">
   <!-- Slim Available Liquidity Strip -->
   <div class="liq-strip" onclick="go('wallet')">
@@ -295,8 +310,8 @@ details.fold .fold-body{padding:12px 14px}
   <div id="dailyTransactionsFeed"></div>
 </section>
 
-<!-- 2. شاشة التوقعات (جدول ملخص السنة فقط مع شريط اختيار السنة ‹ 2026 ›) -->
-<section id="forecast" class="screen">
+<!-- 2. شاشة التقارير (جدول ملخص السنة مع شريط اختيار السنة ‹ 2026 ›) -->
+<section id="reports" class="screen">
   <div class="hero">
     <label>توقعات الشهور القادمة (الدخل − الالتزامات والأقساط)</label>
     <div class="amount" id="fcNextMonthNet">0 EGP</div>
@@ -308,7 +323,7 @@ details.fold .fold-body{padding:12px 14px}
     </div>
   </div>
 
-  <!-- Quick Default Income Settings for Forecast -->
+  <!-- Quick Default Income Settings -->
   <details class="fold">
     <summary><span>✎ ضبط المرتب والأرباح المتوقعة للشهور الجاية</span><span>▼</span></summary>
     <div class="fold-body">
@@ -321,7 +336,7 @@ details.fold .fold-body{padding:12px 14px}
     </div>
   </details>
 
-  <!-- Year Selector Strip (‹ 2026 ›) + Yearly Summary Table ONLY -->
+  <!-- Year Selector Strip (‹ 2026 ›) + Yearly Summary Table -->
   <div class="section-head">
     <h2>جدول ملخص السنة</h2>
     <div class="ym-stepper">
@@ -509,7 +524,7 @@ details.fold .fold-body{padding:12px 14px}
     <div class="panel" id="oneTimeDebtsList"></div>
   </div>
 
-  <!-- Sub-view B: Salary Calculator (ALL Menus Closed by Default) -->
+  <!-- Sub-view B: Salary Calculator (Closed by default) -->
   <div id="planViewSal" style="display:none">
     <details class="fold">
       <summary><span>⚙ إعدادات السنة (ثابتة خلال السنة)</span><span>▼</span></summary>
@@ -561,10 +576,10 @@ details.fold .fold-body{padding:12px 14px}
   </div>
 </section>
 
-<!-- 5. شاشة المزيد والإعدادات -->
+<!-- 5. شاشة المزيد والإعدادات (جميع القوائم مغلقة افتراضياً) -->
 <section id="settings" class="screen">
-  <!-- إعدادات عامة (أوضاع الخلفية: دارك / فاتح / ميتالك / أسود + 8 ألوان ثيم) -->
-  <details class="fold" open>
+  <!-- إعدادات عامة -->
+  <details class="fold">
     <summary><span>🎨 إعدادات عامة والمظهر</span><span>▼</span></summary>
     <div class="fold-body">
       <div class="c-list">
@@ -599,17 +614,18 @@ details.fold .fold-body{padding:12px 14px}
     </div>
   </details>
 
-  <!-- إدارة الأقسام الرئيسية والفرعية -->
-  <details class="fold">
-    <summary><span>🏷 أقسام الدخل والمصروفات</span><span>▼</span></summary>
+  <!-- إدارة الأقسام الرئيسية والفرعية (تبدأ Collapsed، سهم يتحول لـ +، قلم تعديل، وسهم فتح الفرعي) -->
+  <details class="fold" id="settingsCatsFold" ontoggle="onSettingsCatsFoldToggle(this)">
+    <summary>
+      <span>🏷 أقسام الدخل والمصروفات</span>
+      <span id="settingsCatsFoldIcon" style="font-size:1.05rem;font-weight:900;color:var(--mint)">▼</span>
+    </summary>
     <div class="fold-body">
-      <div class="c-list">
-        <div class="c-row"><label>نوع القسم :</label><select id="newCatType" onchange="updateSettingsParentCatOptions()"><option value="expense">مصروف</option><option value="income">دخل</option></select></div>
-        <div class="c-row"><label>القسم الرئيسي :</label><select id="newCatParent"><option value="">قسم رئيسي جديد</option></select></div>
-        <div class="c-row"><label>اسم القسم :</label><input id="newCatName" placeholder="مثال: حلويات / بقالة"></div>
+      <div class="seg-group" style="display:grid;grid-template-columns:1fr 1fr;height:36px;border-radius:11px;border:1px solid var(--line2);overflow:hidden;margin-bottom:10px;background:var(--surface)">
+        <button type="button" class="seg-btn active" id="setCatTabExp" onclick="setSettingsCatTab('expense')">أقسام المصروفات</button>
+        <button type="button" class="seg-btn" id="setCatTabInc" onclick="setSettingsCatTab('income')">أقسام الدخل</button>
       </div>
-      <button type="button" class="primary" style="margin-top:8px" onclick="addCategoryFromSettings()">إضافة قسم</button>
-      <div id="settingsCatsList" style="margin-top:10px;display:flex;flex-wrap:wrap;gap:6px"></div>
+      <div id="settingsCatsTreeContainer"></div>
     </div>
   </details>
 
@@ -641,12 +657,12 @@ details.fold .fold-body{padding:12px 14px}
     </div>
   </details>
 
-  <!-- التحديثات (تسمية القسم «التحديثات» فقط) -->
+  <!-- التحديثات -->
   <details class="fold">
     <summary><span>⟳ التحديثات</span><span>▼</span></summary>
     <div class="fold-body">
       <div class="c-list">
-        <div class="c-row"><span class="c-lbl">الإصدار الحالي :</span><span class="tag" id="appVersionTag">V11.2</span></div>
+        <div class="c-row"><span class="c-lbl">الإصدار الحالي :</span><span class="tag" id="appVersionTag">V11.3</span></div>
         <div class="c-row">
           <span class="c-lbl">التحديثات :</span>
           <div class="c-row-btns">
@@ -682,9 +698,9 @@ details.fold .fold-body{padding:12px 14px}
     <svg viewBox="0 0 24 24" fill="none"><rect x="4" y="3.5" width="16" height="17" rx="3" fill="#43d6b2" fill-opacity=".2" stroke="#43d6b2" stroke-width="1.8"/><path d="M8 8.5h8M8 12.5h8M8 16.5h5" stroke="#43d6b2" stroke-width="1.8" stroke-linecap="round"/></svg>
     <span>المعاملات</span>
   </button>
-  <button class="nav" data-page="forecast" onclick="go('forecast',this)">
+  <button class="nav" data-page="reports" onclick="go('reports',this)">
     <svg viewBox="0 0 24 24" fill="none"><path d="M4 17l5-5 4 4 7-8" stroke="#b69aff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M16 8h4v4" stroke="#b69aff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    <span>التوقعات</span>
+    <span>التقارير</span>
   </button>
   <button class="nav" data-page="wallet" onclick="go('wallet',this)">
     <svg viewBox="0 0 24 24" fill="none"><rect x="2.5" y="5.5" width="19" height="13" rx="3" fill="#73a7ff" fill-opacity=".22" stroke="#73a7ff" stroke-width="1.8"/><circle cx="16.5" cy="12" r="1.5" fill="#73a7ff"/></svg>
@@ -700,7 +716,7 @@ details.fold .fold-body{padding:12px 14px}
   </button>
 </nav>
 
-<!-- Money Manager Style Quick Transaction Entry Modal with Side-by-Side Category & Subcategory -->
+<!-- Money Manager Style Bottom-Sheet Quick Entry Modal (Thumb-Zone Lower Half) -->
 <div class="modal" id="quickModal" onclick="if(event.target===this)closeQuickModal()">
   <div class="sheet">
     <h3>
@@ -715,15 +731,16 @@ details.fold .fold-body{padding:12px 14px}
       <button type="button" class="mm-tab trn" id="qmTabTrn" onclick="setQuickTxType('transfer')">تحويل</button>
     </div>
 
-    <div class="c-list">
-      <div class="c-row"><label>التاريخ :</label><input id="qmDate" type="date"></div>
-      <div class="c-row" onclick="toggleQuickPicker('qmAccGridWrap')">
+    <!-- Compact Top Form Fields -->
+    <div class="qm-form-scroll">
+      <div class="c-row"><label>التاريخ :</label><input id="qmDate" type="date" onfocus="setQmDockMode('none')"></div>
+      <div class="c-row" onclick="setQmDockMode('acc')">
         <label id="qmAccLabelTitle">الحساب :</label>
-        <div class="picker-trigger"><b id="qmAccSelectedText">اختر الحساب</b><span>اختيار</span></div>
+        <div class="picker-trigger" id="qmAccTrigger"><b id="qmAccSelectedText">اختر الحساب</b><span>اختيار</span></div>
       </div>
-      <div class="c-row" id="qmToAccRow" style="display:none" onclick="toggleQuickPicker('qmToAccGridWrap')">
+      <div class="c-row" id="qmToAccRow" style="display:none" onclick="setQmDockMode('toAcc')">
         <label>إلى حساب :</label>
-        <div class="picker-trigger"><b id="qmToAccSelectedText">اختر الحساب</b><span>اختيار</span></div>
+        <div class="picker-trigger" id="qmToAccTrigger"><b id="qmToAccSelectedText">اختر الحساب</b><span>اختيار</span></div>
       </div>
       <div class="c-row" id="qmCardModeRow" style="display:none">
         <label>نوع الدفع :</label>
@@ -740,43 +757,46 @@ details.fold .fold-body{padding:12px 14px}
           <option value="24">24 شهر</option><option value="36">36 شهر</option>
         </select>
       </div>
-      <div class="c-row" id="qmCatRow" onclick="toggleQuickPicker('qmCatGridWrap')">
+      <div class="c-row" id="qmCatRow" onclick="setQmDockMode('cat')">
         <label>القسم :</label>
-        <div class="picker-trigger"><b id="qmCatSelectedText">اختر القسم</b><span>اختيار</span></div>
+        <div class="picker-trigger" id="qmCatTrigger"><b id="qmCatSelectedText">اختر القسم</b><span>اختيار</span></div>
       </div>
-      <div class="c-row"><label>المبلغ (EGP) :</label><input id="qmAmount" type="number" step="0.01" inputmode="decimal" placeholder="0"></div>
-      <div class="c-row"><label>البيان / ملاحظة :</label><input id="qmNote" placeholder="اختياري (يأخذ اسم القسم لو فارغ)"></div>
+      <div class="c-row"><label>المبلغ (EGP) :</label><input id="qmAmount" type="number" step="0.01" inputmode="decimal" placeholder="0" onfocus="setQmDockMode('none')"></div>
+      <div class="c-row"><label>البيان / ملاحظة :</label><input id="qmNote" placeholder="اختياري (يأخذ اسم القسم لو فارغ)" onfocus="setQmDockMode('none')"></div>
     </div>
 
-    <!-- Quick Grid: Accounts + Credit Cards -->
-    <div id="qmAccGridWrap" class="quick-grid-box" style="display:none">
-      <div class="quick-grid-head"><span>اختر الحساب أو البطاقة</span><span style="cursor:pointer;color:var(--mint)" onclick="toggleQuickPicker('qmAccGridWrap')">تم</span></div>
-      <div class="quick-grid" id="qmAccGrid"></div>
-    </div>
-
-    <!-- Quick Grid: Destination Account (for Transfers) -->
-    <div id="qmToAccGridWrap" class="quick-grid-box" style="display:none">
-      <div class="quick-grid-head"><span>اختر الحساب المحوّل إليه</span><span style="cursor:pointer;color:var(--mint)" onclick="toggleQuickPicker('qmToAccGridWrap')">تم</span></div>
-      <div class="quick-grid" id="qmToAccGrid"></div>
-    </div>
-
-    <!-- Money Manager 2-Column Category & Subcategory Picker at Bottom -->
-    <div id="qmCatGridWrap" class="quick-grid-box" style="display:none;max-height:245px">
-      <div class="quick-grid-head">
-        <span>القسم الرئيسي / الفرعي</span>
-        <div style="display:flex;gap:10px">
-          <span style="cursor:pointer;color:var(--mint)" onclick="openAddQuickCatPrompt(false)">＋ رئيسي</span>
-          <span style="cursor:pointer;color:var(--blue)" onclick="openAddQuickCatPrompt(true)">＋ فرعي</span>
-        </div>
+    <!-- Lower-Half Thumb-Zone Dock (Automatically shows Accounts first -> auto-advances to 2-Column Categories!) -->
+    <div id="qmBottomDock" class="qm-bottom-dock">
+      <!-- Dock 1: Accounts + Credit Cards -->
+      <div id="qmDockAcc" style="display:flex;flex-direction:column;height:100%">
+        <div class="quick-grid-head"><span>1. اختر الحساب أو البطاقة</span><span style="color:var(--mint)">ينتقل للأقسام تلقائيًا</span></div>
+        <div class="quick-grid" id="qmAccGrid"></div>
       </div>
-      <div class="mm-cat-split">
-        <div class="mm-cat-col">
-          <div class="mm-cat-col-title">القسم الرئيسي</div>
-          <div id="qmMainCatList"></div>
+
+      <!-- Dock 2: Destination Account (for Transfers) -->
+      <div id="qmDockToAcc" style="display:none;flex-direction:column;height:100%">
+        <div class="quick-grid-head"><span>2. اختر الحساب المحوّل إليه</span><span style="color:var(--mint)">ينتقل للمبلغ تلقائيًا</span></div>
+        <div class="quick-grid" id="qmToAccGrid"></div>
+      </div>
+
+      <!-- Dock 3: Money Manager 2-Column Side-by-Side Category & Subcategory -->
+      <div id="qmDockCat" style="display:none;flex-direction:column;height:100%">
+        <div class="quick-grid-head">
+          <span>2. القسم الرئيسي / الفرعي</span>
+          <div style="display:flex;gap:10px">
+            <span style="cursor:pointer;color:var(--mint)" onclick="openAddQuickCatPrompt(false)">＋ رئيسي</span>
+            <span style="cursor:pointer;color:var(--blue)" onclick="openAddQuickCatPrompt(true)">＋ فرعي</span>
+          </div>
         </div>
-        <div class="mm-cat-col">
-          <div class="mm-cat-col-title">القسم الفرعي</div>
-          <div id="qmSubCatList"></div>
+        <div class="mm-cat-split">
+          <div class="mm-cat-col">
+            <div class="mm-cat-col-title">القسم الرئيسي</div>
+            <div id="qmMainCatList"></div>
+          </div>
+          <div class="mm-cat-col">
+            <div class="mm-cat-col-title">القسم الفرعي</div>
+            <div id="qmSubCatList"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -790,7 +810,7 @@ details.fold .fold-body{padding:12px 14px}
 
 <!-- Account Statement & Edit Account Modal -->
 <div class="modal center-modal" id="accountModal" onclick="if(event.target===this)closeAccountModal()">
-  <div class="sheet" style="max-width:460px">
+  <div class="sheet">
     <h3>
       <span id="accModalTitle">كشف حساب</span>
       <span style="cursor:pointer;color:var(--muted)" onclick="closeAccountModal()">✕</span>
@@ -803,7 +823,7 @@ details.fold .fold-body{padding:12px 14px}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
 <script>
-const APP_VERSION='11.2';
+const APP_VERSION='11.3';
 const APP_BUILD='2026-11-13';
 const KEY='raseed_mobile_v2';
 
@@ -849,16 +869,21 @@ state.incomeCategories=state.incomeCategories||Object.keys(DEFAULT_INC_TREE);
 state.categoryTree=state.categoryTree||{expense:JSON.parse(JSON.stringify(DEFAULT_EXP_TREE)), income:JSON.parse(JSON.stringify(DEFAULT_INC_TREE))};
 state.prefs=state.prefs||{lang:'ar',fontSize:'1',theme:'mint',bgMode:'dark',userName:'',defaultAccount:'',privacy:false,homeDecimals:false};
 
-// Ensure categoryTree stays synced with any flat categories
 function syncCategoryTrees(){
   state.categoryTree = state.categoryTree || {expense:{}, income:{}};
   state.categoryTree.expense = state.categoryTree.expense || {};
   state.categoryTree.income = state.categoryTree.income || {};
+  const expSubsSet = new Set(Object.values(state.categoryTree.expense).flat());
+  const incSubsSet = new Set(Object.values(state.categoryTree.income).flat());
   for(const c of (state.categories||[])){
-    if(c && !state.categoryTree.expense[c]) state.categoryTree.expense[c] = DEFAULT_EXP_TREE[c] ? [...DEFAULT_EXP_TREE[c]] : [];
+    if(c && !state.categoryTree.expense[c] && !expSubsSet.has(c)){
+      state.categoryTree.expense[c] = DEFAULT_EXP_TREE[c] ? [...DEFAULT_EXP_TREE[c]] : [];
+    }
   }
   for(const c of (state.incomeCategories||[])){
-    if(c && !state.categoryTree.income[c]) state.categoryTree.income[c] = DEFAULT_INC_TREE[c] ? [...DEFAULT_INC_TREE[c]] : [];
+    if(c && !state.categoryTree.income[c] && !incSubsSet.has(c)){
+      state.categoryTree.income[c] = DEFAULT_INC_TREE[c] ? [...DEFAULT_INC_TREE[c]] : [];
+    }
   }
 }
 syncCategoryTrees();
@@ -902,6 +927,40 @@ function persist(){
   renderAll();
 }
 
+/* Exit Confirmation & Back-Button Handling */
+let _lastBackPress = 0;
+window.addEventListener('beforeunload', function(e){
+  e.preventDefault();
+  e.returnValue = '';
+});
+try{
+  if(!history.state || !history.state.xwGuard){
+    history.replaceState({xwGuard:true, page:'trans'}, '');
+    history.pushState({xwGuard:true, page:'trans'}, '');
+  }
+  window.addEventListener('popstate', function(){
+    const qm = document.getElementById('quickModal');
+    const am = document.getElementById('accountModal');
+    const ym = document.getElementById('ymModal');
+    if(qm && qm.classList.contains('show')){ closeQuickModal(); history.pushState({xwGuard:true}, ''); return; }
+    if(am && am.classList.contains('show')){ closeAccountModal(); history.pushState({xwGuard:true}, ''); return; }
+    if(ym && ym.classList.contains('show')){ ym.classList.remove('show'); history.pushState({xwGuard:true}, ''); return; }
+    const activePage = document.querySelector('.screen.active')?.id;
+    if(activePage && activePage !== 'trans'){
+      go('trans', document.querySelector('.nav[data-page="trans"]'));
+      history.pushState({xwGuard:true}, '');
+      return;
+    }
+    const now = Date.now();
+    if(now - _lastBackPress < 2200){
+      return;
+    }
+    _lastBackPress = now;
+    toast('اضغط رجوع مرة أخرى للخروج من التطبيق');
+    history.pushState({xwGuard:true}, '');
+  });
+}catch(_){}
+
 /* Auto-Collapse: Opening any <details class="fold"> closes all other open folds in the same page */
 document.addEventListener('toggle', function(e){
   const target = e.target;
@@ -915,7 +974,7 @@ document.addEventListener('toggle', function(e){
   }
 }, true);
 
-/* 8 Theme Colors + 4 Background Modes (Dark / Light / Metallic / Black) */
+/* 8 Theme Colors + 4 Background Modes */
 const THEMES = {
   mint:   {mint:'#43d6b2', mint2:'#1a9c94', h1:'#1b8f83', h2:'#145e68', h3:'#174b63'},
   blue:   {mint:'#569aff', mint2:'#2d68c4', h1:'#2563eb', h2:'#1e40af', h3:'#1e3a8a'},
@@ -1006,6 +1065,9 @@ function go(id, btn){
   if(t) t.classList.add('active');
   document.querySelectorAll('.nav').forEach(x=>x.classList.toggle('active', x.dataset.page===id));
   if(btn) btn.classList.add('active');
+  if(id === 'settings'){
+    document.querySelectorAll('#settings details.fold[open]').forEach(f=>f.removeAttribute('open'));
+  }
   window.scrollTo(0,0);
 }
 function switchWalletTab(which){
@@ -1030,7 +1092,7 @@ function shiftActiveMonth(delta){
 }
 function shiftForecastYear(delta){
   forecastYear += delta;
-  renderForecastScreen();
+  renderReportsScreen();
 }
 function toggleSearchBar(){
   const box = document.getElementById('mmSearchBox');
@@ -1095,7 +1157,11 @@ function cardCurrentAvailable(card){
 function allCardsOutstanding(){
   return round2((state.cards||[]).reduce((s,c)=>s+cardTotalOutstanding(c),0));
 }
-function commitmentDue(c,month){return month>=c.start&&(!c.end||month<=c.end)}
+function commitmentDue(c,month){
+  const st = String(c.start||'0000-01');
+  const en = String(c.end||'');
+  return month >= st && (!en || month <= en);
+}
 function isLoanActiveInMonth(c, m){
   if(!c.dueDate) return true;
   return m <= String(c.dueDate).slice(0, 7);
@@ -1128,7 +1194,7 @@ function oneTimeDebtsStats(m){
   return {list, total:round2(total), paid:round2(paid), remain:round2(Math.max(0,total-paid))};
 }
 
-/* 1. Render Transactions Screen (Amount on RIGHT, Category & Memo on LEFT) */
+/* 1. Render Transactions Screen */
 function renderTransactionsScreen(){
   const m = selected();
   const t = totals(m);
@@ -1263,8 +1329,8 @@ function duplicateTxToday(id){
   toast('تم تكرار الحركة بتاريخ اليوم ✓');
 }
 
-/* 2. Render Forecast Screen (Yearly Summary Table ONLY with ‹ 2026 › bar) */
-function renderForecastScreen(){
+/* 2. Render Reports Screen (Fixed Yearly Commitments & Cards Calculation) */
+function renderReportsScreen(){
   const curYM = selected();
   const y = String(forecastYear);
   const defs = (state.reportDefaults||{})[y] || {salary:0, profit:0};
@@ -1285,15 +1351,18 @@ function renderForecastScreen(){
     const prof = actualProf > 0 ? actualProf : (Number(dYr.profit)||0);
     const totInc = round2(sal + prof + otherInc);
 
+    // Commitments & Installments due in month mk
     const comStats = monthCommitmentsStats(mk);
     let extraCardDue = 0;
+    const syncedOpIds = new Set((state.commitments||[]).filter(c=>c.cardOpId).map(c=>c.cardOpId));
     (state.cardOps||[]).forEach(o=>{
       if(o.type==='swipe' && o.dueDate && o.dueDate.slice(0,7)===mk){
-        const rem = opOutstanding(o);
-        if(rem>0) extraCardDue += rem;
-      } else if(o.type==='installment' && o.feeMonth===mk){
-        const fee = Math.max(0, Number(o.feeDue)||0);
-        if(fee>0) extraCardDue += fee;
+        extraCardDue += Number(o.amount)||0;
+      } else if(o.type==='installment'){
+        if(o.feeMonth===mk) extraCardDue += Number(o.feeDue)||0;
+        if(!syncedOpIds.has(o.id)){
+          (o.schedules||[]).forEach(sc=>{ if(sc.month===mk) extraCardDue += Number(sc.amount)||0; });
+        }
       }
     });
 
@@ -1302,7 +1371,6 @@ function renderForecastScreen(){
     return {mk, sal, prof, totInc, totDue, diff};
   }
 
-  // Next month hero summary
   const nextMK = addMonthsYM(curYM, 1);
   const nextFc = getMonthForecast(nextMK);
   document.getElementById('fcNextMonthNet').textContent = maskable((nextFc.diff>=0?'+':'') + egpSmart(nextFc.diff));
@@ -1311,7 +1379,6 @@ function renderForecastScreen(){
   document.getElementById('fcNextDue').textContent = maskable(fmtNum(nextFc.totDue));
   document.getElementById('fcLoansRemain').textContent = maskable(fmtNum(oneTimeDebtsStats(curYM).remain));
 
-  // Yearly Table with ‹ 2026 › selector
   document.getElementById('forecastYearLabel').textContent = y;
   let rowsHtml = '';
   let sumInc = 0, sumDue = 0, sumDiff = 0;
@@ -1343,12 +1410,38 @@ function saveReportDefaults(){
   toast('تم حفظ الدخل المتوقع لسنة ' + y);
 }
 
-/* 3. Quick Entry Modal (Money Manager 2-Column Category / Subcategory Picker) */
-let qmState = { type:'expense', accountId:'', toAccountId:'', category:'', subCategory:'', isCard:false, cardMode:'swipe', editId:null };
+/* 3. Ergonomic Money Manager Quick Entry Modal (Auto-Starts at Account -> Auto-Moves to Categories in Lower Half) */
+let qmState = { type:'expense', accountId:'', toAccountId:'', category:'', subCategory:'', isCard:false, cardMode:'swipe', editId:null, dock:'acc' };
 
 function getActiveCatTree(){
   syncCategoryTrees();
   return qmState.type === 'income' ? state.categoryTree.income : state.categoryTree.expense;
+}
+
+function setQmDockMode(mode){
+  qmState.dock = mode;
+  const dockBox = document.getElementById('qmBottomDock');
+  const dAcc = document.getElementById('qmDockAcc');
+  const dToAcc = document.getElementById('qmDockToAcc');
+  const dCat = document.getElementById('qmDockCat');
+  const tAcc = document.getElementById('qmAccTrigger');
+  const tToAcc = document.getElementById('qmToAccTrigger');
+  const tCat = document.getElementById('qmCatTrigger');
+
+  [tAcc, tToAcc, tCat].forEach(el=>{ if(el) el.classList.remove('focused-field'); });
+
+  if(mode === 'none'){
+    dockBox.style.display = 'none';
+    return;
+  }
+  dockBox.style.display = 'flex';
+  dAcc.style.display = mode === 'acc' ? 'flex' : 'none';
+  dToAcc.style.display = mode === 'toAcc' ? 'flex' : 'none';
+  dCat.style.display = mode === 'cat' ? 'flex' : 'none';
+
+  if(mode === 'acc' && tAcc) tAcc.classList.add('focused-field');
+  if(mode === 'toAcc' && tToAcc) tToAcc.classList.add('focused-field');
+  if(mode === 'cat' && tCat) tCat.classList.add('focused-field');
 }
 
 function openQuickAddModal(defaultType){
@@ -1362,7 +1455,8 @@ function openQuickAddModal(defaultType){
     subCategory: '',
     isCard: false,
     cardMode: 'swipe',
-    editId: null
+    editId: null,
+    dock: 'acc'
   };
   document.getElementById('qmHeaderTitle').textContent = 'تسجيل حركة جديدة';
   setv('qmDate', today());
@@ -1370,6 +1464,7 @@ function openQuickAddModal(defaultType){
   setv('qmNote', '');
   setQuickTxType(qmState.type);
   renderQuickPickers();
+  setQmDockMode('acc');
   document.getElementById('quickModal').classList.add('show');
 }
 
@@ -1384,7 +1479,8 @@ function openEditQuickTx(id){
     subCategory: t.subCategory || '',
     isCard: false,
     cardMode: 'swipe',
-    editId: t.id
+    editId: t.id,
+    dock: 'cat'
   };
   document.getElementById('qmHeaderTitle').textContent = 'تعديل حركة';
   setv('qmDate', t.date || today());
@@ -1392,14 +1488,12 @@ function openEditQuickTx(id){
   setv('qmNote', t.title || '');
   setQuickTxType(qmState.type);
   renderQuickPickers();
+  setQmDockMode('cat');
   document.getElementById('quickModal').classList.add('show');
 }
 
 function closeQuickModal(){
   document.getElementById('quickModal').classList.remove('show');
-  document.getElementById('qmAccGridWrap').style.display = 'none';
-  document.getElementById('qmToAccGridWrap').style.display = 'none';
-  document.getElementById('qmCatGridWrap').style.display = 'none';
 }
 
 function setQuickTxType(t){
@@ -1425,14 +1519,7 @@ function setQuickTxType(t){
     }
   }
   renderQuickPickers();
-}
-
-function toggleQuickPicker(boxId){
-  ['qmAccGridWrap','qmToAccGridWrap','qmCatGridWrap'].forEach(id=>{
-    const el = document.getElementById(id);
-    if(id === boxId) el.style.display = el.style.display==='none' ? 'block' : 'none';
-    else el.style.display = 'none';
-  });
+  setQmDockMode('acc');
 }
 
 function setQmCardMode(mode){
@@ -1448,7 +1535,6 @@ function updateQmCatLabel(){
 }
 
 function renderQuickPickers(){
-  // 1. Accounts + Credit Cards
   let accItems = state.accounts.map(a=>({id:a.id, name:a.name, isCard:false}));
   if(qmState.type === 'expense' && !qmState.editId){
     state.cards.forEach(c=>accItems.push({id:c.id, name:'💳 ' + c.name, isCard:true}));
@@ -1467,7 +1553,6 @@ function renderQuickPickers(){
     <button type="button" class="qg-item ${a.id===qmState.accountId?'selected':''}" onclick="selectQuickAcc('${a.id}', ${a.isCard})">${esc(a.name)}</button>
   `).join('');
 
-  // 2. To Account
   const toAcc = state.accounts.find(a=>a.id===qmState.toAccountId) || state.accounts.find(a=>a.id!==qmState.accountId);
   if(toAcc){
     qmState.toAccountId = toAcc.id;
@@ -1477,7 +1562,6 @@ function renderQuickPickers(){
     <button type="button" class="qg-item ${a.id===qmState.toAccountId?'selected':''}" onclick="selectQuickToAcc('${a.id}')">${esc(a.name)}</button>
   `).join('');
 
-  // 3. Side-by-Side 2-Column Category & Subcategory
   const tree = getActiveCatTree();
   const mainCats = Object.keys(tree);
   if(!qmState.category || !tree[qmState.category]){
@@ -1493,7 +1577,7 @@ function renderQuickPickers(){
       const subsCount = (tree[mc]||[]).length;
       return `<button type="button" class="mm-cat-item ${mc===qmState.category?'active':''}" onclick="selectQuickMainCat('${esc(mc)}')">
         <span>${esc(mc)}</span>
-        ${subsCount ? `<small style="opacity:.7">(${subsCount})</small>` : ''}
+        ${subsCount ? `<small style="opacity:.7">‹</small>` : ''}
       </button>`;
     }).join('');
 
@@ -1506,16 +1590,23 @@ function renderQuickPickers(){
   }
 }
 
+/* Selecting Account automatically jumps to Categories (or To-Account for transfer) */
 function selectQuickAcc(id, isCard){
   qmState.accountId = id;
   qmState.isCard = !!isCard;
   renderQuickPickers();
-  document.getElementById('qmAccGridWrap').style.display = 'none';
+  if(qmState.type === 'transfer'){
+    setQmDockMode('toAcc');
+  } else {
+    setQmDockMode('cat');
+  }
 }
 function selectQuickToAcc(id){
   qmState.toAccountId = id;
   renderQuickPickers();
-  document.getElementById('qmToAccGridWrap').style.display = 'none';
+  setQmDockMode('none');
+  const amt = document.getElementById('qmAmount');
+  if(amt) amt.focus();
 }
 function selectQuickMainCat(mc){
   qmState.category = mc;
@@ -1523,13 +1614,17 @@ function selectQuickMainCat(mc){
   renderQuickPickers();
   const subs = getActiveCatTree()[mc] || [];
   if(!subs.length){
-    document.getElementById('qmCatGridWrap').style.display = 'none';
+    setQmDockMode('none');
+    const amt = document.getElementById('qmAmount');
+    if(amt) amt.focus();
   }
 }
 function selectQuickSubCat(sc){
   qmState.subCategory = sc;
   renderQuickPickers();
-  document.getElementById('qmCatGridWrap').style.display = 'none';
+  setQmDockMode('none');
+  const amt = document.getElementById('qmAmount');
+  if(amt) amt.focus();
 }
 function openAddQuickCatPrompt(isSub){
   const label = isSub ? `اكتب اسم القسم الفرعي داخل «${qmState.category}»:` : 'اكتب اسم القسم الرئيسي الجديد:';
@@ -1559,7 +1654,6 @@ function saveQuickModal(){
   const note = val('qmNote').trim();
   if(amount <= 0) return toast('أدخل المبلغ بشكل صحيح');
 
-  // Transfer
   if(qmState.type === 'transfer'){
     if(!qmState.accountId || !qmState.toAccountId || qmState.accountId === qmState.toAccountId){
       return toast('اختر حسابين مختلفين للتحويل');
@@ -1578,7 +1672,6 @@ function saveQuickModal(){
     return;
   }
 
-  // Credit Card Purchase / Installment
   if(qmState.isCard && qmState.type === 'expense'){
     const card = state.cards.find(c=>c.id===qmState.accountId);
     if(!card) return toast('اختر البطاقة');
@@ -1609,7 +1702,6 @@ function saveQuickModal(){
     return;
   }
 
-  // Standard Expense / Income
   if(state.accounts.length && !qmState.accountId) return toast('اختر الحساب');
   const title = note || qmState.subCategory || qmState.category || 'حركة';
   if(qmState.editId){
@@ -1646,7 +1738,7 @@ function deleteTransaction(id){
   persist(); toast('تم الحذف');
 }
 
-/* 4. Fixed & Enhanced Money Manager (.mmbak) Importer (Rebuilds Full Main + Subcategory Tree!) */
+/* 4. Fixed Money Manager (.mmbak) Importer — Accurately Maps All Main & Subcategories without 'أخرى' */
 let mmPending = null;
 function mmDefaultType(name, currency){
   if(!/EGP_EGP/i.test(String(currency||''))) return 'skip';
@@ -1676,50 +1768,55 @@ function readMmbak(ev){
         assets = (db.exec("SELECT uid,NIC_NAME,currencyUid FROM ASSETS")[0]?.values||[]).map(r=>[r[0],r[1],r[2],0]);
       }
 
-      // Extract ALL Expense & Income Main + Subcategories from Money Manager
-      let catInfoMap = {}; // uid -> { name, parentName, doType }
+      // Parse all category tables in Money Manager (ZCATEGORY, CATEGORY, CTG, ZSUBCATEGORY, etc.)
+      let catInfoMap = {}; // any key (uid, C_UID, Z_PK) -> { name, parentName, doType }
       let expTree = {};
       let incTree = {};
       try{
         const tables = (db.exec("SELECT name FROM sqlite_master WHERE type='table'")[0]?.values||[]).map(x=>String(x[0]));
-        // Money Manager uses ZCATEGORY (iOS) or CATEGORY / CTG (Android)
         const catTables = tables.filter(tn=>/^(Z?CATEGORY|CTG|Z?SUBCATEGORY)$/i.test(tn) || (/cat|ctg/i.test(tn) && !/android|sqlite/i.test(tn)));
-        const rawById = {};
+        const rawByKey = {};
+        const allNodes = [];
         for(const catTable of catTables){
           const cols = (db.exec(`PRAGMA table_info("${catTable}")`)[0]?.values||[]).map(x=>String(x[1]));
-          const uidCol = cols.find(c=>/^(uid|z_pk|id|c_uid)$/i.test(c)) || cols[0];
-          const nameCol = cols.find(c=>/^(name|zname|nic_name|c_name|title|ztitle)$/i.test(c));
-          const typeCol = cols.find(c=>/^(do_type|type|ztype|kind|zdotype)$/i.test(c));
-          const parentCol = cols.find(c=>/^(p_uid|parent_uid|parent|zparent|zcategory|cat_uid|ctg_uid)$/i.test(c));
+          const idCols = cols.filter(c=>/^(uid|c_uid|z_pk|id|category_uid)$/i.test(c));
+          const nameCol = cols.find(c=>/^(name|zname|nic_name|c_name|title|ztitle|ctg_name)$/i.test(c));
+          const typeCol = cols.find(c=>/^(do_type|type|ztype|kind|zdotype|c_type)$/i.test(c));
+          const parentCol = cols.find(c=>/^(p_uid|parent_uid|parent|zparent|zcategory|cat_uid|ctg_uid|pc_uid)$/i.test(c));
           const delCol = cols.find(c=>/^(is_del|zis_del|deleted)$/i.test(c));
-          if(uidCol && nameCol){
-            const selCols = [uidCol, nameCol, typeCol||"''", parentCol||"''", delCol||"0"].map(c=>(c.startsWith("'")||c==="0")?c:`"${c}"`).join(',');
-            const rows = db.exec(`SELECT ${selCols} FROM "${catTable}"`)[0]?.values || [];
+          if(idCols.length && nameCol){
+            const selList = [...idCols, nameCol, typeCol||"''", parentCol||"''", delCol||"0"].map(c=>(c.startsWith("'")||c==="0")?c:`"${c}"`).join(',');
+            const rows = db.exec(`SELECT ${selList} FROM "${catTable}"`)[0]?.values || [];
             for(const r of rows){
-              if(Number(r[4]) === 1) continue;
-              const id = String(r[0]??'').trim();
-              const nm = String(r[1]??'').trim();
-              const tp = String(r[2]??'').trim();
-              let pid = String(r[3]??'').trim();
-              if(pid === '0' || pid === '-1' || pid === 'null' || pid === 'NULL' || pid === id) pid = '';
-              if(id && nm) rawById[id] = {id, name:nm, type:tp, parentId:pid};
+              const keys = r.slice(0, idCols.length).map(v=>String(v??'').trim()).filter(Boolean);
+              const nm = String(r[idCols.length]??'').trim();
+              const tp = String(r[idCols.length+1]??'').trim();
+              let pid = String(r[idCols.length+2]??'').trim();
+              const isDel = Number(r[idCols.length+3]) === 1;
+              if(!keys.length || !nm) continue;
+              if(pid === '0' || pid === '-1' || pid === 'null' || pid === 'NULL' || keys.includes(pid)) pid = '';
+              const node = {keys, name:nm, type:tp, parentId:pid, isDel};
+              allNodes.push(node);
+              for(const k of keys) rawByKey[k] = node;
             }
           }
         }
-        for(const [id, obj] of Object.entries(rawById)){
-          const parentObj = obj.parentId && rawById[obj.parentId] ? rawById[obj.parentId] : null;
+        for(const obj of allNodes){
+          const parentObj = obj.parentId && rawByKey[obj.parentId] ? rawByKey[obj.parentId] : null;
           const effType = obj.type || (parentObj ? parentObj.type : '1');
           const isIncome = (effType === '0' || /inc/i.test(effType));
           const targetTree = isIncome ? incTree : expTree;
 
-          if(parentObj){
-            targetTree[parentObj.name] = targetTree[parentObj.name] || [];
-            if(!targetTree[parentObj.name].includes(obj.name)) targetTree[parentObj.name].push(obj.name);
-            catInfoMap[id] = { name: obj.name, parentName: parentObj.name, doType: effType };
-          } else {
-            targetTree[obj.name] = targetTree[obj.name] || [];
-            catInfoMap[id] = { name: obj.name, parentName: '', doType: effType };
+          if(!obj.isDel){
+            if(parentObj){
+              targetTree[parentObj.name] = targetTree[parentObj.name] || [];
+              if(!targetTree[parentObj.name].includes(obj.name)) targetTree[parentObj.name].push(obj.name);
+            } else {
+              targetTree[obj.name] = targetTree[obj.name] || [];
+            }
           }
+          const info = { name: obj.name, parentName: parentObj ? parentObj.name : '', doType: effType };
+          for(const k of obj.keys) catInfoMap[k] = info;
         }
       }catch(err){ console.warn('MM Category parse:', err); }
 
@@ -1742,7 +1839,6 @@ function commitMmbakDirect(){
   const chosen = [...document.querySelectorAll('.mmasset:checked')].map(x=>Number(x.value));
   if(!chosen.length) return toast('اختر حسابًا واحدًا على الأقل');
 
-  // 1. Merge extracted Main + Subcategory Trees into X-Wallet!
   syncCategoryTrees();
   for(const [main, subs] of Object.entries(mmPending.expTree||{})){
     state.categoryTree.expense[main] = [...new Set([...(state.categoryTree.expense[main]||[]), ...subs])];
@@ -1753,7 +1849,6 @@ function commitMmbakDirect(){
     if(!state.incomeCategories.includes(main)) state.incomeCategories.push(main);
   }
 
-  // 2. Map Accounts
   const map = new Map(), newAccounts = [];
   for(const i of chosen){
     const a = mmPending.assets[i], name = String(a[1]||'حساب').trim(), currency = String(a[2]||'EGP_EGP');
@@ -1766,7 +1861,6 @@ function commitMmbakDirect(){
     map.set(a[0], dest.id);
   }
 
-  // 3. Import Transactions with full Category + Subcategory names
   const txs = [], seenTransferKeys = new Set();
   const seen = new Set([...state.transactions, ...state.ledger].map(x=>String(x.id)));
   for(const r of mmPending.tx){
@@ -1790,12 +1884,24 @@ function commitMmbakDirect(){
     if(seen.has(id)) continue;
     seen.add(id);
 
-    const cInfo = mmPending.catInfoMap[String(cat??'').trim()];
-    const mainCat = cInfo ? (cInfo.parentName || cInfo.name) : 'أخرى';
-    const subCat = (cInfo && cInfo.parentName) ? cInfo.name : '';
+    const rawCatKey = String(cat??'').trim();
+    const cInfo = mmPending.catInfoMap[rawCatKey];
     const cleanMemo = String(content??'').trim();
     const isMemoUuid = /^[0-9a-f-]{16,}$/i.test(cleanMemo);
-    const titleText = (cleanMemo && !isMemoUuid) ? cleanMemo : (subCat || mainCat);
+    const usableMemo = (cleanMemo && !isMemoUuid) ? cleanMemo : '';
+
+    // Never fallback blindly to 'أخرى' if category name is directly in cat or memo
+    let mainCat = 'أخرى';
+    let subCat = '';
+    if(cInfo){
+      mainCat = cInfo.parentName || cInfo.name;
+      subCat = cInfo.parentName ? cInfo.name : '';
+    } else if(rawCatKey && !/^\d+$/.test(rawCatKey) && !/^[0-9a-f-]{16,}$/i.test(rawCatKey)){
+      mainCat = rawCatKey;
+    } else if(usableMemo){
+      mainCat = usableMemo;
+    }
+    const titleText = usableMemo || subCat || mainCat;
 
     txs.push({
       id,
@@ -1811,7 +1917,6 @@ function commitMmbakDirect(){
     });
   }
 
-  // Adjust opening balances so final balance matches MM file
   const netByAcc = {};
   for(const t of txs){
     const n = Number(t.amount)||0;
@@ -1839,7 +1944,7 @@ function commitMmbakDirect(){
   toast('تم استيراد الأقسام والحركات بنجاح ✓');
 }
 
-/* 5. Accounts: Statement + Edit + Delete Buttons */
+/* 5. Accounts: Full Statement (All Transactions + Month Filter) + Edit + Delete */
 function addAccount(){
   let name = val('accName').trim(), opening = num('accOpening');
   if(!name) return toast('اكتب اسم الحساب');
@@ -1854,44 +1959,63 @@ function deleteAccount(id){
 function closeAccountModal(){
   document.getElementById('accountModal').classList.remove('show');
 }
-function openAccountStatement(id){
+function openAccountStatement(id, filterYM){
   const acc = state.accounts.find(a=>a.id===id);
   if(!acc) return;
+  const ym = filterYM || '';
   document.getElementById('accModalTitle').textContent = 'كشف حساب: ' + acc.name;
   const rows = [];
-  if(Number(acc.opening)){
-    rows.push({date:'', title:'الرصيد الافتتاحي', delta:Number(acc.opening)});
+  if(Number(acc.opening) && !ym){
+    rows.push({date:'', title:'الرصيد الافتتاحي', cat:'', delta:Number(acc.opening)});
   }
-  state.transactions.filter(t=>t.accountId===id).forEach(t=>{
+  state.transactions.filter(t=>t.accountId===id && (!ym || monthKey(t.date)===ym)).forEach(t=>{
     const d = (t.type==='income'||t.type==='fund') ? (Number(t.amount)||0) : -(Number(t.amount)||0);
-    rows.push({date:t.date, title:t.title||t.category, delta:d});
+    const cLbl = t.subCategory ? `${t.category} / ${t.subCategory}` : (t.category||'');
+    rows.push({date:t.date, title:t.title||cLbl, cat:cLbl, delta:d});
   });
   state.ledger.forEach(l=>{
+    if(ym && monthKey(l.date)!==ym) return;
     if(l.type==='adjust' && l.from===id){
-      rows.push({date:l.date, title:l.note||'تسوية رصيد', delta:Number(l.delta??l.amount)||0});
+      rows.push({date:l.date, title:l.note||'تسوية رصيد', cat:'تسوية', delta:Number(l.delta??l.amount)||0});
     } else if(l.from===id){
       const toN = state.accounts.find(x=>x.id===l.to)?.name || 'حساب';
-      rows.push({date:l.date, title:'تحويل إلى ' + toN, delta:-(Number(l.amount)||0)});
+      rows.push({date:l.date, title:'تحويل إلى ' + toN, cat:'تحويل', delta:-(Number(l.amount)||0)});
     } else if(l.to===id){
       const fromN = state.accounts.find(x=>x.id===l.from)?.name || 'حساب';
-      rows.push({date:l.date, title:'تحويل من ' + fromN, delta:Number(l.amount)||0});
+      rows.push({date:l.date, title:'تحويل من ' + fromN, cat:'تحويل', delta:Number(l.amount)||0});
     }
   });
   rows.sort((a,b)=>String(b.date).localeCompare(String(a.date)));
   const bal = accountBalance(acc);
-  const listHtml = rows.length ? rows.slice(0,40).map(r=>`
-    <div class="rowline" style="padding:7px 0;border-bottom:1px solid var(--line)">
-      <div><b style="display:block;font-size:.76rem;color:var(--text)">${esc(r.title)}</b><small style="color:var(--muted)">${esc(r.date||'افتتاحي')}</small></div>
-      <strong class="${r.delta>=0?'blue':'red'}" style="direction:ltr">${r.delta>=0?'+':''}${fmt(r.delta)}</strong>
+
+  // Build available months for quick filter
+  const allMonths = [...new Set([
+    ...state.transactions.filter(t=>t.accountId===id).map(t=>monthKey(t.date)),
+    ...state.ledger.filter(l=>l.from===id||l.to===id).map(l=>monthKey(l.date))
+  ].filter(Boolean))].sort().reverse();
+
+  const filterOpts = `<option value="">كل الحركات (${rows.length})</option>` + allMonths.map(m=>`<option value="${m}" ${ym===m?'selected':''}>${formatYMArabic(m)}</option>`).join('');
+
+  const listHtml = rows.length ? rows.map(r=>`
+    <div class="rowline" style="padding:8px 0;border-bottom:1px solid var(--line)">
+      <div style="min-width:0;flex:1">
+        <b style="display:block;font-size:.76rem;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(r.title)}</b>
+        <small style="color:var(--muted)">${esc(r.date||'افتتاحي')}${r.cat?' · '+esc(r.cat):''}</small>
+      </div>
+      <strong class="${r.delta>=0?'blue':'red'}" style="direction:ltr;margin-right:8px">${r.delta>=0?'+':''}${fmt(r.delta)}</strong>
     </div>
-  `).join('') : '<div class="empty">لا توجد حركات مسجلة على هذا الحساب.</div>';
+  `).join('') : '<div class="empty">لا توجد حركات مسجلة في هذه الفترة.</div>';
 
   document.getElementById('accModalBody').innerHTML = `
     <div class="hero" style="padding:13px;margin-bottom:10px">
-      <label>الرصيد الحالي</label>
+      <label>الرصيد الحالي الكلي</label>
       <div class="amount" style="font-size:1.45rem">${egp(bal)}</div>
     </div>
-    <div style="max-height:280px;overflow-y:auto">${listHtml}</div>
+    <div class="c-row" style="margin-bottom:8px;min-height:40px">
+      <label>فلترة الفترة :</label>
+      <select onchange="openAccountStatement('${acc.id}', this.value)">${filterOpts}</select>
+    </div>
+    <div style="max-height:330px;overflow-y:auto;padding-left:2px">${listHtml}</div>
     <div class="actions"><button type="button" class="secondary" onclick="closeAccountModal()">إغلاق</button></div>
   `;
   document.getElementById('accountModal').classList.add('show');
@@ -2254,46 +2378,138 @@ function showSalaryResult(){
   el.innerHTML=`<div class="rowline"><span>إجمالي المرتب</span><b>${egp(r.gross)}</b></div><div class="rowline"><span>التأمينات</span><b>${egp(r.insurance)}</b></div><div class="rowline"><span>الضرائب</span><b>${egp(r.tax)}</b></div><div class="hero" style="margin-top:10px"><label>صافي المرتب</label><div class="amount">${egp(r.net)}</div></div>`;
 }
 
-/* Settings Categories Management (Main & Subcategory) */
-function updateSettingsParentCatOptions(){
-  syncCategoryTrees();
-  const isInc = val('newCatType') === 'income';
-  const tree = isInc ? state.categoryTree.income : state.categoryTree.expense;
-  const sel = document.getElementById('newCatParent');
-  if(!sel) return;
-  const cur = sel.value;
-  sel.innerHTML = '<option value="">— قسم رئيسي جديد —</option>' + Object.keys(tree).map(mc=>`<option value="${esc(mc)}">فرعي داخل: ${esc(mc)}</option>`).join('');
-  if([...sel.options].some(o=>o.value===cur)) sel.value = cur;
-}
-function addCategoryFromSettings(){
-  const t = val('newCatType'), parent = val('newCatParent'), n = val('newCatName').trim();
-  if(!n) return toast('اكتب اسم القسم');
-  syncCategoryTrees();
-  const isInc = t === 'income';
-  const tree = isInc ? state.categoryTree.income : state.categoryTree.expense;
-  if(parent){
-    tree[parent] = [...new Set([...(tree[parent]||[]), n])];
+/* Settings Categories Tree Manager (Collapsed by default, Arrow -> + to add main, Edit pencil + Expand arrow per main, Edit pencil per sub) */
+let settingsCatMode = 'expense';
+let expandedSettingsMainCats = {};
+
+function onSettingsCatsFoldToggle(det){
+  const ic = document.getElementById('settingsCatsFoldIcon');
+  if(!ic) return;
+  if(det.open){
+    ic.textContent = '＋';
+    ic.title = 'إضافة قسم رئيسي جديد';
+    ic.onclick = function(ev){
+      ev.preventDefault();
+      ev.stopPropagation();
+      addMainCategoryInSettings();
+    };
   } else {
-    if(!tree[n]) tree[n] = [];
-    if(isInc) state.incomeCategories = [...new Set([...(state.incomeCategories||[]), n])];
-    else state.categories = [...new Set([...(state.categories||[]), n])];
+    ic.textContent = '▼';
+    ic.title = '';
+    ic.onclick = null;
   }
-  setv('newCatName','');
-  persist(); toast('تمت إضافة القسم ✓');
 }
-function renderSettingsCategories(){
-  updateSettingsParentCatOptions();
-  const el = document.getElementById('settingsCatsList'); if(!el) return;
+
+function setSettingsCatTab(mode){
+  settingsCatMode = mode;
+  document.getElementById('setCatTabExp').classList.toggle('active', mode==='expense');
+  document.getElementById('setCatTabInc').classList.toggle('active', mode==='income');
+  renderSettingsCategories();
+}
+
+function addMainCategoryInSettings(){
+  const n = prompt(settingsCatMode==='income' ? 'اسم قسم الدخل الرئيسي الجديد:' : 'اسم قسم المصروفات الرئيسي الجديد:');
+  if(!n || !n.trim()) return;
+  const clean = n.trim();
   syncCategoryTrees();
-  const expHtml = Object.entries(state.categoryTree.expense||{}).map(([mc, subs])=>{
-    const subTxt = subs.length ? ` (${subs.join('، ')})` : '';
-    return `<span class="tag" style="border:1px solid #ff728555;color:#ff7285">${esc(mc)}${esc(subTxt)}</span>`;
+  const tree = settingsCatMode==='income' ? state.categoryTree.income : state.categoryTree.expense;
+  if(!tree[clean]) tree[clean] = [];
+  if(settingsCatMode==='income') state.incomeCategories = [...new Set([...(state.incomeCategories||[]), clean])];
+  else state.categories = [...new Set([...(state.categories||[]), clean])];
+  persist();
+  toast('تمت إضافة القسم الرئيسي ✓');
+}
+
+function renameMainCategoryInSettings(oldName){
+  const n = prompt('تعديل اسم القسم الرئيسي:', oldName);
+  if(!n || !n.trim() || n.trim()===oldName) return;
+  const clean = n.trim();
+  syncCategoryTrees();
+  const tree = settingsCatMode==='income' ? state.categoryTree.income : state.categoryTree.expense;
+  const subs = tree[oldName] || [];
+  delete tree[oldName];
+  tree[clean] = [...new Set([...(tree[clean]||[]), ...subs])];
+  if(settingsCatMode==='income'){
+    state.incomeCategories = (state.incomeCategories||[]).map(x=>x===oldName?clean:x);
+  } else {
+    state.categories = (state.categories||[]).map(x=>x===oldName?clean:x);
+  }
+  state.transactions.forEach(t=>{ if(t.category===oldName) t.category=clean; });
+  persist();
+  toast('تم تعديل اسم القسم ✓');
+}
+
+function addSubCategoryInSettings(mainName){
+  const n = prompt(`إضافة قسم فرعي جديد داخل «${mainName}»:`);
+  if(!n || !n.trim()) return;
+  const clean = n.trim();
+  syncCategoryTrees();
+  const tree = settingsCatMode==='income' ? state.categoryTree.income : state.categoryTree.expense;
+  tree[mainName] = [...new Set([...(tree[mainName]||[]), clean])];
+  expandedSettingsMainCats[mainName] = true;
+  persist();
+  toast('تمت إضافة القسم الفرعي ✓');
+}
+
+function renameSubCategoryInSettings(mainName, oldSub){
+  const n = prompt('تعديل اسم القسم الفرعي:', oldSub);
+  if(!n || !n.trim() || n.trim()===oldSub) return;
+  const clean = n.trim();
+  syncCategoryTrees();
+  const tree = settingsCatMode==='income' ? state.categoryTree.income : state.categoryTree.expense;
+  tree[mainName] = (tree[mainName]||[]).map(s=>s===oldSub?clean:s);
+  state.transactions.forEach(t=>{ if(t.category===mainName && t.subCategory===oldSub) t.subCategory=clean; });
+  persist();
+  toast('تم تعديل القسم الفرعي ✓');
+}
+
+function toggleSettingsMainCatExpand(mainName){
+  const was = !!expandedSettingsMainCats[mainName];
+  expandedSettingsMainCats = {};
+  if(!was) expandedSettingsMainCats[mainName] = true;
+  renderSettingsCategories();
+}
+
+function renderSettingsCategories(){
+  const container = document.getElementById('settingsCatsTreeContainer');
+  if(!container) return;
+  syncCategoryTrees();
+  const tree = settingsCatMode==='income' ? state.categoryTree.income : state.categoryTree.expense;
+  const entries = Object.entries(tree||{});
+  if(!entries.length){
+    container.innerHTML = '<div class="empty">لا توجد أقسام مسجلة. اضغط على علامة ＋ بالأعلى للإضافة.</div>';
+    return;
+  }
+  container.innerHTML = entries.map(([mc, subs])=>{
+    const isOpen = !!expandedSettingsMainCats[mc];
+    const previewSubs = subs.length ? subs.slice(0,5).join('، ') + (subs.length>5 ? '…' : '') : 'لا توجد أقسام فرعية';
+    const subsHtml = isOpen ? `
+      <div class="cat-mgr-subs">
+        ${subs.map(sc=>`
+          <div class="cat-mgr-sub-row">
+            <span>${esc(sc)}</span>
+            <button type="button" class="icon-act-btn" title="تعديل الفرعي" onclick="renameSubCategoryInSettings('${esc(mc)}','${esc(sc)}')">✎</button>
+          </div>
+        `).join('')}
+        <button type="button" class="smallbtn" style="width:100%;margin-top:2px;border-color:var(--mint);color:var(--mint)" onclick="addSubCategoryInSettings('${esc(mc)}')">＋ إضافة قسم فرعي</button>
+      </div>
+    ` : '';
+    return `
+      <div class="cat-mgr-row">
+        <div class="cat-mgr-main">
+          <div class="cat-mgr-main-title" onclick="toggleSettingsMainCatExpand('${esc(mc)}')">
+            <b>${esc(mc)} <span style="color:var(--muted);font-weight:600">(${subs.length})</span></b>
+            <small>${esc(previewSubs)}</small>
+          </div>
+          <div class="cat-mgr-icons">
+            <button type="button" class="icon-act-btn" title="تعديل القسم الرئيسي" onclick="renameMainCategoryInSettings('${esc(mc)}')">✎</button>
+            <button type="button" class="icon-act-btn" title="عرض الأقسام الفرعية" onclick="toggleSettingsMainCatExpand('${esc(mc)}')">${isOpen?'▲':'▼'}</button>
+          </div>
+        </div>
+        ${subsHtml}
+      </div>
+    `;
   }).join('');
-  const incHtml = Object.entries(state.categoryTree.income||{}).map(([mc, subs])=>{
-    const subTxt = subs.length ? ` (${subs.join('، ')})` : '';
-    return `<span class="tag" style="border:1px solid #73a7ff55;color:#73a7ff">${esc(mc)}${esc(subTxt)}</span>`;
-  }).join('');
-  el.innerHTML = expHtml + incHtml;
 }
 
 /* Compact Month/Year Picker Dialog */
@@ -2407,7 +2623,7 @@ function installPWA(){
 
 function renderAll(){
   renderTransactionsScreen();
-  renderForecastScreen();
+  renderReportsScreen();
   renderAccountsAndCards();
   renderPlanScreen();
   renderSettingsCategories();
