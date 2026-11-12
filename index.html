@@ -5,90 +5,99 @@
 <title>المحفظة | Wallet</title>
 <link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png">
 <style>
-:root{--bg:#0b1220;--panel:#121d2e;--panel2:#18263a;--line:#25354b;--muted:#91a2b9;--text:#f4f7fb;--mint:#43d6b2;--blue:#73a7ff;--orange:#ffbd69;--red:#ff7285;--purple:#b69aff;--radius:22px}
+:root{--bg:#0b1220;--panel:#121d2e;--panel2:#18263a;--line:#25354b;--muted:#91a2b9;--text:#f4f7fb;--mint:#43d6b2;--mint2:#1a9c94;--hero1:#1b8f83;--hero2:#145e68;--hero3:#174b63;--blue:#73a7ff;--orange:#ffbd69;--red:#ff7285;--purple:#b69aff;--radius:22px;--scale:1}
 *{box-sizing:border-box}
+html{font-size:calc(16px * var(--scale))}
 body{margin:0;background:radial-gradient(ellipse at 80% -10%,#1b3450 0,transparent 42%),var(--bg);color:var(--text);font-family:system-ui,'Noto Sans Arabic','Tahoma',sans-serif;min-height:100vh;padding-bottom:105px}
 button,input,select{font:inherit}
 button{cursor:pointer}
 .app{max-width:520px;margin:auto;padding:20px 17px 30px}
 .top{display:flex;justify-content:space-between;align-items:center;margin:8px 0 23px}
 .brand{display:flex;align-items:center;gap:10px}
-.logo{width:43px;height:43px;border-radius:15px;background:#121d2e;border:1px solid #2a3e59;display:grid;place-items:center;box-shadow:0 8px 28px #43d6b222}
+.logo{width:43px;height:43px;border-radius:15px;background:#121d2e;border:1px solid #2a3e59;display:grid;place-items:center;box-shadow:0 8px 28px #0004}
 .logo svg{width:26px;height:26px;display:block}
-.brand b{font-size:21px;letter-spacing:-.5px}
-.brand small{display:block;color:var(--muted);font-size:11px;margin-top:-3px}
-.avatar{width:42px;height:42px;border-radius:15px;background:#22334a;color:#c7d7ed;display:grid;place-items:center;font-weight:800}
-.greeting{font-size:13px;color:var(--muted)}
-h1{font-size:25px;line-height:1.4;margin:2px 0 15px;font-weight:800}
+.brand b{font-size:1.3rem;letter-spacing:-.5px}
+.brand small{display:block;color:var(--muted);font-size:.68rem;margin-top:-2px}
+.avatar{width:42px;height:42px;border-radius:15px;background:#22334a;color:#c7d7ed;display:grid;place-items:center;font-weight:800;font-size:1rem}
+.greeting{font-size:.8rem;color:var(--muted)}
+h1{font-size:1.55rem;line-height:1.4;margin:2px 0 15px;font-weight:800}
 .monthbar{display:flex;align-items:center;justify-content:space-between;margin:20px 2px 12px}
 .period-btns{display:flex;gap:7px}
-.ym-pill-btn{background:#17263a;border:1px solid var(--line);color:var(--text);border-radius:12px;padding:8px 13px;font-size:12px;font-weight:700;display:flex;align-items:center;gap:6px}
-.ym-pill-btn span{color:var(--mint);font-size:10px}
-.hero{background:linear-gradient(135deg,#1b8f83,#145e68 60%,#174b63);border:1px solid #4dd9bb44;border-radius:27px;padding:20px 19px;position:relative;overflow:hidden;box-shadow:0 18px 40px #0003}
+.ym-pill-btn{background:#17263a;border:1px solid var(--line);color:var(--text);border-radius:12px;padding:8px 13px;font-size:.75rem;font-weight:700;display:flex;align-items:center;gap:6px}
+.ym-pill-btn span{color:var(--mint);font-size:.65rem}
+.hero{background:linear-gradient(135deg,var(--hero1),var(--hero2) 60%,var(--hero3));border:1px solid #ffffff33;border-radius:27px;padding:20px 19px;position:relative;overflow:hidden;box-shadow:0 18px 40px #0003}
 .hero:after{content:"";position:absolute;width:190px;height:190px;border:1px solid #ffffff18;border-radius:50%;left:-70px;top:-80px;box-shadow:0 0 0 22px #ffffff08,0 0 0 48px #ffffff05;pointer-events:none}
-.hero label{font-size:12px;color:#d5fff4}
-.hero .amount{font-size:32px;font-weight:900;letter-spacing:-1px;margin:6px 0 2px;direction:ltr;text-align:right}
-.hero .sub{font-size:11px;color:#d2f5ee}
+.hero-top-row{display:flex;justify-content:space-between;align-items:center}
+.hero label{font-size:.75rem;color:#eafaf6}
+.eye-btn{background:#ffffff1f;border:1px solid #ffffff2a;color:white;border-radius:10px;padding:4px 9px;font-size:.7rem;position:relative;z-index:2}
+.hero .amount{font-size:2rem;font-weight:900;letter-spacing:-1px;margin:6px 0 2px;direction:ltr;text-align:right}
+.hero .sub{font-size:.68rem;color:#e0f7f2}
 .hero-foot{display:flex;gap:8px;margin-top:16px}
-.hero-pill{background:#ffffff19;border:1px solid #ffffff22;padding:8px 10px;border-radius:13px;font-size:10px;flex:1}
-.hero-pill b{display:block;font-size:13px;margin-top:2px}
+.hero-pill{background:#ffffff19;border:1px solid #ffffff22;padding:8px 10px;border-radius:13px;font-size:.65rem;flex:1}
+.hero-pill b{display:block;font-size:.82rem;margin-top:2px}
 .quick-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
-.quick-btn{background:#132136;border:1px solid #2d4463;color:#e6f2ff;border-radius:15px;padding:11px 8px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:11px;font-weight:700;text-align:center}
-.quick-btn span.q-ico{font-size:16px;color:var(--mint)}
+.quick-btn{background:#132136;border:1px solid #2d4463;color:#e6f2ff;border-radius:15px;padding:11px 8px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:.7rem;font-weight:700;text-align:center}
+.quick-btn span.q-ico{font-size:1rem;color:var(--mint)}
 .section-head{display:flex;justify-content:space-between;align-items:center;margin:22px 2px 11px}
-.section-head h2{font-size:16px;margin:0}
-.section-head span{font-size:11px;color:var(--muted)}
+.section-head h2{font-size:1rem;margin:0}
+.section-head span{font-size:.7rem;color:var(--muted)}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:11px}
-.metric{background:linear-gradient(150deg,#172438,#111b2b);border:1px solid var(--line);border-radius:20px;padding:15px;min-height:116px}
+.metric{background:linear-gradient(150deg,#172438,#111b2b);border:1px solid var(--line);border-radius:20px;padding:15px;min-height:112px}
 .metric-top{display:flex;justify-content:space-between;align-items:center}
-.ico{width:32px;height:32px;border-radius:11px;display:grid;place-items:center;font-size:16px;font-weight:800}
-.metric small{font-size:11px;color:var(--muted)}
-.metric strong{display:block;font-size:18px;margin-top:9px;direction:ltr;text-align:right}
-.metric em{display:block;font-size:10px;color:var(--muted);font-style:normal;margin-top:1px}
+.ico{width:32px;height:32px;border-radius:11px;display:grid;place-items:center;font-size:1rem;font-weight:800}
+.metric small{font-size:.7rem;color:var(--muted)}
+.metric strong{display:block;font-size:1.15rem;margin-top:9px;direction:ltr;text-align:right}
+.metric em{display:block;font-size:.63rem;color:var(--muted);font-style:normal;margin-top:1px}
 .mint{color:var(--mint)}.blue{color:var(--blue)}.orange{color:var(--orange)}.red{color:var(--red)}.purple{color:var(--purple)}
 .chartbox,.panel{background:linear-gradient(150deg,#172438,#111b2b);border:1px solid var(--line);border-radius:22px;padding:16px}
-.chartlegend{display:flex;gap:16px;font-size:10px;color:var(--muted);margin-top:8px}
+.chartlegend{display:flex;gap:16px;font-size:.65rem;color:var(--muted);margin-top:8px}
 .dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-left:5px}
 .bars{height:168px;display:flex;align-items:end;justify-content:space-around;gap:4px;padding:10px 2px 6px;border-bottom:1px solid var(--line)}
 .barwrap,.barcol{height:100%;flex:1;display:flex;align-items:center;justify-content:end;flex-direction:column;gap:5px;min-width:0}
 .barpair{display:flex;align-items:end;gap:2px;height:105px;width:100%;justify-content:center}
-.bar{width:45%;max-width:20px;border-radius:6px 6px 2px 2px;background:linear-gradient(#55dabb,#1d8f8b);min-height:3px}
+.bar{width:45%;max-width:20px;border-radius:6px 6px 2px 2px;background:linear-gradient(var(--mint),var(--mint2));min-height:3px}
 .bar.exp{background:linear-gradient(#83aaff,#4566bb)}
-.vmonth{writing-mode:vertical-rl;transform:rotate(180deg);font-size:9px;color:var(--muted);white-space:nowrap;height:44px;display:flex;align-items:center;justify-content:center;line-height:1}
+.vmonth{writing-mode:vertical-rl;transform:rotate(180deg);font-size:.58rem;color:var(--muted);white-space:nowrap;height:44px;display:flex;align-items:center;justify-content:center;line-height:1}
 .progress{height:8px;background:#26364b;border-radius:20px;overflow:hidden;margin:8px 0}
-.progress i{height:100%;display:block;background:linear-gradient(90deg,#43d6b2,#73a7ff);border-radius:20px}
-.rowline{display:flex;justify-content:space-between;align-items:center;font-size:12px;margin:6px 0}
+.progress i{height:100%;display:block;background:linear-gradient(90deg,var(--mint),#73a7ff);border-radius:20px}
+.rowline{display:flex;justify-content:space-between;align-items:center;font-size:.75rem;margin:6px 0}
 .rowline span{color:var(--muted)}
 .activity{display:flex;align-items:flex-start;gap:11px;padding:12px 0;border-bottom:1px solid #26364b;cursor:pointer}
 .activity:last-child{border:0}
 .actico{width:39px;height:39px;border-radius:14px;background:#23354b;display:grid;place-items:center;flex-shrink:0}
 .acttxt{flex:1;min-width:0}
-.acttxt b{font-size:12px;display:block}
-.acttxt small{color:var(--muted);font-size:10px}
-.actamt{font-size:13px;font-weight:800;direction:ltr;white-space:nowrap}
+.acttxt b{font-size:.78rem;display:block}
+.acttxt small{color:var(--muted);font-size:.65rem}
+.actamt{font-size:.82rem;font-weight:800;direction:ltr;white-space:nowrap}
 
 /* Clean 5-item Colored Bottom Nav Bar */
 .bottom{position:fixed;bottom:0;left:0;right:0;background:#0d1726ed;backdrop-filter:blur(18px);border-top:1px solid #25354b;z-index:10;padding:8px max(12px,calc((100vw - 520px)/2)) calc(8px + env(safe-area-inset-bottom));display:flex;justify-content:space-around;gap:4px}
-.nav{border:0;background:none;color:#71839b;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:10px;flex:1;min-width:0;padding:2px 0;white-space:nowrap;opacity:.72;transition:opacity .15s,transform .15s}
+.nav{border:0;background:none;color:#71839b;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:.64rem;flex:1;min-width:0;padding:2px 0;white-space:nowrap;opacity:.72;transition:opacity .15s,transform .15s}
 .nav svg{width:22px;height:22px;display:block}
 .nav.active{color:var(--mint);opacity:1;font-weight:700}
 
-.fab{position:fixed;bottom:84px;left:calc(50% - 27px);z-index:11;width:54px;height:54px;border-radius:19px;border:4px solid var(--bg);background:linear-gradient(145deg,#4ce0bd,#1a9c94);color:#06221f;font-size:28px;box-shadow:0 8px 25px #1eb99b55}
+.fab{position:fixed;bottom:84px;left:calc(50% - 27px);z-index:11;width:54px;height:54px;border-radius:19px;border:4px solid var(--bg);background:linear-gradient(145deg,var(--mint),var(--mint2));color:#06221f;font-size:28px;box-shadow:0 8px 25px #0006}
 .screen{display:none}
 .screen.active{display:block}
 .listitem{display:flex;align-items:flex-start;gap:10px;padding:13px 0;border-bottom:1px solid var(--line);cursor:pointer}
 .listitem:last-child{border:0}
 .listitem .info{flex:1;min-width:0}
-.listitem b{font-size:13px}
-.listitem small{display:block;color:var(--muted);font-size:11px;line-height:1.6}
-.listitem strong{font-size:14px;white-space:nowrap}
-.tag{font-size:10px;padding:3px 7px;border-radius:8px;background:#2a3a50;color:#b9cbe2;white-space:nowrap}
-.empty{text-align:center;color:var(--muted);padding:26px 10px;font-size:12px}
+.listitem b{font-size:.82rem}
+.listitem small{display:block;color:var(--muted);font-size:.7rem;line-height:1.6}
+.listitem strong{font-size:.88rem;white-space:nowrap}
+.tag{font-size:.64rem;padding:3px 8px;border-radius:8px;background:#253852;color:#cfe0f7;white-space:nowrap;font-weight:600}
+.empty{text-align:center;color:var(--muted);padding:26px 10px;font-size:.75rem}
 
-/* Hidden details & actions until tap */
-.tap-details{display:none;margin-top:4px}
+/* Horizontal 3-button action bar on Cards screen */
+.h-action-bar{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0}
+.h-action-btn{background:linear-gradient(150deg,#172438,#111b2b);border:1px solid var(--line);color:var(--text);border-radius:16px;padding:12px 6px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;font-size:.72rem;font-weight:800;text-align:center;transition:border-color .15s,background .15s}
+.h-action-btn.active{border-color:var(--mint);background:#162b3d;color:var(--mint)}
+.h-action-btn span.h-ico{font-size:1.1rem}
+.card-subpanel{display:none;margin-bottom:14px}
+.card-subpanel.show{display:block}
+
+/* Hidden actions until tap */
 .tap-actions{display:none;margin-top:8px;gap:6px;flex-wrap:wrap}
-.listitem.expanded .tap-details,.activity.expanded .tap-details{display:block}
 .listitem.expanded .tap-actions,.activity.expanded .tap-actions{display:flex}
 
 /* Modals: Input Sheet (top-aligned for keyboard) vs Centered Confirm/Picker */
@@ -97,66 +106,70 @@ h1{font-size:25px;line-height:1.4;margin:2px 0 15px;font-weight:800}
 .modal.center-modal{align-items:center;padding:16px}
 .sheet{width:100%;max-width:500px;background:#142136;border:1px solid #314866;border-radius:24px;padding:18px 16px 22px;box-shadow:0 20px 50px #0008;margin-top:8px}
 .modal.center-modal .sheet{max-width:360px;margin-top:0;padding:18px 16px}
-.sheet h3{margin:0 0 12px;font-size:16px}
+.sheet h3{margin:0 0 12px;font-size:1rem}
 .field{margin:9px 0}
-.field label{display:block;font-size:11px;color:var(--muted);margin-bottom:5px}
+.field label{display:block;font-size:.7rem;color:var(--muted);margin-bottom:5px}
 .field input,.field select{width:100%;background:#0e1929;border:1px solid #30445e;border-radius:13px;padding:11px 12px;color:white;outline:none;color-scheme:dark}
-.picker-trigger{width:100%;background:#0e1929;border:1px solid #30445e;border-radius:13px;padding:11px 12px;color:white;display:flex;justify-content:space-between;align-items:center;font-size:13px;text-align:right}
-.picker-trigger span{color:var(--mint);font-size:11px}
+.picker-trigger{width:100%;background:#0e1929;border:1px solid #30445e;border-radius:13px;padding:11px 12px;color:white;display:flex;justify-content:space-between;align-items:center;font-size:.8rem;text-align:right}
+.picker-trigger span{color:var(--mint);font-size:.7rem}
 .actions{display:flex;gap:9px;margin-top:16px}
-.primary,.secondary{border:0;border-radius:13px;padding:11px 14px;font-weight:800;flex:1;font-size:13px}
+.primary,.secondary{border:0;border-radius:13px;padding:11px 14px;font-weight:800;flex:1;font-size:.8rem}
 .primary{background:var(--mint);color:#06221e;width:100%}
 .secondary{background:#25364d;color:#d6e1ef}
 .danger-fill{background:#7f2536;color:#ffe6ea}
-.hint{font-size:12px;color:var(--muted);line-height:1.7;margin:6px 0}
+.hint{font-size:.72rem;color:var(--muted);line-height:1.7;margin:6px 0}
 .wideform{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .wideform .field{margin:3px 0}
 .full{grid-column:1/-1}
-.smallbtn{border:1px solid #35506b;background:#1b2c42;color:#eaf2fb;border-radius:10px;padding:5px 10px;font-size:11px}
+.smallbtn{border:1px solid #35506b;background:#1b2c42;color:#eaf2fb;border-radius:10px;padding:5px 10px;font-size:.7rem}
 .smallbtn.danger{background:#4a2631;color:#ffdbe1;border:1px solid #75404b}
 .filterbar{display:flex;gap:8px;margin:10px 0;flex-wrap:wrap}
 .filterbar input,.filterbar select{flex:1;min-width:120px;background:#0e1929;border:1px solid #30445e;border-radius:12px;padding:10px;color:white}
-.daysep{display:flex;align-items:center;gap:10px;margin:16px 0 8px;color:#8fa3bd;font-size:11px;font-weight:700}
+.daysep{display:flex;align-items:center;gap:10px;margin:16px 0 8px;color:#8fa3bd;font-size:.7rem;font-weight:700}
 .daysep:before,.daysep:after{content:"";flex:1;height:1px;background:#24344a}
-.toast{position:fixed;top:15px;left:50%;transform:translateX(-50%);background:#1d3d46;border:1px solid #43d6b2;color:#dffdf5;padding:10px 15px;border-radius:13px;z-index:60;font-size:12px;display:none;max-width:90%;text-align:center}
+.toast{position:fixed;top:15px;left:50%;transform:translateX(-50%);background:#1d3d46;border:1px solid var(--mint);color:#dffdf5;padding:10px 15px;border-radius:13px;z-index:60;font-size:.75rem;display:none;max-width:90%;text-align:center}
 
 /* Compact In-App Month/Year Grid Picker */
 .ym-year-bar{display:flex;align-items:center;justify-content:space-between;background:#0e1929;border:1px solid #283b54;border-radius:13px;padding:6px 10px;margin-bottom:10px}
 .ym-year-bar button{background:#1d2e45;border:0;color:white;width:32px;height:32px;border-radius:10px;font-weight:800;font-size:15px}
 .ym-year-bar b{font-size:15px;color:var(--mint)}
 .ym-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
-.ym-cell{background:#0e1929;border:1px solid #283b54;color:#d6e1ef;border-radius:11px;padding:9px 4px;font-size:12px;font-weight:700;text-align:center}
+.ym-cell{background:#0e1929;border:1px solid #283b54;color:#d6e1ef;border-radius:11px;padding:9px 4px;font-size:.75rem;font-weight:700;text-align:center}
 .ym-cell.active{background:var(--mint);color:#06221e;border-color:var(--mint)}
 
 /* Collapsible Panels (Accordion) */
 details.fold{background:linear-gradient(150deg,#172438,#111b2b);border:1px solid var(--line);border-radius:22px;margin:12px 0;overflow:hidden}
-details.fold > summary{list-style:none;cursor:pointer;padding:15px 16px;display:flex;align-items:center;justify-content:space-between;font-weight:800;font-size:14px;user-select:none}
+details.fold > summary{list-style:none;cursor:pointer;padding:15px 16px;display:flex;align-items:center;justify-content:space-between;font-weight:800;font-size:.88rem;user-select:none}
 details.fold > summary::-webkit-details-marker{display:none}
 details.fold > summary .fold-left{display:flex;align-items:center;gap:10px}
-details.fold > summary .fold-ico{width:30px;height:30px;border-radius:10px;background:#1e314a;color:var(--mint);display:grid;place-items:center;font-size:15px}
-details.fold > summary .fold-meta{font-size:11px;color:var(--muted);font-weight:400;margin-right:6px}
-details.fold > summary .chev{color:var(--muted);font-size:12px;transition:transform .2s ease}
+details.fold > summary .fold-ico{width:30px;height:30px;border-radius:10px;background:#1e314a;color:var(--mint);display:grid;place-items:center;font-size:.95rem}
+details.fold > summary .fold-meta{font-size:.68rem;color:var(--muted);font-weight:400;margin-right:6px}
+details.fold > summary .chev{color:var(--muted);font-size:.75rem;transition:transform .2s ease}
 details.fold[open] > summary .chev{transform:rotate(180deg);color:var(--mint)}
 details.fold[open] > summary{border-bottom:1px solid var(--line);background:#162438}
 details.fold .fold-body{padding:14px 16px 16px}
 details.subfold{background:#0e1929;border:1px solid #283b54;border-radius:15px;margin:10px 0}
-details.subfold > summary{list-style:none;cursor:pointer;padding:11px 13px;display:flex;align-items:center;justify-content:space-between;font-size:12px;font-weight:700;color:#cfe0f5}
+details.subfold > summary{list-style:none;cursor:pointer;padding:11px 13px;display:flex;align-items:center;justify-content:space-between;font-size:.75rem;font-weight:700;color:#cfe0f5}
 details.subfold > summary::-webkit-details-marker{display:none}
 details.subfold[open] > summary{border-bottom:1px solid #283b54}
 details.subfold .subfold-body{padding:10px 12px}
 
 /* Settings UI improvements */
-.set-card{background:linear-gradient(150deg,#172438,#111b2b);border:1px solid var(--line);border-radius:20px;padding:15px 16px;margin-bottom:12px}
-.set-head{display:flex;align-items:center;gap:12px;margin-bottom:10px}
-.set-ico{width:40px;height:40px;border-radius:13px;background:#1e314a;display:grid;place-items:center;font-size:18px;flex-shrink:0}
+.set-card{background:#0e1929;border:1px solid #263952;border-radius:16px;padding:13px 14px;margin-bottom:10px}
+.set-card:last-child{margin-bottom:0}
+.set-head{display:flex;align-items:center;gap:11px}
+.set-ico{width:36px;height:36px;border-radius:11px;background:#1a2c44;display:grid;place-items:center;font-size:1rem;flex-shrink:0}
 .set-title{flex:1;min-width:0}
-.set-title b{display:block;font-size:14px;margin-bottom:2px}
-.set-title small{display:block;font-size:11px;color:var(--muted);line-height:1.5}
+.set-title b{display:block;font-size:.82rem;margin-bottom:2px}
+.set-title small{display:block;font-size:.68rem;color:var(--muted);line-height:1.5}
 .set-actions{display:flex;gap:8px;margin-top:10px}
 .file-hidden{display:none}
-.backup-banner{background:linear-gradient(135deg,#2d2417,#1f1a14);border:1px solid #ffbd6955;border-radius:18px;padding:12px 14px;margin:12px 0;display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:12px}
+.theme-dots{display:flex;gap:10px;margin-top:8px}
+.theme-dot{width:32px;height:32px;border-radius:50%;border:2px solid transparent;cursor:pointer}
+.theme-dot.active{border-color:white;transform:scale(1.1)}
+.backup-banner{background:linear-gradient(135deg,#2d2417,#1f1a14);border:1px solid #ffbd6955;border-radius:18px;padding:12px 14px;margin:12px 0;display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:.75rem}
 .backup-banner b{color:var(--orange);display:block;margin-bottom:2px}
-.calc-pill{background:#0e1929;border:1px solid #283b54;border-radius:12px;padding:9px 12px;margin-top:8px;display:flex;justify-content:space-between;align-items:center;font-size:12px}
+.calc-pill{background:#0e1929;border:1px solid #283b54;border-radius:12px;padding:9px 12px;margin-top:8px;display:flex;justify-content:space-between;align-items:center;font-size:.75rem}
 </style>
 </head>
 <body>
@@ -171,86 +184,89 @@ details.subfold .subfold-body{padding:10px 12px}
         <circle cx="21.8" cy="17.5" r="1.4" fill="#43d6b2"/>
       </svg>
     </div>
-    <div><b>المحفظة</b><small>Wallet · مديرك المالي الشخصي</small></div>
+    <div><b data-i18n="appName">المحفظة</b><small data-i18n="appSub">Wallet · مديرك المالي الشخصي</small></div>
   </div>
-  <div class="avatar">م</div>
+  <div class="avatar" id="userAvatarLetter">م</div>
 </header>
 
 <!-- 1. الرئيسية -->
 <section id="home" class="screen active">
-  <div class="greeting">أهلاً بيك 👋</div>
-  <h1>خلّيك متحكم في فلوسك</h1>
+  <div class="greeting" data-i18n="greeting">أهلاً بيك 👋</div>
+  <h1 data-i18n="heroHeadline">خلّيك متحكم في فلوسك</h1>
   <div id="backupReminderBox"></div>
 
-  <!-- General Hero Card -->
+  <!-- General Hero Card (Whole numbers on Home) -->
   <div class="hero">
-    <label>إجمالي الأموال المتاحة (رصيد حساباتك)</label>
-    <div class="amount" id="homeAvailableTotal">0.00 ج.م</div>
-    <div class="sub">إجمالي السيولة الفعلية في الكاش والبنوك والمحافظ</div>
+    <div class="hero-top-row">
+      <label data-i18n="totalAvail">إجمالي الأموال المتاحة (رصيد حساباتك)</label>
+      <button type="button" class="eye-btn" onclick="togglePrivacyMode()" id="privacyToggleBtn">👁</button>
+    </div>
+    <div class="amount" id="homeAvailableTotal">0 ج.م</div>
+    <div class="sub" data-i18n="totalAvailSub">إجمالي السيولة الفعلية في الكاش والبنوك والمحافظ</div>
     <div class="hero-foot">
-      <div class="hero-pill">صافي الشهر<b id="remaining">0.00 ج.م</b></div>
-      <div class="hero-pill">دخل الشهر<b id="incomeHero">0.00 ج.م</b></div>
-      <div class="hero-pill">مصروف الشهر<b id="expenseHero">0.00 ج.م</b></div>
+      <div class="hero-pill"><span data-i18n="netMonth">صافي الشهر</span><b id="remaining">0 ج.م</b></div>
+      <div class="hero-pill"><span data-i18n="incMonth">دخل الشهر</span><b id="incomeHero">0 ج.م</b></div>
+      <div class="hero-pill"><span data-i18n="expMonth">مصروف الشهر</span><b id="expenseHero">0 ج.م</b></div>
     </div>
   </div>
 
-  <!-- 3 Quick Action Buttons: المرتب، الحركات، التقارير -->
+  <!-- 3 Quick Action Buttons -->
   <div class="quick-row">
     <button class="quick-btn" onclick="go('salary')">
       <span class="q-ico">₪</span>
-      <span>حساب المرتب</span>
+      <span data-i18n="btnSalary">حساب المرتب</span>
     </button>
     <button class="quick-btn" onclick="go('activity')">
       <span class="q-ico" style="color:var(--blue)">⇄</span>
-      <span>سجل الحركات</span>
+      <span data-i18n="btnActivity">سجل الحركات</span>
     </button>
     <button class="quick-btn" onclick="go('reports')">
       <span class="q-ico" style="color:var(--purple)">▥</span>
-      <span>التقارير</span>
+      <span data-i18n="btnReports">التقارير</span>
     </button>
   </div>
 
   <!-- Month Selector right above Monthly Summary -->
   <div class="monthbar">
-    <b>ملخصك المالي</b>
+    <b data-i18n="monthlySummary">ملخصك المالي</b>
     <div class="period-btns">
       <button type="button" class="ym-pill-btn" onclick="openHomePeriodPicker()"><b id="homePeriodLabel">نوفمبر 2026</b><span>▼</span></button>
     </div>
   </div>
 
   <div class="grid">
-    <div class="metric"><div class="metric-top"><span class="ico mint" style="background:#173b3b">↙</span><small>إجمالي الدخل</small></div><strong id="incomeCard">0.00</strong><em>جنيه مصري</em></div>
-    <div class="metric"><div class="metric-top"><span class="ico red" style="background:#3d222b">↗</span><small>إجمالي المصروفات</small></div><strong id="expenseCard">0.00</strong><em>جنيه مصري</em></div>
-    <div class="metric"><div class="metric-top"><span class="ico orange" style="background:#3d3021">▤</span><small>مديونية البطاقات</small></div><strong id="debtCard">0.00</strong><em>المستخدم من الليمت</em></div>
-    <div class="metric"><div class="metric-top"><span class="ico purple" style="background:#30294a">◈</span><small>الادخار التراكمي</small></div><strong id="savingCard">0.00</strong><em>جنيه مصري</em></div>
+    <div class="metric"><div class="metric-top"><span class="ico mint" style="background:#173b3b">↙</span><small data-i18n="totalIncome">إجمالي الدخل</small></div><strong id="incomeCard">0</strong><em data-i18n="currencyFull">جنيه مصري</em></div>
+    <div class="metric"><div class="metric-top"><span class="ico red" style="background:#3d222b">↗</span><small data-i18n="totalExpense">إجمالي المصروفات</small></div><strong id="expenseCard">0</strong><em data-i18n="currencyFull">جنيه مصري</em></div>
+    <div class="metric"><div class="metric-top"><span class="ico orange" style="background:#3d3021">▤</span><small data-i18n="cardsDebt">مديونية البطاقات</small></div><strong id="debtCard">0</strong><em data-i18n="usedFromLimit">المستخدم من الليمت</em></div>
+    <div class="metric"><div class="metric-top"><span class="ico purple" style="background:#30294a">◈</span><small data-i18n="cumSavings">الادخار التراكمي</small></div><strong id="savingCard">0</strong><em data-i18n="currencyFull">جنيه مصري</em></div>
   </div>
 
   <!-- Separate Section 1: السلف -->
-  <div class="section-head"><h2>السلف</h2><span style="cursor:pointer;color:var(--mint)" onclick="go('commitments')">التفاصيل ←</span></div>
+  <div class="section-head"><h2 data-i18n="loansTitle">السلف</h2><span style="cursor:pointer;color:var(--mint)" onclick="go('commitments')" data-i18n="detailsLink">التفاصيل ←</span></div>
   <div class="panel">
-    <div class="rowline"><span>إجمالي السلف</span><b id="homeDebtsTotal">0.00 ج.م</b></div>
+    <div class="rowline"><span data-i18n="totalLoans">إجمالي السلف</span><b id="homeDebtsTotal">0 ج.م</b></div>
     <div class="progress"><i id="homeDebtsProgress" style="width:0%"></i></div>
-    <div class="rowline"><span>المسدد فعليًا</span><b class="mint" id="homeDebtsPaid">0.00 ج.م</b></div>
-    <div class="rowline"><span>المتبقي للسداد</span><b class="red" id="homeDebtsRemain">0.00 ج.م</b></div>
+    <div class="rowline"><span data-i18n="paidActual">المسدد فعليًا</span><b class="mint" id="homeDebtsPaid">0 ج.م</b></div>
+    <div class="rowline"><span data-i18n="remainPay">المتبقي للسداد</span><b class="red" id="homeDebtsRemain">0 ج.م</b></div>
   </div>
 
   <!-- Separate Section 2: الالتزامات الشهرية -->
-  <div class="section-head"><h2>الالتزامات الشهرية</h2><span style="cursor:pointer;color:var(--mint)" onclick="go('commitments')">التفاصيل ←</span></div>
+  <div class="section-head"><h2 data-i18n="monthlyCommitments">الالتزامات الشهرية</h2><span style="cursor:pointer;color:var(--mint)" onclick="go('commitments')" data-i18n="detailsLink">التفاصيل ←</span></div>
   <div class="panel">
-    <div class="rowline"><span>مستحق هذا الشهر (أقساط / جمعيات)</span><b class="orange" id="homeCommitmentsDue">0.00 ج.م</b></div>
+    <div class="rowline"><span data-i18n="dueThisMonth">مستحق هذا الشهر (أقساط / جمعيات)</span><b class="orange" id="homeCommitmentsDue">0 ج.م</b></div>
     <div class="progress"><i id="homeCommitmentsProgress" style="width:0%"></i></div>
-    <div class="rowline"><span>المسدد هذا الشهر</span><b class="mint" id="homeCommitmentsPaid">0.00 ج.م</b></div>
-    <div class="rowline"><span>المتبقي هذا الشهر</span><b class="red" id="homeCommitmentsRemain">0.00 ج.م</b></div>
+    <div class="rowline"><span data-i18n="paidThisMonth">المسدد هذا الشهر</span><b class="mint" id="homeCommitmentsPaid">0 ج.م</b></div>
+    <div class="rowline"><span data-i18n="remainThisMonth">المتبقي هذا الشهر</span><b class="red" id="homeCommitmentsRemain">0 ج.م</b></div>
   </div>
 
-  <div class="section-head"><h2>آخر الحركات</h2><span style="cursor:pointer;color:var(--mint)" onclick="go('activity')">عرض الكل ←</span></div>
+  <div class="section-head"><h2 data-i18n="recentTx">آخر الحركات</h2><span style="cursor:pointer;color:var(--mint)" onclick="go('activity')" data-i18n="viewAll">عرض الكل ←</span></div>
   <div class="panel" id="recent"></div>
 </section>
 
-<!-- 2. حساباتي -->
+<!-- 2. الحسابات -->
 <section id="accounts" class="screen">
   <div class="greeting">أرصدتك وحركات أموالك</div>
-  <h1>حساباتي</h1>
+  <h1 data-i18n="navAccounts">الحسابات</h1>
   <div class="hero">
     <label>إجمالي الأموال المتاحة</label>
     <div class="amount" id="accountsTotal">0.00 ج.م</div>
@@ -275,42 +291,107 @@ details.subfold .subfold-body{padding:10px 12px}
   <div class="panel" id="accountsList"></div>
 </section>
 
-<!-- 3. الحركات (تُفتح من الرئيسية) -->
-<section id="activity" class="screen">
-  <div class="greeting">سجل كل حركة مالية</div>
-  <h1>الحركات</h1>
-
-  <details class="fold">
-    <summary>
-      <div class="fold-left"><span class="fold-ico">⇄</span><span>تحويل بين حسابين / تسوية رصيد</span></div>
-      <span class="chev">▼</span>
-    </summary>
-    <div class="fold-body">
-      <div class="wideform">
-        <div class="field"><label>نوع الحركة</label><select id="ledgerType" onchange="toggleLedgerFields()"><option value="transfer">تحويل بين حسابين</option><option value="adjust">تسوية رصيد</option></select></div>
-        <div class="field"><label>المبلغ</label><input id="ledgerAmount" type="number" inputmode="decimal" placeholder="0"></div>
-        <div class="field"><label>من حساب</label><select id="ledgerFrom"></select></div>
-        <div class="field" id="ledgerToWrap"><label>إلى حساب</label><select id="ledgerTo"></select></div>
-        <div class="field"><label>رسوم التحويل (اختياري)</label><input id="ledgerFee" type="number" placeholder="0"></div>
-        <div class="field full"><label>السبب / البيان</label><input id="ledgerNote" placeholder="سبب التسوية أو التحويل"></div>
-      </div>
-      <button class="primary" style="margin-top:10px" onclick="saveLedgerMovement()">حفظ الحركة</button>
-    </div>
-  </details>
-
-  <div class="filterbar">
-    <input id="actSearch" type="search" placeholder="بحث في البيان أو التصنيف..." oninput="filterActivity()">
-    <select id="actTypeFilter" onchange="filterActivity()"><option value="">كل الأنواع</option><option value="expense">مصروف</option><option value="income">دخل</option><option value="fund">تمويل</option><option value="transfer">تحويل</option><option value="adjust">تسوية</option><option value="credit_payment">سداد بطاقة</option></select>
-    <select id="actAccountFilter" onchange="filterActivity()"><option value="">كل الحسابات</option></select>
+<!-- 3. البطاقات (قبل الالتزامات) -->
+<section id="cards" class="screen">
+  <div class="greeting">إدارة البطاقات الائتمانية ودورات السداد</div>
+  <h1 data-i18n="navCards">البطاقات</h1>
+  <div class="grid">
+    <div class="metric"><small>إجمالي المديونية (المستخدم)</small><strong id="cardDebtTotal">0.00</strong><em>جنيه مصري</em></div>
+    <div class="metric"><small>مستحق هذا الشهر</small><strong id="cardDueTotal">0.00</strong><em>جنيه مصري</em></div>
   </div>
 
-  <div class="panel" id="allActivity"></div>
+  <!-- Horizontal 3-Button Bar -->
+  <div class="h-action-bar">
+    <button type="button" class="h-action-btn" id="btnCardPanelAdd" onclick="toggleCardPanel('cardPanelAdd', this)">
+      <span class="h-ico">💳</span>
+      <span>إضافة بطاقة</span>
+    </button>
+    <button type="button" class="h-action-btn" id="btnCardPanelOp" onclick="toggleCardPanel('cardPanelOp', this)">
+      <span class="h-ico">🛒</span>
+      <span>تسجيل عملية</span>
+    </button>
+    <button type="button" class="h-action-btn" id="btnCardPanelPay" onclick="toggleCardPanel('cardPanelPay', this)">
+      <span class="h-ico">✓</span>
+      <span>سداد بطاقة</span>
+    </button>
+  </div>
+
+  <!-- Subpanel 1: Add Card -->
+  <div class="panel card-subpanel" id="cardPanelAdd">
+    <div class="section-head" style="margin-top:0"><h2>إضافة بطاقة</h2><span style="cursor:pointer" onclick="closeCardPanels()">✕</span></div>
+    <div class="wideform">
+      <div class="field full"><label>اسم البطاقة / الجهة (مثل QNB، فاليو، كونتكت)</label><input id="cardName" placeholder="مثال: QNB أو قناة السويس" onblur="applyKnownBankTerms()"></div>
+      <div class="field"><label>الحد الائتماني (الليميت)</label><input id="cardLimit" type="number" step="0.01" inputmode="decimal" placeholder="مثال: 35400" oninput="previewNewCardDebt()"></div>
+      <div class="field"><label>الرصيد المتاح حاليًا</label><input id="cardAvailable" type="number" step="0.01" inputmode="decimal" placeholder="مثال: 28657.70" oninput="previewNewCardDebt()"></div>
+      <div class="field full"><label>يوم السداد الشهري</label><input id="cardPayDay" type="number" min="1" max="28" value="3"></div>
+    </div>
+    <div class="calc-pill" id="newCardDebtPreview"><span>المديونية الافتتاحية المحسوبة:</span><b>0.00 ج.م</b></div>
+
+    <details class="subfold">
+      <summary>
+        <span>جدول الفوائد والرسوم حسب مدة التقسيط (اختياري)</span>
+        <span>▼</span>
+      </summary>
+      <div class="subfold-body">
+        <div class="wideform">
+          <div class="field"><label>3 شهور – فائدة شهرية %</label><input id="ir3" type="number" step="0.01" value="0"></div><div class="field"><label>3 شهور – رسوم إدارية %</label><input id="fee3" type="number" step="0.01" value="0"></div>
+          <div class="field"><label>6 شهور – فائدة شهرية %</label><input id="ir6" type="number" step="0.01" value="0"></div><div class="field"><label>6 شهور – رسوم إدارية %</label><input id="fee6" type="number" step="0.01" value="0"></div>
+          <div class="field"><label>9 شهور – فائدة شهرية %</label><input id="ir9" type="number" step="0.01" value="0"></div><div class="field"><label>9 شهور – رسوم إدارية %</label><input id="fee9" type="number" step="0.01" value="0"></div>
+          <div class="field"><label>12 شهر – فائدة شهرية %</label><input id="ir12" type="number" step="0.01" value="0"></div><div class="field"><label>12 شهر – رسوم إدارية %</label><input id="fee12" type="number" step="0.01" value="0"></div>
+          <div class="field"><label>15 شهر – فائدة شهرية %</label><input id="ir15" type="number" step="0.01" value="0"></div><div class="field"><label>15 شهر – رسوم إدارية %</label><input id="fee15" type="number" step="0.01" value="0"></div>
+          <div class="field"><label>18 شهر – فائدة شهرية %</label><input id="ir18" type="number" step="0.01" value="0"></div><div class="field"><label>18 شهر – رسوم إدارية %</label><input id="fee18" type="number" step="0.01" value="0"></div>
+          <div class="field"><label>24 شهر – فائدة شهرية %</label><input id="ir24" type="number" step="0.01" value="0"></div><div class="field"><label>24 شهر – رسوم إدارية %</label><input id="fee24" type="number" step="0.01" value="0"></div>
+          <div class="field"><label>36 شهر – فائدة شهرية %</label><input id="ir36" type="number" step="0.01" value="0"></div><div class="field"><label>36 شهر – رسوم إدارية %</label><input id="fee36" type="number" step="0.01" value="0"></div>
+        </div>
+      </div>
+    </details>
+
+    <button class="primary" style="margin-top:10px" onclick="addCard()">حفظ البطاقة</button>
+  </div>
+
+  <!-- Subpanel 2: Add Card Operation -->
+  <div class="panel card-subpanel" id="cardPanelOp">
+    <div class="section-head" style="margin-top:0"><h2>تسجيل عملية على البطاقة</h2><span style="cursor:pointer" onclick="closeCardPanels()">✕</span></div>
+    <div class="wideform">
+      <div class="field"><label>البطاقة</label><select id="opCard"></select></div>
+      <div class="field"><label>نوع العملية</label><select id="opType" onchange="toggleInstallmentFields()"><option value="swipe">مسحوبات فيزا</option><option value="installment">شراء بالتقسيط</option></select></div>
+      <div class="field full"><label>وصف العملية</label><input id="opTitle" placeholder="مثال: موبايل"></div>
+      <div class="field"><label>قيمة العملية</label><input id="opAmount" type="number" min="1"></div>
+      <div class="field"><label>تاريخ العملية</label><input id="opDate" type="date"></div>
+      <div class="field installment-only"><label>مدة التقسيط</label><select id="opMonths" onchange="showCreditQuote()"><option>3</option><option>6</option><option>9</option><option selected>12</option><option>15</option><option>18</option><option>24</option><option>36</option></select></div>
+      <div class="field installment-only">
+        <label>شهر بداية القسط</label>
+        <button type="button" class="picker-trigger" onclick="openCompactYMPicker('opStart')"><b id="opStartLabel">نوفمبر 2026</b><span>تغيير</span></button>
+        <input type="hidden" id="opStartVal">
+      </div>
+    </div>
+    <div id="creditQuote" class="panel" style="margin-top:10px;background:#0e1929"><div class="empty">اختر البطاقة والمبلغ والمدة لعرض القسط والفائدة والرسوم.</div></div>
+    <button class="primary" style="margin-top:10px" onclick="addCardOperation()">تسجيل العملية</button>
+  </div>
+
+  <!-- Subpanel 3: Pay Card -->
+  <div class="panel card-subpanel" id="cardPanelPay">
+    <div class="section-head" style="margin-top:0"><h2>سداد بطاقة</h2><span style="cursor:pointer" onclick="closeCardPanels()">✕</span></div>
+    <div class="wideform" id="cardPayFormBox">
+      <div class="field"><label>البطاقة</label><select id="payCard"></select></div>
+      <div class="field"><label>المبلغ المدفوع</label><input id="cardPaymentAmount" type="number" min="1"></div>
+      <div class="field"><label>تاريخ الدفع</label><input id="cardPaymentDate" type="date"></div>
+      <div class="field full"><label>حساب السداد</label><select id="cardPayAccount"></select></div>
+    </div>
+    <button class="primary" style="margin-top:10px" onclick="payCard()">تسجيل السداد</button>
+  </div>
+
+  <div class="section-head"><h2>البطاقات المسجلة</h2><span>اضغط على البطاقة للخيارات</span></div>
+  <div class="panel" id="cardsList"><div class="empty">لا توجد بطاقات مسجلة.</div></div>
+
+  <div class="section-head"><h2>عمليات البطاقات</h2><span>مديونية وجدول استحقاق</span></div>
+  <div class="panel" id="cardOpsList"><div class="empty">لا توجد عمليات.</div></div>
 </section>
 
-<!-- 4. الالتزامات والسلف -->
+<!-- 4. الالتزامات (بعد البطاقات) -->
 <section id="commitments" class="screen">
   <div class="greeting">إدارة السلف والالتزامات الشهرية</div>
-  <h1>الالتزامات</h1>
+  <h1 data-i18n="navCommitments">الالتزامات</h1>
 
   <details class="fold">
     <summary>
@@ -321,7 +402,7 @@ details.subfold .subfold-body{padding:10px 12px}
       <div class="wideform">
         <div class="field full"><label>نظام السداد</label><select id="comFreq" onchange="toggleCommitmentFreqFields()"><option value="monthly">شهري (قسط / جمعية / فاتورة)</option><option value="once">سلفة (مرة واحدة)</option></select></div>
         <div class="field"><label>التصنيف</label><select id="comType"><option>سلفة</option><option>جمعية</option><option>قسط شقة</option><option>قسط بنك</option><option>التزام شهري</option><option>فاتورة</option><option>أخرى</option></select></div>
-        <div class="field"><label>الاسم (اختياري)</label><input id="comTitle" placeholder="يأخذ اسم التصنيف لو فارغ"></div>
+        <div class="field"><label>الاسم (اختياري)</label><input id="comTitle" placeholder="مثال: أحمد / الشقة"></div>
         <div class="field"><label>المبلغ</label><input id="comAmount" type="number" min="1" step="0.01" inputmode="decimal" placeholder="0"></div>
         <div class="field com-monthly-only"><label>يوم الاستحقاق</label><input id="comDay" type="number" min="1" max="31" value="1"></div>
         <div class="field com-monthly-only">
@@ -354,7 +435,39 @@ details.subfold .subfold-body{padding:10px 12px}
   </div>
 </section>
 
-<!-- 5. المرتبات (تُفتح من الرئيسية) -->
+<!-- 5. الحركات (تُفتح من الرئيسية) -->
+<section id="activity" class="screen">
+  <div class="greeting">سجل كل حركة مالية</div>
+  <h1>الحركات</h1>
+
+  <details class="fold">
+    <summary>
+      <div class="fold-left"><span class="fold-ico">⇄</span><span>تحويل بين حسابين / تسوية رصيد</span></div>
+      <span class="chev">▼</span>
+    </summary>
+    <div class="fold-body">
+      <div class="wideform">
+        <div class="field"><label>نوع الحركة</label><select id="ledgerType" onchange="toggleLedgerFields()"><option value="transfer">تحويل بين حسابين</option><option value="adjust">تسوية رصيد</option></select></div>
+        <div class="field"><label>المبلغ</label><input id="ledgerAmount" type="number" inputmode="decimal" placeholder="0"></div>
+        <div class="field"><label>من حساب</label><select id="ledgerFrom"></select></div>
+        <div class="field" id="ledgerToWrap"><label>إلى حساب</label><select id="ledgerTo"></select></div>
+        <div class="field"><label>رسوم التحويل (اختياري)</label><input id="ledgerFee" type="number" placeholder="0"></div>
+        <div class="field full"><label>السبب / البيان</label><input id="ledgerNote" placeholder="سبب التسوية أو التحويل"></div>
+      </div>
+      <button class="primary" style="margin-top:10px" onclick="saveLedgerMovement()">حفظ الحركة</button>
+    </div>
+  </details>
+
+  <div class="filterbar">
+    <input id="actSearch" type="search" placeholder="بحث في البيان أو التصنيف..." oninput="filterActivity()">
+    <select id="actTypeFilter" onchange="filterActivity()"><option value="">كل الأنواع</option><option value="expense">مصروف</option><option value="income">دخل</option><option value="fund">تمويل</option><option value="transfer">تحويل</option><option value="adjust">تسوية</option><option value="credit_payment">سداد بطاقة</option></select>
+    <select id="actAccountFilter" onchange="filterActivity()"><option value="">كل الحسابات</option></select>
+  </div>
+
+  <div class="panel" id="allActivity"></div>
+</section>
+
+<!-- 6. المرتبات (تُفتح من الرئيسية) -->
 <section id="salary" class="screen">
   <div class="greeting">حساب المرتب الشهري</div>
   <h1>المرتبات</h1>
@@ -414,99 +527,6 @@ details.subfold .subfold-body{padding:10px 12px}
   <div id="salaryResult" class="panel"><div class="empty">افتح مدخلات الشهر واضغط احسب.</div></div>
 </section>
 
-<!-- 6. البطاقات -->
-<section id="cards" class="screen">
-  <div class="greeting">إدارة البطاقات الائتمانية ودورات السداد</div>
-  <h1>البطاقات</h1>
-  <div class="grid">
-    <div class="metric"><small>إجمالي المديونية (المستخدم)</small><strong id="cardDebtTotal">0.00</strong><em>جنيه مصري</em></div>
-    <div class="metric"><small>مستحق هذا الشهر</small><strong id="cardDueTotal">0.00</strong><em>جنيه مصري</em></div>
-  </div>
-
-  <details class="fold">
-    <summary>
-      <div class="fold-left"><span class="fold-ico">💳</span><span>إضافة بطاقة</span></div>
-      <span class="chev">▼</span>
-    </summary>
-    <div class="fold-body">
-      <div class="wideform">
-        <div class="field full"><label>اسم البطاقة / الجهة (مثل QNB، فاليو، كونتكت)</label><input id="cardName" placeholder="مثال: QNB أو قناة السويس" onblur="applyKnownBankTerms()"></div>
-        <div class="field"><label>الحد الائتماني (الليميت)</label><input id="cardLimit" type="number" step="0.01" inputmode="decimal" placeholder="مثال: 35400" oninput="previewNewCardDebt()"></div>
-        <div class="field"><label>الرصيد المتاح حاليًا</label><input id="cardAvailable" type="number" step="0.01" inputmode="decimal" placeholder="مثال: 28657.70" oninput="previewNewCardDebt()"></div>
-        <div class="field full"><label>يوم السداد الشهري</label><input id="cardPayDay" type="number" min="1" max="28" value="3"></div>
-      </div>
-      <div class="calc-pill" id="newCardDebtPreview"><span>المديونية الافتتاحية المحسوبة:</span><b>0.00 ج.م</b></div>
-
-      <details class="subfold">
-        <summary>
-          <span>جدول الفوائد والرسوم حسب مدة التقسيط (اختياري)</span>
-          <span>▼</span>
-        </summary>
-        <div class="subfold-body">
-          <div class="wideform">
-            <div class="field"><label>3 شهور – فائدة شهرية %</label><input id="ir3" type="number" step="0.01" value="0"></div><div class="field"><label>3 شهور – رسوم إدارية %</label><input id="fee3" type="number" step="0.01" value="0"></div>
-            <div class="field"><label>6 شهور – فائدة شهرية %</label><input id="ir6" type="number" step="0.01" value="0"></div><div class="field"><label>6 شهور – رسوم إدارية %</label><input id="fee6" type="number" step="0.01" value="0"></div>
-            <div class="field"><label>9 شهور – فائدة شهرية %</label><input id="ir9" type="number" step="0.01" value="0"></div><div class="field"><label>9 شهور – رسوم إدارية %</label><input id="fee9" type="number" step="0.01" value="0"></div>
-            <div class="field"><label>12 شهر – فائدة شهرية %</label><input id="ir12" type="number" step="0.01" value="0"></div><div class="field"><label>12 شهر – رسوم إدارية %</label><input id="fee12" type="number" step="0.01" value="0"></div>
-            <div class="field"><label>15 شهر – فائدة شهرية %</label><input id="ir15" type="number" step="0.01" value="0"></div><div class="field"><label>15 شهر – رسوم إدارية %</label><input id="fee15" type="number" step="0.01" value="0"></div>
-            <div class="field"><label>18 شهر – فائدة شهرية %</label><input id="ir18" type="number" step="0.01" value="0"></div><div class="field"><label>18 شهر – رسوم إدارية %</label><input id="fee18" type="number" step="0.01" value="0"></div>
-            <div class="field"><label>24 شهر – فائدة شهرية %</label><input id="ir24" type="number" step="0.01" value="0"></div><div class="field"><label>24 شهر – رسوم إدارية %</label><input id="fee24" type="number" step="0.01" value="0"></div>
-            <div class="field"><label>36 شهر – فائدة شهرية %</label><input id="ir36" type="number" step="0.01" value="0"></div><div class="field"><label>36 شهر – رسوم إدارية %</label><input id="fee36" type="number" step="0.01" value="0"></div>
-          </div>
-        </div>
-      </details>
-
-      <button class="primary" style="margin-top:10px" onclick="addCard()">حفظ البطاقة</button>
-    </div>
-  </details>
-
-  <details class="fold">
-    <summary>
-      <div class="fold-left"><span class="fold-ico">🛒</span><span>تسجيل عملية على البطاقة</span></div>
-      <span class="chev">▼</span>
-    </summary>
-    <div class="fold-body">
-      <div class="wideform">
-        <div class="field"><label>البطاقة</label><select id="opCard"></select></div>
-        <div class="field"><label>نوع العملية</label><select id="opType" onchange="toggleInstallmentFields()"><option value="swipe">مسحوبات فيزا</option><option value="installment">شراء بالتقسيط</option></select></div>
-        <div class="field full"><label>وصف العملية</label><input id="opTitle" placeholder="مثال: موبايل"></div>
-        <div class="field"><label>قيمة العملية</label><input id="opAmount" type="number" min="1"></div>
-        <div class="field"><label>تاريخ العملية</label><input id="opDate" type="date"></div>
-        <div class="field installment-only"><label>مدة التقسيط</label><select id="opMonths" onchange="showCreditQuote()"><option>3</option><option>6</option><option>9</option><option selected>12</option><option>15</option><option>18</option><option>24</option><option>36</option></select></div>
-        <div class="field installment-only">
-          <label>شهر بداية القسط</label>
-          <button type="button" class="picker-trigger" onclick="openCompactYMPicker('opStart')"><b id="opStartLabel">نوفمبر 2026</b><span>تغيير</span></button>
-          <input type="hidden" id="opStartVal">
-        </div>
-      </div>
-      <div id="creditQuote" class="panel" style="margin-top:10px;background:#0e1929"><div class="empty">اختر البطاقة والمبلغ والمدة لعرض القسط والفائدة والرسوم.</div></div>
-      <button class="primary" style="margin-top:10px" onclick="addCardOperation()">تسجيل العملية</button>
-    </div>
-  </details>
-
-  <details class="fold">
-    <summary>
-      <div class="fold-left"><span class="fold-ico">✓</span><span>سداد بطاقة</span></div>
-      <span class="chev">▼</span>
-    </summary>
-    <div class="fold-body">
-      <div class="wideform" id="cardPayFormBox">
-        <div class="field"><label>البطاقة</label><select id="payCard"></select></div>
-        <div class="field"><label>المبلغ المدفوع</label><input id="cardPaymentAmount" type="number" min="1"></div>
-        <div class="field"><label>تاريخ الدفع</label><input id="cardPaymentDate" type="date"></div>
-        <div class="field full"><label>حساب السداد</label><select id="cardPayAccount"></select></div>
-      </div>
-      <button class="primary" style="margin-top:10px" onclick="payCard()">تسجيل السداد</button>
-    </div>
-  </details>
-
-  <div class="section-head"><h2>البطاقات المسجلة</h2><span>اضغط على البطاقة للخيارات</span></div>
-  <div class="panel" id="cardsList"><div class="empty">لا توجد بطاقات مسجلة.</div></div>
-
-  <div class="section-head"><h2>عمليات البطاقات</h2><span>مديونية وجدول استحقاق</span></div>
-  <div class="panel" id="cardOpsList"><div class="empty">لا توجد عمليات.</div></div>
-</section>
-
 <!-- 7. التقارير (تُفتح من الرئيسية) -->
 <section id="reports" class="screen">
   <div class="greeting">قراءة أعمق لأموالك</div>
@@ -525,146 +545,214 @@ details.subfold .subfold-body{padding:10px 12px}
   <div class="section-head"><h2>مقارنة الأشهر</h2></div>
   <div class="chartbox">
     <div class="bars" id="yearBars"></div>
-    <div class="chartlegend"><span><i class="dot" style="background:#43d6b2"></i>الدخل</span><span><i class="dot" style="background:#73a7ff"></i>المصروفات</span></div>
+    <div class="chartlegend"><span><i class="dot" style="background:var(--mint)"></i>الدخل</span><span><i class="dot" style="background:#73a7ff"></i>المصروفات</span></div>
   </div>
 </section>
 
-<!-- 8. الإعدادات -->
+<!-- 8. الإعدادات (مقسمة 3 أقسام منظمة) -->
 <section id="settings" class="screen">
-  <div class="greeting">بياناتك محفوظة على الجهاز</div>
-  <h1>الإعدادات</h1>
+  <div class="greeting">تخصيص التطبيق والبيانات</div>
+  <h1 data-i18n="navSettings">الإعدادات</h1>
 
-  <div class="section-head" style="margin-top:10px"><h2>النسخ الاحتياطي والاستعادة</h2><span>JSON</span></div>
-
-  <div class="set-card">
-    <div class="set-head">
-      <div class="set-ico">🔒</div>
-      <div class="set-title">
-        <b>خصوصية البيانات</b>
-        <small>التخزين محلي بالكامل داخل المتصفح على هذا الجهاز ولا يُرفع لأي سيرفر.</small>
+  <!-- القسم 1: إعدادات عامة -->
+  <details class="fold" open>
+    <summary>
+      <div class="fold-left"><span class="fold-ico">🎨</span><span data-i18n="setGeneral">إعدادات عامة</span></div>
+      <span class="chev">▼</span>
+    </summary>
+    <div class="fold-body">
+      <div class="wideform">
+        <div class="field">
+          <label data-i18n="setLang">اللغة (Language)</label>
+          <select id="prefLang" onchange="updatePreference('lang', this.value)">
+            <option value="ar">العربية</option>
+            <option value="en">English</option>
+          </select>
+        </div>
+        <div class="field">
+          <label data-i18n="setFont">حجم الخط</label>
+          <select id="prefFontSize" onchange="updatePreference('fontSize', this.value)">
+            <option value="0.92">صغير</option>
+            <option value="1">متوسط (افتراضي)</option>
+            <option value="1.1">كبير</option>
+            <option value="1.18">كبير جدًا</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>الحرف الشخصي</label>
+          <input id="prefAvatar" maxlength="2" placeholder="م" oninput="updatePreference('avatar', this.value)">
+        </div>
+        <div class="field">
+          <label>الحساب الافتراضي</label>
+          <select id="prefDefaultAcc" onchange="updatePreference('defaultAccount', this.value)"></select>
+        </div>
       </div>
-      <span class="tag">محلي</span>
-    </div>
-  </div>
 
-  <div class="set-card">
-    <div class="set-head">
-      <div class="set-ico">⬇</div>
-      <div class="set-title">
-        <b>تصدير نسخة احتياطية</b>
-        <small id="lastBackupLabel">احفظ نسخة JSON من كل حساباتك وحركاتك على جهازك.</small>
+      <div class="field" style="margin-top:12px">
+        <label>لون التطبيق (الثيم)</label>
+        <div class="theme-dots" id="themeSelector">
+          <button type="button" class="theme-dot" data-theme="mint" style="background:#43d6b2" onclick="updatePreference('theme','mint')"></button>
+          <button type="button" class="theme-dot" data-theme="blue" style="background:#569aff" onclick="updatePreference('theme','blue')"></button>
+          <button type="button" class="theme-dot" data-theme="gold" style="background:#f5b041" onclick="updatePreference('theme','gold')"></button>
+          <button type="button" class="theme-dot" data-theme="purple" style="background:#a582ff" onclick="updatePreference('theme','purple')"></button>
+        </div>
       </div>
-    </div>
-    <div class="set-actions">
-      <button class="primary" onclick="backup()">تصدير نسخة JSON</button>
-    </div>
-  </div>
 
-  <div class="set-card">
-    <div class="set-head">
-      <div class="set-ico">↥</div>
-      <div class="set-title">
-        <b>استعادة نسخة احتياطية</b>
-        <small>اختر ملف wallet-backup.json سبق تصديره لاسترجاع بياناتك.</small>
-      </div>
-    </div>
-    <input id="restore" class="file-hidden" type="file" accept="application/json,.json" onchange="restore(event)">
-    <div class="set-actions">
-      <button class="secondary" onclick="openFilePicker('restore')">اختيار ملف الاستعادة (JSON)</button>
-    </div>
-  </div>
-
-  <div class="section-head"><h2>استيراد البيانات من ملفات خارجية</h2></div>
-
-  <div class="set-card">
-    <div class="set-head">
-      <div class="set-ico">📊</div>
-      <div class="set-title">
-        <b>استيراد من Excel</b>
-        <small>ارفع ملف Excel لنقل الدخل والمصروفات والتمويل تلقائيًا دون تكرار.</small>
-      </div>
-    </div>
-    <input id="excelImport" class="file-hidden" type="file" accept=".xlsx,.xls,.csv" onchange="importWorkbook(event)">
-    <div class="set-actions">
-      <button class="secondary" onclick="openFilePicker('excelImport')">اختيار ملف Excel (.xlsx / .csv)</button>
-    </div>
-  </div>
-
-  <div class="set-card">
-    <div class="set-head">
-      <div class="set-ico">🗃</div>
-      <div class="set-title">
-        <b>استيراد Money Manager</b>
-        <small>استيراد حسابات وحركات محددة من نسخة (.mmbak / .db) مع معاينة قبل الإضافة.</small>
+      <div class="set-card" style="margin-top:12px">
+        <div class="set-head">
+          <div class="set-title">
+            <b>إخفاء الأرصدة (وضع الخصوصية)</b>
+            <small>إخفاء الأرقام في الصفحة الرئيسية بعلامات ••••</small>
+          </div>
+          <input type="checkbox" id="prefPrivacy" onchange="updatePreference('privacy', this.checked)" style="width:20px;height:20px;accent-color:var(--mint)">
+        </div>
       </div>
     </div>
-    <input id="mmbakFile" class="file-hidden" type="file" accept=".mmbak,.db,.sqlite" onchange="readMmbak(event)">
-    <div class="wideform" style="margin-top:8px">
-      <div class="field"><label>من تاريخ</label><input id="mmFrom" type="date" value="2021-01-01"></div>
-      <div class="field"><label>إلى تاريخ</label><input id="mmTo" type="date" value=""></div>
-    </div>
-    <div class="set-actions">
-      <button class="secondary" onclick="openFilePicker('mmbakFile')">اختيار ملف Money Manager</button>
-    </div>
-    <div id="mmbakPreview" style="margin-top:10px"></div>
-  </div>
+  </details>
 
-  <div class="section-head"><h2>النظام والتحديثات</h2></div>
-
-  <div class="set-card">
-    <div class="set-head">
-      <div class="set-ico">ℹ</div>
-      <div class="set-title">
-        <b>المحفظة (Wallet) — حول التطبيق</b>
-        <small id="appVersionDetail">V8.9 · 2026-11-12</small>
+  <!-- القسم 2: النسخ الاحتياطي والاستيراد -->
+  <details class="fold">
+    <summary>
+      <div class="fold-left"><span class="fold-ico">💾</span><span data-i18n="setBackup">النسخ الاحتياطي والاستيراد</span></div>
+      <span class="chev">▼</span>
+    </summary>
+    <div class="fold-body">
+      <div class="set-card">
+        <div class="set-head">
+          <div class="set-ico">🔒</div>
+          <div class="set-title">
+            <b>خصوصية البيانات</b>
+            <small>التخزين محلي بالكامل على جهازك ولا يُرفع لأي سيرفر.</small>
+          </div>
+          <span class="tag">محلي</span>
+        </div>
       </div>
-      <span class="tag" id="appVersionTag">V8.9</span>
-    </div>
-    <div class="hint" id="updateStatus">بياناتك المالية تبقى على الجهاز. التحديث يخص ملفات التطبيق فقط.</div>
-    <div class="set-actions">
-      <button class="secondary" onclick="checkForUpdate()">فحص التحديثات</button>
-      <button class="primary" onclick="forceAppUpdate()">تحديث الآن</button>
-    </div>
-  </div>
 
-  <div class="set-card" style="border-color:#75404b55">
-    <div class="set-head">
-      <div class="set-ico" style="background:#4a2631;color:#ffdbe1">⚠</div>
-      <div class="set-title">
-        <b>إعادة ضبط التطبيق</b>
-        <small>حذف جميع الحركات والحسابات المسجلة على هذا الجهاز نهائيًا.</small>
+      <div class="set-card">
+        <div class="set-head">
+          <div class="set-ico">⬇</div>
+          <div class="set-title">
+            <b>تصدير نسخة احتياطية</b>
+            <small id="lastBackupLabel">احفظ نسخة JSON من كل بياناتك.</small>
+          </div>
+        </div>
+        <div class="set-actions">
+          <button class="primary" onclick="backup()">تصدير نسخة JSON</button>
+        </div>
+      </div>
+
+      <div class="set-card">
+        <div class="set-head">
+          <div class="set-ico">↥</div>
+          <div class="set-title">
+            <b>استعادة نسخة احتياطية</b>
+            <small>استرجع بياناتك من ملف JSON سبق تصديره.</small>
+          </div>
+        </div>
+        <input id="restore" class="file-hidden" type="file" accept="application/json,.json" onchange="restore(event)">
+        <div class="set-actions">
+          <button class="secondary" onclick="openFilePicker('restore')">اختيار ملف الاستعادة (JSON)</button>
+        </div>
+      </div>
+
+      <div class="set-card">
+        <div class="set-head">
+          <div class="set-ico">📊</div>
+          <div class="set-title">
+            <b>استيراد من Excel</b>
+            <small>نقل الدخل والمصروفات والتمويل من ملف Excel.</small>
+          </div>
+        </div>
+        <input id="excelImport" class="file-hidden" type="file" accept=".xlsx,.xls,.csv" onchange="importWorkbook(event)">
+        <div class="set-actions">
+          <button class="secondary" onclick="openFilePicker('excelImport')">اختيار ملف Excel</button>
+        </div>
+      </div>
+
+      <div class="set-card">
+        <div class="set-head">
+          <div class="set-ico">🗃</div>
+          <div class="set-title">
+            <b>استيراد Money Manager</b>
+            <small>استيراد من نسخة (.mmbak / .db) مع معاينة قبل الإضافة.</small>
+          </div>
+        </div>
+        <input id="mmbakFile" class="file-hidden" type="file" accept=".mmbak,.db,.sqlite" onchange="readMmbak(event)">
+        <div class="wideform" style="margin-top:8px">
+          <div class="field"><label>من تاريخ</label><input id="mmFrom" type="date" value="2021-01-01"></div>
+          <div class="field"><label>إلى تاريخ</label><input id="mmTo" type="date" value=""></div>
+        </div>
+        <div class="set-actions">
+          <button class="secondary" onclick="openFilePicker('mmbakFile')">اختيار ملف Money Manager</button>
+        </div>
+        <div id="mmbakPreview" style="margin-top:10px"></div>
       </div>
     </div>
-    <div class="set-actions">
-      <button class="secondary danger-fill" onclick="resetApp()">مسح جميع البيانات</button>
+  </details>
+
+  <!-- القسم 3: التحديث والنظام -->
+  <details class="fold">
+    <summary>
+      <div class="fold-left"><span class="fold-ico">⟳</span><span data-i18n="setSystem">التحديث والنظام</span></div>
+      <span class="chev">▼</span>
+    </summary>
+    <div class="fold-body">
+      <div class="set-card">
+        <div class="set-head">
+          <div class="set-ico">ℹ</div>
+          <div class="set-title">
+            <b>المحفظة (Wallet) — حول التطبيق</b>
+            <small id="appVersionDetail">V9.0 · 2026-11-12</small>
+          </div>
+          <span class="tag" id="appVersionTag">V9.0</span>
+        </div>
+        <div class="hint" id="updateStatus">بياناتك المالية تبقى على الجهاز. التحديث يخص ملفات التطبيق فقط.</div>
+        <div class="set-actions">
+          <button class="secondary" onclick="checkForUpdate()">فحص التحديثات</button>
+          <button class="primary" onclick="forceAppUpdate()">تحديث الآن</button>
+        </div>
+      </div>
+
+      <div class="set-card" style="border-color:#75404b55">
+        <div class="set-head">
+          <div class="set-ico" style="background:#4a2631;color:#ffdbe1">⚠</div>
+          <div class="set-title">
+            <b>إعادة ضبط التطبيق</b>
+            <small>حذف جميع الحركات والحسابات المسجلة على هذا الجهاز نهائيًا.</small>
+          </div>
+        </div>
+        <div class="set-actions">
+          <button class="secondary danger-fill" onclick="resetApp()">مسح جميع البيانات</button>
+        </div>
+      </div>
     </div>
-  </div>
+  </details>
 </section>
 </div>
 
 <button class="fab" onclick="openModal('transaction')">＋</button>
 
-<!-- Clean 5-Item Colored Bottom Bar -->
+<!-- Bottom Bar: الرئيسية -> الحسابات -> البطاقات -> الالتزامات -> الإعدادات -->
 <nav class="bottom">
   <button class="nav active" data-page="home" onclick="go('home',this)">
     <svg viewBox="0 0 24 24" fill="none"><path d="M3 10.5L12 3l9 7.5V20a1.5 1.5 0 0 1-1.5 1.5h-5v-6h-5v6h-5A1.5 1.5 0 0 1 3 20v-9.5Z" fill="#43d6b2" fill-opacity=".22" stroke="#43d6b2" stroke-width="1.8" stroke-linejoin="round"/></svg>
-    الرئيسية
+    <span data-i18n="navHome">الرئيسية</span>
   </button>
   <button class="nav" data-page="accounts" onclick="go('accounts',this)">
     <svg viewBox="0 0 24 24" fill="none"><rect x="2.5" y="5.5" width="19" height="13" rx="3" fill="#73a7ff" fill-opacity=".22" stroke="#73a7ff" stroke-width="1.8"/><circle cx="16.5" cy="12" r="1.5" fill="#73a7ff"/></svg>
-    حساباتي
-  </button>
-  <button class="nav" data-page="commitments" onclick="go('commitments',this)">
-    <svg viewBox="0 0 24 24" fill="none"><rect x="4" y="3.5" width="16" height="17" rx="3" fill="#ff7285" fill-opacity=".22" stroke="#ff7285" stroke-width="1.8"/><path d="M8 8.5h8M8 12.5h8M8 16.5h5" stroke="#ff7285" stroke-width="1.8" stroke-linecap="round"/></svg>
-    الالتزامات
+    <span data-i18n="navAccounts">الحسابات</span>
   </button>
   <button class="nav" data-page="cards" onclick="go('cards',this)">
     <svg viewBox="0 0 24 24" fill="none"><rect x="2.5" y="5" width="19" height="14" rx="3" fill="#ffbd69" fill-opacity=".25" stroke="#ffbd69" stroke-width="1.8"/><path d="M2.5 9.5h19" stroke="#ffbd69" stroke-width="2"/><rect x="6" y="13.5" width="5" height="2" rx="1" fill="#ffbd69"/></svg>
-    البطاقات
+    <span data-i18n="navCards">البطاقات</span>
+  </button>
+  <button class="nav" data-page="commitments" onclick="go('commitments',this)">
+    <svg viewBox="0 0 24 24" fill="none"><rect x="4" y="3.5" width="16" height="17" rx="3" fill="#ff7285" fill-opacity=".22" stroke="#ff7285" stroke-width="1.8"/><path d="M8 8.5h8M8 12.5h8M8 16.5h5" stroke="#ff7285" stroke-width="1.8" stroke-linecap="round"/></svg>
+    <span data-i18n="navCommitments">الالتزامات</span>
   </button>
   <button class="nav" data-page="settings" onclick="go('settings',this)">
     <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" fill="#91a2b9" fill-opacity=".3" stroke="#91a2b9" stroke-width="1.8"/><path d="M12 3v2.2M12 18.8V21M3 12h2.2M18.8 12H21M5.6 5.6l1.6 1.6M16.8 16.8l1.6 1.6M18.4 5.6l-1.6 1.6M7.2 16.8l-1.6 1.6" stroke="#91a2b9" stroke-width="1.8" stroke-linecap="round"/></svg>
-    الإعدادات
+    <span data-i18n="navSettings">الإعدادات</span>
   </button>
 </nav>
 
@@ -708,11 +796,12 @@ details.subfold .subfold-body{padding:10px 12px}
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
 <script>
-const APP_VERSION='8.9';
+const APP_VERSION='9.0';
 const APP_BUILD='2026-11-12';
 const KEY='raseed_mobile_v2';
 let pendingWorkbookTransactions=null;
-const monthNames=['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+const monthNamesAr=['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+const monthNamesEn=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const DEFAULT_CATS=['أسرة','فواتير','مواصلات','تعليم','صحة','تسوق','ترفيه','أقساط','راتب','أرباح','أخرى','قرض مستلم','قبض جمعية'];
 
 let state;
@@ -730,12 +819,17 @@ state.ledger=state.ledger||[];
 state.importBatches=state.importBatches||[];
 state.debts=state.debts||[];
 state.categories=state.categories||[...DEFAULT_CATS];
+state.prefs=state.prefs||{lang:'ar',fontSize:'1',theme:'mint',avatar:'م',defaultAccount:'',privacy:false};
 
 let activeYear = new Date().getFullYear();
 let activeMonth = new Date().getMonth() + 1;
 
+const getMonthNames = () => (state.prefs?.lang === 'en' ? monthNamesEn : monthNamesAr);
 const fmt=n=>(Math.round((Number(n)||0)*100)/100).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmtInt=n=>Math.round(Number(n)||0).toLocaleString('en-US');
 const egp=n=>fmt(n)+' ج.م';
+const egpInt=n=>fmtInt(n)+' ج.م';
+const maskable=(str)=>state.prefs?.privacy ? '••••' : str;
 const today=()=>new Date().toISOString().slice(0,10);
 const monthKey=d=>String(d||'').slice(0,7);
 const selected=()=>String(activeYear)+'-'+String(activeMonth).padStart(2,'0');
@@ -755,7 +849,113 @@ function persist(){
   render();
 }
 
-/* Toggle Tap Details & Actions on List Items */
+/* Preferences (Language, Font Size, Theme, Privacy, Default Account, Avatar) */
+const THEMES = {
+  mint:   {mint:'#43d6b2', mint2:'#1a9c94', h1:'#1b8f83', h2:'#145e68', h3:'#174b63'},
+  blue:   {mint:'#569aff', mint2:'#2d68c4', h1:'#2563eb', h2:'#1e40af', h3:'#1e3a8a'},
+  gold:   {mint:'#f5b041', mint2:'#b9770e', h1:'#b7791f', h2:'#744210', h3:'#5f370e'},
+  purple: {mint:'#a582ff', mint2:'#6b46c1', h1:'#6b46c1', h2:'#44337a', h3:'#322659'}
+};
+const I18N = {
+  ar: {
+    appName:'المحفظة', appSub:'Wallet · مديرك المالي الشخصي', greeting:'أهلاً بيك 👋', heroHeadline:'خلّيك متحكم في فلوسك',
+    totalAvail:'إجمالي الأموال المتاحة (رصيد حساباتك)', totalAvailSub:'إجمالي السيولة الفعلية في الكاش والبنوك والمحافظ',
+    netMonth:'صافي الشهر', incMonth:'دخل الشهر', expMonth:'مصروف الشهر',
+    btnSalary:'حساب المرتب', btnActivity:'سجل الحركات', btnReports:'التقارير',
+    monthlySummary:'ملخصك المالي', totalIncome:'إجمالي الدخل', totalExpense:'إجمالي المصروفات',
+    cardsDebt:'مديونية البطاقات', usedFromLimit:'المستخدم من الليمت', cumSavings:'الادخار التراكمي', currencyFull:'جنيه مصري',
+    loansTitle:'السلف', totalLoans:'إجمالي السلف', paidActual:'المسدد فعليًا', remainPay:'المتبقي للسداد',
+    monthlyCommitments:'الالتزامات الشهرية', dueThisMonth:'مستحق هذا الشهر (أقساط / جمعيات)',
+    paidThisMonth:'المسدد هذا الشهر', remainThisMonth:'المتبقي هذا الشهر',
+    recentTx:'آخر الحركات', viewAll:'عرض الكل ←', detailsLink:'التفاصيل ←',
+    navHome:'الرئيسية', navAccounts:'الحسابات', navCards:'البطاقات', navCommitments:'الالتزامات', navSettings:'الإعدادات',
+    setGeneral:'إعدادات عامة', setLang:'اللغة (Language)', setFont:'حجم الخط',
+    setBackup:'النسخ الاحتياطي والاستيراد', setSystem:'التحديث والنظام'
+  },
+  en: {
+    appName:'Wallet', appSub:'المحفظة · Personal Finance Manager', greeting:'Welcome back 👋', heroHeadline:'Stay in control of your money',
+    totalAvail:'Total Available Funds (Accounts)', totalAvailSub:'Actual liquid balance across cash, banks & wallets',
+    netMonth:'Month Net', incMonth:'Income', expMonth:'Expenses',
+    btnSalary:'Salary Calc', btnActivity:'Activity Log', btnReports:'Reports',
+    monthlySummary:'Monthly Summary', totalIncome:'Total Income', totalExpense:'Total Expenses',
+    cardsDebt:'Cards Debt', usedFromLimit:'Used of credit limit', cumSavings:'Cumulative Savings', currencyFull:'EGP',
+    loansTitle:'Loans', totalLoans:'Total Loans', paidActual:'Paid', remainPay:'Remaining',
+    monthlyCommitments:'Monthly Commitments', dueThisMonth:'Due this month',
+    paidThisMonth:'Paid this month', remainThisMonth:'Remaining this month',
+    recentTx:'Recent Activity', viewAll:'View all →', detailsLink:'Details →',
+    navHome:'Home', navAccounts:'Accounts', navCards:'Cards', navCommitments:'Commitments', navSettings:'Settings',
+    setGeneral:'General Settings', setLang:'Language', setFont:'Font Size',
+    setBackup:'Backup & Import', setSystem:'Updates & System'
+  }
+};
+
+function applyPreferences(){
+  const p = state.prefs || {};
+  // Font scale
+  document.documentElement.style.setProperty('--scale', p.fontSize || '1');
+  // Theme colors
+  const th = THEMES[p.theme] || THEMES.mint;
+  document.documentElement.style.setProperty('--mint', th.mint);
+  document.documentElement.style.setProperty('--mint2', th.mint2);
+  document.documentElement.style.setProperty('--hero1', th.h1);
+  document.documentElement.style.setProperty('--hero2', th.h2);
+  document.documentElement.style.setProperty('--hero3', th.h3);
+  document.querySelectorAll('.theme-dot').forEach(btn=>btn.classList.toggle('active', btn.dataset.theme===(p.theme||'mint')));
+  // Avatar letter
+  const av = document.getElementById('userAvatarLetter');
+  if(av) av.textContent = (p.avatar||'م').trim() || 'م';
+  // Language & Direction
+  const lang = p.lang === 'en' ? 'en' : 'ar';
+  document.documentElement.lang = lang;
+  document.documentElement.dir = lang === 'en' ? 'ltr' : 'rtl';
+  const dict = I18N[lang];
+  document.querySelectorAll('[data-i18n]').forEach(el=>{
+    const k = el.getAttribute('data-i18n');
+    if(dict[k]) el.textContent = dict[k];
+  });
+  // Sync controls in Settings
+  setv('prefLang', lang);
+  setv('prefFontSize', p.fontSize || '1');
+  setv('prefAvatar', p.avatar || 'م');
+  const privChk = document.getElementById('prefPrivacy');
+  if(privChk) privChk.checked = !!p.privacy;
+  const eyeBtn = document.getElementById('privacyToggleBtn');
+  if(eyeBtn) eyeBtn.textContent = p.privacy ? '🙈' : '👁';
+  const defAccSel = document.getElementById('prefDefaultAcc');
+  if(defAccSel){
+    defAccSel.innerHTML = '<option value="">بدون افتراضي</option>' + state.accounts.map(a=>`<option value="${a.id}">${esc(a.name)}</option>`).join('');
+    defAccSel.value = p.defaultAccount || '';
+  }
+}
+
+function updatePreference(key, value){
+  state.prefs = state.prefs || {};
+  state.prefs[key] = value;
+  applyPreferences();
+  persist();
+}
+
+function togglePrivacyMode(){
+  updatePreference('privacy', !state.prefs?.privacy);
+}
+
+/* Horizontal Card Panels Toggle */
+function toggleCardPanel(panelId, btn){
+  const target = document.getElementById(panelId);
+  const wasOpen = target.classList.contains('show');
+  document.querySelectorAll('.card-subpanel').forEach(p=>p.classList.remove('show'));
+  document.querySelectorAll('.h-action-btn').forEach(b=>b.classList.remove('active'));
+  if(!wasOpen){
+    target.classList.add('show');
+    if(btn) btn.classList.add('active');
+  }
+}
+function closeCardPanels(){
+  document.querySelectorAll('.card-subpanel').forEach(p=>p.classList.remove('show'));
+  document.querySelectorAll('.h-action-btn').forEach(b=>b.classList.remove('active'));
+}
+
+/* Toggle Tap Actions on List Items */
 function toggleItemActions(el, ev){
   if(ev && ev.target.closest('button')) return;
   const wasExpanded = el.classList.contains('expanded');
@@ -809,7 +1009,7 @@ function migrateLegacyDebtsToCommitments(){
     if(!state.commitments.some(c=>c.id===cid)){
       state.commitments.push({
         id:cid,
-        title:'سلفة مسجلة سابقًا',
+        title:'سلفة',
         type:'سلفة',
         freq:'once',
         amount:Number(state.debtTotal)||0,
@@ -886,8 +1086,9 @@ function openHomePeriodPicker(){
 }
 function renderCompactYMPicker(){
   ensureActionDialog(true);
-  document.getElementById('actionTitle').textContent = 'اختر الشهر والسنة';
-  const gridHtml = monthNames.map((n, i) => {
+  const mList = getMonthNames();
+  document.getElementById('actionTitle').textContent = state.prefs?.lang==='en'?'Select Month & Year':'اختر الشهر والسنة';
+  const gridHtml = mList.map((n, i) => {
     const mNum = i + 1;
     const isSel = mNum === ymPickerState.month;
     return `<button type="button" class="ym-cell ${isSel?'active':''}" onclick="selectCompactYMMonth(${mNum})">${n}</button>`;
@@ -965,7 +1166,6 @@ try{
   });
 }catch(e){}
 
-/* Scroll active input into view inside top-aligned modal */
 document.addEventListener('focusin',e=>{
   if(e.target.closest('.modal.show:not(.center-modal)')){
     setTimeout(()=>e.target.scrollIntoView({block:'nearest',behavior:'smooth'}),100);
@@ -975,7 +1175,8 @@ document.addEventListener('focusin',e=>{
 function formatYMArabic(ym){
   if(!ym || !ym.includes('-')) return 'مفتوح';
   const [y,m]=ym.split('-');
-  const mName=monthNames[Number(m)-1]||m;
+  const mList=getMonthNames();
+  const mName=mList[Number(m)-1]||m;
   return `${mName} ${y}`;
 }
 
@@ -1054,6 +1255,7 @@ function init(){
   document.getElementById('opStartLabel').textContent = formatYMArabic(curYM);
   toggleCommitmentFreqFields();
   showAppVersion();
+  applyPreferences();
   render();
 }
 
@@ -1076,36 +1278,37 @@ function render(){
   const homePeriodLbl=document.getElementById('homePeriodLabel');
   if(homePeriodLbl) homePeriodLbl.textContent=formatYMArabic(m);
 
+  // Home uses whole rounded numbers + optional privacy mask
   const homeAvailEl=document.getElementById('homeAvailableTotal');
-  if(homeAvailEl) homeAvailEl.textContent=egp(availTotal);
+  if(homeAvailEl) homeAvailEl.textContent=maskable(egpInt(availTotal));
 
-  document.getElementById('remaining').textContent=egp(t.net);
-  document.getElementById('incomeHero').textContent=egp(t.inc);
-  document.getElementById('expenseHero').textContent=egp(t.exp);
-  document.getElementById('incomeCard').textContent=fmt(t.inc);
-  document.getElementById('expenseCard').textContent=fmt(t.exp);
-  document.getElementById('debtCard').textContent=fmt(cardsDebtTotal);
-  document.getElementById('savingCard').textContent=fmt((Number(state.savings)||0)+t.net);
+  document.getElementById('remaining').textContent=maskable(egpInt(t.net));
+  document.getElementById('incomeHero').textContent=maskable(egpInt(t.inc));
+  document.getElementById('expenseHero').textContent=maskable(egpInt(t.exp));
+  document.getElementById('incomeCard').textContent=maskable(fmtInt(t.inc));
+  document.getElementById('expenseCard').textContent=maskable(fmtInt(t.exp));
+  document.getElementById('debtCard').textContent=maskable(fmtInt(cardsDebtTotal));
+  document.getElementById('savingCard').textContent=maskable(fmtInt((Number(state.savings)||0)+t.net));
   document.getElementById('savingBig').textContent=egp((Number(state.savings)||0)+t.net);
 
-  // Home Section 1: السلف
+  // Home Section 1: السلف (Whole numbers)
   const hdTot=document.getElementById('homeDebtsTotal');
   const hdPaid=document.getElementById('homeDebtsPaid');
   const hdRem=document.getElementById('homeDebtsRemain');
   const hdProg=document.getElementById('homeDebtsProgress');
-  if(hdTot) hdTot.textContent=egp(debtStats.total);
-  if(hdPaid) hdPaid.textContent=egp(debtStats.paid);
-  if(hdRem) hdRem.textContent=egp(debtStats.remain);
+  if(hdTot) hdTot.textContent=maskable(egpInt(debtStats.total));
+  if(hdPaid) hdPaid.textContent=maskable(egpInt(debtStats.paid));
+  if(hdRem) hdRem.textContent=maskable(egpInt(debtStats.remain));
   if(hdProg) hdProg.style.width=(debtStats.total>0?Math.min(100,(debtStats.paid/debtStats.total)*100):0)+'%';
 
-  // Home Section 2: الالتزامات الشهرية
+  // Home Section 2: الالتزامات الشهرية (Whole numbers)
   const hcDue=document.getElementById('homeCommitmentsDue');
   const hcPaid=document.getElementById('homeCommitmentsPaid');
   const hcRem=document.getElementById('homeCommitmentsRemain');
   const hcProg=document.getElementById('homeCommitmentsProgress');
-  if(hcDue) hcDue.textContent=egp(comStats.due);
-  if(hcPaid) hcPaid.textContent=egp(comStats.paid);
-  if(hcRem) hcRem.textContent=egp(comStats.remain);
+  if(hcDue) hcDue.textContent=maskable(egpInt(comStats.due));
+  if(hcPaid) hcPaid.textContent=maskable(egpInt(comStats.paid));
+  if(hcRem) hcRem.textContent=maskable(egpInt(comStats.remain));
   if(hcProg) hcProg.style.width=(comStats.due>0?Math.min(100,(comStats.paid/comStats.due)*100):0)+'%';
 
   document.getElementById('reportIncome').textContent=egp(t.inc);
@@ -1155,11 +1358,12 @@ function render(){
 
   // 12-Month Comparison Chart in Reports
   const yb=document.getElementById('yearBars');
+  const mList=getMonthNames();
   if(yb){
     const months={};
     for(let i=1;i<=12;i++){const k=y+'-'+String(i).padStart(2,'0');const tt=totals(k);months[k]={inc:tt.inc,exp:tt.exp}}
     const max=Math.max(1,...Object.values(months).flatMap(v=>[v.inc,v.exp]));
-    yb.innerHTML=Object.entries(months).map(([k,v])=>`<div class="barcol"><div class="barpair"><div class="bar inc" style="height:${Math.max(3,v.inc/max*100)}%"></div><div class="bar exp" style="height:${Math.max(3,v.exp/max*100)}%"></div></div><span class="vmonth">${monthNames[Number(k.slice(5,7))-1]}</span></div>`).join('');
+    yb.innerHTML=Object.entries(months).map(([k,v])=>`<div class="barcol"><div class="barpair"><div class="bar inc" style="height:${Math.max(3,v.inc/max*100)}%"></div><div class="bar exp" style="height:${Math.max(3,v.exp/max*100)}%"></div></div><span class="vmonth">${mList[Number(k.slice(5,7))-1]}</span></div>`).join('');
   }
 
   if(typeof renderModules==='function'){renderModules();showCreditQuote();}
@@ -1180,12 +1384,13 @@ function filterActivity(){
   if(!el) return;
   if(!filtered.length){el.innerHTML='<div class="empty">لا توجد نتائج مطابقة</div>';return}
   let html='',lastDay='';
+  const mList=getMonthNames();
   for(const t of filtered){
     const day=String(t.date||'').slice(0,10);
     if(day && day!==lastDay){
       lastDay=day;
       const parts=day.split('-');
-      const label=(parts.length===3)?(`${Number(parts[2])} ${monthNames[Number(parts[1])-1]||''} ${parts[0]}`):day;
+      const label=(parts.length===3)?(`${Number(parts[2])} ${mList[Number(parts[1])-1]||''} ${parts[0]}`):day;
       html+=`<div class="daysep"><span>${label}</span></div>`;
     }
     html+=itemHTML(t);
@@ -1226,7 +1431,7 @@ function editTransaction(id){
   window._editingTxId=String(id);
 }
 
-/* Unified Modal Open & Save (Title optional -> defaults to category name) */
+/* Unified Modal Open & Save */
 function openModal(which){
   const m=document.getElementById('modal');
   m.classList.add('show');
@@ -1236,6 +1441,10 @@ function openModal(which){
   document.getElementById('modalTitle').textContent=which==='payment'?'تسجيل سداد':'إضافة حركة مالية';
   if(which!=='edit')window._editingTxId=null;
   refreshAccountSelects();
+  if(which!=='edit' && state.prefs?.defaultAccount){
+    const sel=document.getElementById('transactionAccount');
+    if(sel && state.accounts.some(a=>a.id===state.prefs.defaultAccount)) sel.value=state.prefs.defaultAccount;
+  }
   refreshCategorySelect();
   updateTransactionAccountOptions();
 }
@@ -1354,7 +1563,9 @@ function restore(e){
       let v=JSON.parse(r.result);
       if(!Array.isArray(v.transactions))throw 0;
       state=v;
+      state.prefs=state.prefs||{lang:'ar',fontSize:'1',theme:'mint',avatar:'م',defaultAccount:'',privacy:false};
       migrateLegacyDebtsToCommitments();
+      applyPreferences();
       persist();renderAccounts();renderModules();toast('تم استرجاع النسخة بنجاح');
     }catch{toast('ملف النسخة غير صالح')}
     e.target.value='';
@@ -1424,7 +1635,7 @@ function initModules(){
   let y=document.getElementById('salYear'),m=document.getElementById('salMonth');
   if(!y||!m)return;
   for(let i=new Date().getFullYear()-5;i<=new Date().getFullYear()+15;i++)y.add(new Option(i,String(i)));
-  monthNames.forEach((n,i)=>m.add(new Option(n,String(i+1))));
+  monthNamesAr.forEach((n,i)=>m.add(new Option(n,String(i+1))));
   y.value=String(new Date().getFullYear());
   m.value=String(new Date().getMonth()+1);
   setv('opDate',today());setv('cardPaymentDate',today());
@@ -1590,7 +1801,7 @@ function addCard(){
   const payDay=num('cardPayDay')||3;
   state.cards.push({id:'card-'+Date.now(),name,payDay,limit,balance,terms});
   persist();setv('cardName','');setv('cardLimit','');setv('cardAvailable','');previewNewCardDebt();
-  refreshModuleSelects();renderModules();toast('تم حفظ البطاقة');
+  refreshModuleSelects();renderModules();closeCardPanels();toast('تم حفظ البطاقة');
 }
 function editCard(id){
   const c=state.cards.find(x=>x.id===id);if(!c)return;
@@ -1672,7 +1883,7 @@ function addCardOperation(){
   }
   state.cardOps.push(op);
   state.transactions.push({id:'card-purchase-'+op.id,type:'expense',title:'شراء بالبطاقة - '+title,category:'مشتريات بطاقة',amount,date,accountId:null,source:'card-purchase:'+op.id});
-  persist();setv('opTitle','');setv('opAmount','');renderModules();showCreditQuote();toast('تم تسجيل العملية وخصمها من الرصيد المتاح للبطاقة');
+  persist();setv('opTitle','');setv('opAmount','');renderModules();showCreditQuote();closeCardPanels();toast('تم تسجيل العملية وخصمها من الرصيد المتاح للبطاقة');
 }
 function opOutstanding(op){
   return op.type==='installment'
@@ -1713,10 +1924,10 @@ function payCard(){
   }
   state.cardPayments.push({id:'cp-'+Date.now(),cardId:card.id,amount,date,accountId:accountId||null});
   state.transactions.push({id:'cardpay-'+Date.now(),type:'credit_payment',title:'سداد بطاقة - '+card.name,category:'سداد بطاقة',amount,date,accountId:accountId||null,source:'card-payment'});
-  persist();renderModules();renderAccounts();setv('cardPaymentAmount','');toast('تم تسجيل السداد وتحديث الرصيد المتاح للبطاقة');
+  persist();renderModules();renderAccounts();setv('cardPaymentAmount','');closeCardPanels();toast('تم تسجيل السداد وتحديث الرصيد المتاح للبطاقة');
 }
 
-/* Commitments & السلف (Optional Name -> defaults to category name) */
+/* Commitments & السلف (Primary: Category, Optional Badge: Custom Name if different) */
 function toggleCommitmentFreqFields(){
   const isMonthly = val('comFreq') !== 'once';
   document.querySelectorAll('.com-monthly-only').forEach(e=>e.style.display=isMonthly?'block':'none');
@@ -1747,6 +1958,16 @@ function addCommitment(){
 }
 function commitmentDue(c,month){return month>=c.start&&(!c.end||month<=c.end)}
 
+/* Helper: Format Commitment/Loan Title + Optional Tag without duplicate text */
+function formatCommitmentLabel(c){
+  const cat = String(c.type || (c.freq==='once'?'سلفة':'التزام')).trim();
+  const custom = String(c.title || '').trim();
+  if(!custom || custom === cat){
+    return `<b>${esc(cat)}</b>`;
+  }
+  return `<b>${esc(cat)} <span class="tag" style="margin-right:4px">${esc(custom)}</span></b>`;
+}
+
 function showCommitmentDetails(id){
   const c=state.commitments.find(x=>x.id===id);if(!c)return;
   const isOnce=c.freq==='once';
@@ -1759,8 +1980,8 @@ function showCommitmentDetails(id){
   ensureActionDialog(true);
   document.getElementById('actionTitle').textContent=isOnce?'تفاصيل السلفة':'تفاصيل الالتزام';
   let rows=`
-    <div class="rowline"><span>الاسم</span><b>${esc(c.title)}</b></div>
     <div class="rowline"><span>التصنيف</span><b>${esc(c.type||'التزام')}</b></div>
+    ${(c.title && c.title!==c.type)?`<div class="rowline"><span>الاسم / البيان</span><b>${esc(c.title)}</b></div>`:''}
     <div class="rowline"><span>نظام السداد</span><b>${isOnce?'سلفة (مرة واحدة)':'شهري'}</b></div>
     <div class="rowline"><span>المبلغ</span><b>${egp(c.amount)}</b></div>
   `;
@@ -1787,11 +2008,12 @@ function editCommitment(id){
   const c=state.commitments.find(x=>x.id===id);if(!c)return;
   ensureActionDialog(false);
   const isOnce=c.freq==='once';
+  const customVal = (c.title && c.title !== c.type) ? c.title : '';
   document.getElementById('actionTitle').textContent=isOnce?'تعديل السلفة':'تعديل الالتزام';
   document.getElementById('actionBody').innerHTML=`
     <div class="field"><label>نظام السداد</label><select id="eComFreq" onchange="document.querySelectorAll('.ecom-m-only').forEach(x=>x.style.display=this.value==='monthly'?'block':'none')"><option value="monthly" ${!isOnce?'selected':''}>شهري</option><option value="once" ${isOnce?'selected':''}>سلفة (مرة واحدة)</option></select></div>
     <div class="field"><label>التصنيف</label><select id="eComType"><option>سلفة</option><option>جمعية</option><option>قسط شقة</option><option>قسط بنك</option><option>التزام شهري</option><option>فاتورة</option><option>أخرى</option></select></div>
-    <div class="field"><label>الاسم</label><input id="eComTitle" value="${esc(c.title)}"></div>
+    <div class="field"><label>الاسم (اختياري)</label><input id="eComTitle" value="${esc(customVal)}" placeholder="اتركه فارغًا أو اكتب اسم"></div>
     <div class="wideform">
       <div class="field"><label>المبلغ</label><input id="eComAmount" type="number" step="0.01" value="${c.amount}"></div>
       <div class="field ecom-m-only" style="display:${isOnce?'none':'block'}"><label>يوم الاستحقاق</label><input id="eComDay" type="number" min="1" max="31" value="${c.day||1}"></div>
@@ -1858,23 +2080,23 @@ function renderModules(){
     return `<div class="listitem"><div class="info"><b>${esc(o.title)} — ${esc(c?.name||'بطاقة')}</b><small>${sub} · ${o.date}</small><small>الأصل ${fmt(o.amount)} · المتبقي ${fmt(remaining)}</small></div><span class="tag">${o.type==='swipe'?'مسحوبات':'تقسيط'}</span></div>`;
   }).join(''):'<div class="empty">لا توجد عمليات.</div>';
 
-  // Render Monthly Commitments (ultra-clean by default, details & actions appear on tap)
+  // Render Monthly Commitments (NO paid/remaining line underneath; clean label + amount; actions on tap)
   const comStats=monthCommitmentsStats(m);
   e=document.getElementById('comMonthLabel');if(e)e.textContent=formatYMArabic(m);
   e=document.getElementById('commitmentsList');
   if(e)e.innerHTML=comStats.list.length?comStats.list.map(c=>{
     let paid=state.commitmentPayments.filter(p=>p.commitmentId===c.id&&p.month===m).reduce((s,p)=>s+(Number(p.amount)||0),0),
         left=Math.max(0,(Number(c.amount)||0)-paid);
-    return `<div class="listitem" onclick="toggleItemActions(this,event)"><div class="info"><b>${esc(c.title)} <span class="tag" style="margin-right:4px">${esc(c.type||'التزام')}</span></b><small class="tap-details">مدفوع ${egp(paid)} · متبقي ${egp(left)}</small><div class="tap-actions"><button class="smallbtn" onclick="markCommitmentPaid('${c.id}')">${left?'تسجيل دفع':'مدفوع ✓'}</button><button class="smallbtn" onclick="showCommitmentDetails('${c.id}')">تفاصيل</button><button class="smallbtn" onclick="editCommitment('${c.id}')">تعديل</button><button class="smallbtn danger" onclick="deleteCommitment('${c.id}')">حذف</button></div></div><strong class="${left?'orange':'mint'}">${egp(left)}</strong></div>`;
+    return `<div class="listitem" onclick="toggleItemActions(this,event)"><div class="info">${formatCommitmentLabel(c)}<div class="tap-actions"><button class="smallbtn" onclick="markCommitmentPaid('${c.id}')">${left?'تسجيل دفع':'مدفوع ✓'}</button><button class="smallbtn" onclick="showCommitmentDetails('${c.id}')">تفاصيل</button><button class="smallbtn" onclick="editCommitment('${c.id}')">تعديل</button><button class="smallbtn danger" onclick="deleteCommitment('${c.id}')">حذف</button></div></div><strong class="${left?'orange':'mint'}">${egp(left)}</strong></div>`;
   }).join(''):'<div class="empty">لا توجد التزامات شهرية في هذا الشهر.</div>';
 
-  // Render السلف (ultra-clean by default, details & actions appear on tap)
+  // Render السلف (NO paid/remaining line underneath; clean label + amount; actions on tap)
   const debtStats=oneTimeDebtsStats();
   const dListEl=document.getElementById('oneTimeDebtsList');
   if(dListEl) dListEl.innerHTML=debtStats.list.length?debtStats.list.map(c=>{
     let paid=state.commitmentPayments.filter(p=>p.commitmentId===c.id).reduce((s,p)=>s+(Number(p.amount)||0),0),
         left=Math.max(0,(Number(c.amount)||0)-paid);
-    return `<div class="listitem" onclick="toggleItemActions(this,event)"><div class="info"><b>${esc(c.title)} <span class="tag" style="margin-right:4px">${esc(c.type||'سلفة')}</span></b><small class="tap-details">مدفوع ${egp(paid)} · متبقي ${egp(left)}</small><div class="tap-actions"><button class="smallbtn" onclick="markCommitmentPaid('${c.id}')">${left?'تسجيل سداد':'مسدد ✓'}</button><button class="smallbtn" onclick="showCommitmentDetails('${c.id}')">تفاصيل</button><button class="smallbtn" onclick="editCommitment('${c.id}')">تعديل</button><button class="smallbtn danger" onclick="deleteCommitment('${c.id}')">حذف</button></div></div><strong class="${left?'red':'mint'}">${egp(left)}</strong></div>`;
+    return `<div class="listitem" onclick="toggleItemActions(this,event)"><div class="info">${formatCommitmentLabel(c)}<div class="tap-actions"><button class="smallbtn" onclick="markCommitmentPaid('${c.id}')">${left?'تسجيل سداد':'مسدد ✓'}</button><button class="smallbtn" onclick="showCommitmentDetails('${c.id}')">تفاصيل</button><button class="smallbtn" onclick="editCommitment('${c.id}')">تعديل</button><button class="smallbtn danger" onclick="deleteCommitment('${c.id}')">حذف</button></div></div><strong class="${left?'red':'mint'}">${egp(left)}</strong></div>`;
   }).join(''):'<div class="empty">لا توجد سلف مسجلة.</div>';
 }
 
@@ -1911,14 +2133,14 @@ function addAccount(){
   if(!name)return toast('اكتب اسم الحساب');
   if(state.accounts.some(a=>a.name.toLowerCase()===name.toLowerCase()))return toast('الحساب موجود بالفعل');
   state.accounts.push({id:'acc-'+Date.now(),name,type:val('accType'),opening});
-  persist();setv('accName','');setv('accOpening','');renderAccounts();refreshAccountSelects();toast('تمت إضافة الحساب');
+  persist();setv('accName','');setv('accOpening','');renderAccounts();refreshAccountSelects();applyPreferences();toast('تمت إضافة الحساب');
 }
 function renderAccounts(){
   let list=document.getElementById('accountsList');if(!list)return;
   let total=allAccountsAvailable();
   document.getElementById('accountsTotal').textContent=egp(total);
   const homeAvailEl=document.getElementById('homeAvailableTotal');
-  if(homeAvailEl) homeAvailEl.textContent=egp(total);
+  if(homeAvailEl) homeAvailEl.textContent=maskable(egpInt(total));
   list.innerHTML=state.accounts.length?state.accounts.map(a=>`<div class="listitem" onclick="toggleItemActions(this,event)"><div class="actico">${a.type==='cash'?'👛':a.type==='bank'?'🏦':a.type==='wallet'?'📱':'💳'}</div><div class="info"><b>${esc(a.name)}</b><small>${({cash:'كاش',bank:'حساب بنكي',wallet:'محفظة إلكترونية',prepaid:'بطاقة مسبقة الدفع'})[a.type]||a.type}</small><div class="tap-actions"><button class="smallbtn" onclick="showAccountStatement('${a.id}')">كشف حساب</button><button class="smallbtn" onclick="editAccount('${a.id}')">تعديل</button><button class="smallbtn danger" onclick="deleteAccount('${a.id}')">حذف</button></div></div><strong>${egp(accountBalance(a))}</strong></div>`).join(''):'<div class="empty">أضف أول حساب لتتبع أرصدتك.</div>';
   refreshAccountSelects();
 }
@@ -1935,7 +2157,7 @@ function editAccount(id){
     if(!name)return toast('اكتب اسم الحساب');
     if(state.accounts.some(x=>x.id!==id&&x.name.toLowerCase()===name.toLowerCase()))return toast('الاسم مستخدم');
     a.name=name;a.type=document.getElementById('editAccType').value;a.opening=Number(document.getElementById('editAccOpening').value)||0;
-    persist();closeActionDialog();renderAccounts();toast('تم تعديل الحساب');
+    persist();closeActionDialog();renderAccounts();applyPreferences();toast('تم تعديل الحساب');
   };
   const dlg=document.getElementById('actionDialog');
   dlg.classList.add('show');dlg.scrollTop=0;
@@ -1945,7 +2167,7 @@ function deleteAccount(id){
   const used=state.transactions.some(t=>t.accountId===id)||(state.ledger||[]).some(l=>l.from===id||l.to===id);
   appConfirm('حذف الحساب','هل تريد حذف حساب «'+a.name+'»؟'+(used?' (الحركات المرتبطة ستبقى بدون حساب)':''),'نعم، احذف',()=>{
     state.accounts=state.accounts.filter(x=>x.id!==id);
-    persist();renderAccounts();toast('تم حذف الحساب');
+    persist();renderAccounts();applyPreferences();toast('تم حذف الحساب');
   });
 }
 function showAccountStatement(accId){
@@ -2132,7 +2354,7 @@ function commitMmbakImport(){
   state.ledger.push(...p.txs.filter(x=>x.type==='transfer').map(x=>({id:x.id,type:'transfer',from:x.accountId,to:x.toAccountId,amount:x.amount,fee:0,date:x.date,note:x.title,importSource:'mmbak',importBatch:batchId})));
   state.importBatches=state.importBatches||[];
   state.importBatches.push({id:batchId,accountIds:p.newAccounts.map(a=>a.id),transactionIds:p.txs.filter(x=>x.type!=='transfer').map(x=>x.id),ledgerIds:p.txs.filter(x=>x.type==='transfer').map(x=>x.id),dateFrom:val('mmFrom'),dateTo:val('mmTo')});
-  persist();mmPending=null;renderAccounts();
+  persist();mmPending=null;renderAccounts();applyPreferences();
   document.getElementById('mmbakPreview').innerHTML='<div class="hint">تم استيراد '+p.newAccounts.length+' حساب و'+p.txs.length+' حركة.</div><button class="secondary" style="margin-top:6px" onclick="undoLastMmbak()">التراجع عن آخر استيراد</button>';
   toast('اكتمل الاستيراد');
 }
@@ -2143,7 +2365,7 @@ function undoLastMmbak(){
   state.ledger=state.ledger.filter(x=>!ids.has(x.id));
   const used=new Set([...state.transactions.map(x=>x.accountId),...state.ledger.flatMap(x=>[x.from,x.to])]);
   state.accounts=state.accounts.filter(a=>!(b.accountIds||[]).includes(a.id)||used.has(a.id));
-  persist();renderAccounts();document.getElementById('mmbakPreview').textContent='تم التراجع عن آخر عملية استيراد.';toast('تم التراجع عن الاستيراد');
+  persist();renderAccounts();applyPreferences();document.getElementById('mmbakPreview').textContent='تم التراجع عن آخر عملية استيراد.';toast('تم التراجع عن الاستيراد');
 }
 
 /* Unified In-App Action Dialogs */
@@ -2196,7 +2418,8 @@ function saveCommitmentPayment(){
 }
 function resetApp(){
   appConfirm('إعادة ضبط التطبيق','سيتم حذف جميع الحركات والحسابات والبطاقات والالتزامات المحفوظة على هذا الجهاز نهائيًا. تأكد من تصدير نسخة احتياطية أولًا.','نعم، امسح الكل',()=>{
-    state={transactions:[],paid:0,savings:0,debtTotal:0,salaryConfig:{},salaryMonths:{},cards:[],cardOps:[],cardPayments:[],commitments:[],commitmentPayments:[],accounts:[],ledger:[],debts:[],categories:[...DEFAULT_CATS]};
+    state={transactions:[],paid:0,savings:0,debtTotal:0,salaryConfig:{},salaryMonths:{},cards:[],cardOps:[],cardPayments:[],commitments:[],commitmentPayments:[],accounts:[],ledger:[],debts:[],categories:[...DEFAULT_CATS],prefs:{lang:'ar',fontSize:'1',theme:'mint',avatar:'م',defaultAccount:'',privacy:false}};
+    applyPreferences();
     persist();renderModules();renderAccounts();toast('تمت إعادة الضبط');
   });
 }
