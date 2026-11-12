@@ -42,6 +42,12 @@ h1{font-size:1.55rem;line-height:1.4;margin:2px 0 15px;font-weight:800}
 .section-head h2{font-size:1rem;margin:0}
 .section-head span{font-size:.7rem;color:var(--muted)}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.metric-list{display:flex;flex-direction:column;gap:8px}
+.metric-row{background:linear-gradient(150deg,#172438,#111b2b);border:1px solid var(--line);border-radius:18px;padding:13px 15px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.metric-row-right{display:flex;align-items:center;gap:11px;min-width:0}
+.metric-row-title b{display:block;font-size:.82rem}
+.metric-row-title small{display:block;font-size:.66rem;color:var(--muted)}
+.metric-row strong{font-size:1.05rem;direction:ltr;white-space:nowrap}
 .metric{background:linear-gradient(150deg,#172438,#111b2b);border:1px solid var(--line);border-radius:20px;padding:15px;min-height:112px}
 .metric-top{display:flex;justify-content:space-between;align-items:center}
 .ico{width:32px;height:32px;border-radius:11px;display:grid;place-items:center;font-size:1rem;font-weight:800}
@@ -247,11 +253,23 @@ window.addEventListener('beforeinstallprompt', function(e) {
     </div>
   </div>
 
-  <div class="grid">
-    <div class="metric"><div class="metric-top"><span class="ico mint" style="background:#173b3b">↙</span><small data-i18n="totalIncome">إجمالي الدخل</small></div><strong id="incomeCard">0</strong><em data-i18n="currencyFull">EGP</em></div>
-    <div class="metric"><div class="metric-top"><span class="ico red" style="background:#3d222b">↗</span><small data-i18n="totalExpense">إجمالي المصروفات</small></div><strong id="expenseCard">0</strong><em data-i18n="currencyFull">EGP</em></div>
-    <div class="metric"><div class="metric-top"><span class="ico orange" style="background:#3d3021">▤</span><small data-i18n="cardsDebt">مديونية البطاقات</small></div><strong id="debtCard">0</strong><em data-i18n="usedFromLimit">المستخدم من الليمت</em></div>
-    <div class="metric"><div class="metric-top"><span class="ico purple" style="background:#30294a">◈</span><small data-i18n="cumSavings">الادخار التراكمي</small></div><strong id="savingCard">0</strong><em data-i18n="currencyFull">EGP</em></div>
+  <div class="metric-list">
+    <div class="metric-row">
+      <div class="metric-row-right"><span class="ico mint" style="background:#173b3b">↙</span><div class="metric-row-title"><b data-i18n="totalIncome">إجمالي الدخل</b><small data-i18n="currencyFull">EGP</small></div></div>
+      <strong class="mint" id="incomeCard">0</strong>
+    </div>
+    <div class="metric-row">
+      <div class="metric-row-right"><span class="ico red" style="background:#3d222b">↗</span><div class="metric-row-title"><b data-i18n="totalExpense">إجمالي المصروفات</b><small data-i18n="currencyFull">EGP</small></div></div>
+      <strong class="red" id="expenseCard">0</strong>
+    </div>
+    <div class="metric-row">
+      <div class="metric-row-right"><span class="ico orange" style="background:#3d3021">▤</span><div class="metric-row-title"><b data-i18n="cardsDebt">مديونية البطاقات</b><small data-i18n="usedFromLimit">المستخدم من الليمت</small></div></div>
+      <strong class="orange" id="debtCard">0</strong>
+    </div>
+    <div class="metric-row">
+      <div class="metric-row-right"><span class="ico purple" style="background:#30294a">◈</span><div class="metric-row-title"><b data-i18n="cumSavings">الادخار التراكمي</b><small data-i18n="currencyFull">EGP</small></div></div>
+      <strong class="purple" id="savingCard">0</strong>
+    </div>
   </div>
 
   <!-- Separate Section 1: السلف (Tap card to reveal Paid/Remaining) -->
@@ -598,7 +616,10 @@ window.addEventListener('beforeinstallprompt', function(e) {
         </div>
         <div class="field">
           <label>اسمك الشخصي</label>
-          <input id="prefUserName" placeholder="مثال: محمد" oninput="updatePreference('userName', this.value)">
+          <div style="display:flex;gap:6px">
+            <input id="prefUserName" placeholder="مثال: محمد" onchange="saveUserNamePref()" style="flex:1;min-width:0">
+            <button type="button" class="smallbtn" style="padding:0 10px;border-color:var(--mint);color:var(--mint)" onclick="saveUserNamePref()">حفظ</button>
+          </div>
         </div>
         <div class="field">
           <label>الحساب الافتراضي</label>
@@ -744,9 +765,9 @@ window.addEventListener('beforeinstallprompt', function(e) {
           <div class="set-ico">ℹ</div>
           <div class="set-title">
             <b>المحفظة (Wallet) — حول التطبيق</b>
-            <small id="appVersionDetail">V9.5 · 2026-11-12</small>
+            <small id="appVersionDetail">V9.6 · 2026-11-12</small>
           </div>
-          <span class="tag" id="appVersionTag">V9.5</span>
+          <span class="tag" id="appVersionTag">V9.6</span>
         </div>
         <div class="hint" id="updateStatus">بياناتك المالية تبقى على الجهاز. التحديث يخص ملفات التطبيق فقط.</div>
         <div class="set-actions">
@@ -838,7 +859,7 @@ window.addEventListener('beforeinstallprompt', function(e) {
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
 <script>
-const APP_VERSION='9.5';
+const APP_VERSION='9.6';
 const APP_BUILD='2026-11-12';
 const KEY='raseed_mobile_v2';
 let pendingWorkbookTransactions=null;
@@ -967,7 +988,7 @@ function applyPreferences(){
 
   setv('prefLang', lang);
   setv('prefFontSize', p.fontSize || '1');
-  setv('prefUserName', uName);
+  const uInp=document.getElementById('prefUserName'); if(uInp && document.activeElement!==uInp) uInp.value=uName;
   const decChk = document.getElementById('prefDecimals');
   if(decChk) decChk.checked = !!p.homeDecimals;
   const privChk = document.getElementById('prefPrivacy');
@@ -986,6 +1007,16 @@ function updatePreference(key, value){
   state.prefs[key] = value;
   applyPreferences();
   persist();
+}
+
+
+function saveUserNamePref(){
+  const v = (document.getElementById('prefUserName')?.value || '').trim();
+  state.prefs = state.prefs || {};
+  state.prefs.userName = v;
+  applyPreferences();
+  persist();
+  toast(v ? ('تم حفظ الاسم: ' + v) : 'تم مسح الاسم');
 }
 
 function togglePrivacyMode(){
