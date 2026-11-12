@@ -196,6 +196,26 @@ details.subfold .subfold-body{padding:10px 12px}
 .yr-table tr:last-child td{border-bottom:0;font-weight:800;background:#152336}
 .yr-table td.num,.yr-table th.num{direction:ltr;text-align:left}
 
+
+/* Compact 1-Line Form Rows */
+.c-list{display:flex;flex-direction:column;gap:7px}
+.c-row{background:#0e1929;border:1px solid #263952;border-radius:13px;padding:8px 12px;display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:44px}
+.c-row > label,.c-row > .c-lbl{font-size:.76rem;font-weight:700;color:#dce8f8;white-space:nowrap;flex-shrink:0}
+.c-row input,.c-row select{background:#142136;border:1px solid #2f4562;border-radius:10px;padding:6px 10px;color:white;font-size:.76rem;max-width:58%;min-width:130px;text-align:right;outline:none}
+.c-row input[type="date"]{min-width:140px}
+.c-row .picker-trigger{background:#142136;border:1px solid #2f4562;border-radius:10px;padding:6px 10px;font-size:.75rem;max-width:62%;width:auto;gap:8px}
+.c-row .theme-dots{margin-top:0;gap:8px}
+.c-row .theme-dot{width:24px;height:24px}
+.c-row-btns{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.seg-group{display:inline-flex;background:#142136;border:1px solid #2f4562;border-radius:10px;overflow:hidden}
+.seg-btn{border:0;background:transparent;color:var(--muted);padding:6px 10px;font-size:.72rem;font-weight:700;white-space:nowrap}
+.seg-btn.active{background:var(--mint);color:#06221e}
+
+/* Hero Quick Controls (👁 & .00) */
+.hero-ctrls{display:flex;gap:6px;align-items:center;position:relative;z-index:2}
+.dec-btn{background:#ffffff1f;border:1px solid #ffffff2a;color:white;border-radius:10px;padding:4px 8px;font-size:.68rem;font-weight:800;font-family:monospace}
+.dec-btn.active{background:var(--mint);color:#06221e;border-color:var(--mint)}
+
 </style>
 <script>
 window.__deferredInstallPrompt = null;
@@ -233,7 +253,10 @@ window.addEventListener('beforeinstallprompt', function(e) {
   <div class="hero">
     <div class="hero-top-row">
       <label data-i18n="totalAvail">إجمالي الأموال المتاحة (رصيد حساباتك)</label>
-      <button type="button" class="eye-btn" onclick="togglePrivacyMode()" id="privacyToggleBtn">👁</button>
+      <div class="hero-ctrls">
+        <button type="button" class="dec-btn dec-toggle-btn" onclick="toggleDecimalsMode()">.00</button>
+        <button type="button" class="eye-btn privacy-toggle-btn" onclick="togglePrivacyMode()">👁</button>
+      </div>
     </div>
     <div class="amount" id="homeAvailableTotal">0 EGP</div>
     <div class="sub" data-i18n="totalAvailSub">إجمالي السيولة الفعلية في الكاش والبنوك والمحافظ</div>
@@ -299,8 +322,7 @@ window.addEventListener('beforeinstallprompt', function(e) {
     </div>
   </div>
 
-  <div class="section-head"><h2 data-i18n="recentTx">آخر الحركات</h2><span style="cursor:pointer;color:var(--mint)" onclick="go('activity')" data-i18n="viewAll">عرض الكل ←</span></div>
-  <div class="panel" id="recent"></div>
+
 </section>
 
 <!-- 2. الحسابات -->
@@ -308,8 +330,14 @@ window.addEventListener('beforeinstallprompt', function(e) {
   <div class="greeting">أرصدتك وحركات أموالك</div>
   <h1 data-i18n="navAccounts">الحسابات</h1>
   <div class="hero">
-    <label>إجمالي الأموال المتاحة</label>
-    <div class="amount" id="accountsTotal">0.00 EGP</div>
+    <div class="hero-top-row">
+      <label>إجمالي الأموال المتاحة</label>
+      <div class="hero-ctrls">
+        <button type="button" class="dec-btn dec-toggle-btn" onclick="toggleDecimalsMode()">.00</button>
+        <button type="button" class="eye-btn privacy-toggle-btn" onclick="togglePrivacyMode()">👁</button>
+      </div>
+    </div>
+    <div class="amount" id="accountsTotal">0 EGP</div>
   </div>
 
   <details class="fold">
@@ -392,25 +420,32 @@ window.addEventListener('beforeinstallprompt', function(e) {
   <!-- Subpanel 2: Add Card Operation -->
   <div class="panel card-subpanel" id="cardPanelOp">
     <div class="section-head" style="margin-top:0"><h2>تسجيل عملية على البطاقة</h2><span style="cursor:pointer" onclick="closeCardPanels()">✕</span></div>
-    <div class="wideform">
-      <div class="field"><label>البطاقة</label><select id="opCard"></select></div>
-      <div class="field"><label>نوع العملية</label><select id="opType" onchange="toggleInstallmentFields()"><option value="swipe">مسحوبات فيزا</option><option value="installment">شراء بالتقسيط</option></select></div>
-      <div class="field full"><label>وصف العملية</label><input id="opTitle" placeholder="مثال: موبايل"></div>
-      <div class="field"><label>قيمة العملية</label><input id="opAmount" type="number" min="1"></div>
-      <div class="field"><label>تاريخ العملية</label><input id="opDate" type="date" onchange="syncCardOpMonthsFromDate()"></div>
-      <div class="field installment-only"><label>مدة التقسيط</label><select id="opMonths" onchange="showCreditQuote()"><option>3</option><option>6</option><option>9</option><option selected>12</option><option>15</option><option>18</option><option>24</option><option>36</option></select></div>
-      <div class="field installment-only">
-        <label>شهر الشراء (كشف الحساب)</label>
+    <div class="c-list">
+      <div class="c-row"><label>اسم البطاقة :</label><select id="opCard"></select></div>
+      <div class="c-row">
+        <label>نوع العملية :</label>
+        <div class="seg-group">
+          <button type="button" class="seg-btn active" id="segOpSwipe" onclick="setCardOpType('swipe')">شراء بالبطاقة</button>
+          <button type="button" class="seg-btn" id="segOpInst" onclick="setCardOpType('installment')">تقسيط بالبطاقة</button>
+        </div>
+        <input type="hidden" id="opType" value="swipe">
+      </div>
+      <div class="c-row"><label>وصف العملية :</label><input id="opTitle" placeholder="مثال: موبايل"></div>
+      <div class="c-row"><label>قيمة العملية :</label><input id="opAmount" type="number" min="1" inputmode="decimal" placeholder="0"></div>
+      <div class="c-row"><label>تاريخ العملية :</label><input id="opDate" type="date" onchange="syncCardOpMonthsFromDate()"></div>
+      <div class="c-row installment-only"><label>مدة التقسيط :</label><select id="opMonths" onchange="showCreditQuote()"><option value="3">3 شهور</option><option value="6">6 شهور</option><option value="9">9 شهور</option><option value="12" selected>12 شهر</option><option value="15">15 شهر</option><option value="18">18 شهر</option><option value="24">24 شهر</option><option value="36">36 شهر</option></select></div>
+      <div class="c-row installment-only">
+        <label>شهر الشراء :</label>
         <button type="button" class="picker-trigger" onclick="openCardOpPurchasePicker()"><b id="opPurchaseLabel">نوفمبر 2026</b><span>تغيير</span></button>
         <input type="hidden" id="opPurchaseVal">
       </div>
-      <div class="field installment-only full">
-        <label>شهر المصاريف الإدارية (أول قسط يبدأ الشهر التالي له مباشرة)</label>
+      <div class="c-row installment-only">
+        <label>شهر المصاريف :</label>
         <button type="button" class="picker-trigger" onclick="openCompactYMPicker('opFeeMonth')"><b id="opFeeMonthLabel">ديسمبر 2026</b><span>تغيير</span></button>
         <input type="hidden" id="opFeeMonthVal">
       </div>
     </div>
-    <div id="creditQuote" class="panel" style="margin-top:10px;background:#0e1929"><div class="empty">اختر البطاقة والمبلغ والمدة لعرض القسط والفائدة والرسوم.</div></div>
+    <div id="creditQuote" class="panel installment-only" style="margin-top:10px;background:#0e1929;padding:12px"><div class="empty">أدخل المبلغ لعرض القسط والفائدة والرسوم.</div></div>
     <button class="primary" style="margin-top:10px" onclick="addCardOperation()">تسجيل العملية</button>
   </div>
 
@@ -439,8 +474,14 @@ window.addEventListener('beforeinstallprompt', function(e) {
   <h1 data-i18n="navCommitments">الالتزامات</h1>
 
   <div class="hero" style="margin-bottom:14px">
-    <label>إجمالي الالتزامات الشهرية (<span id="comHeroMonthLabel">نوفمبر 2026</span>)</label>
-    <div class="amount" id="comHeroTotal">0.00 EGP</div>
+    <div class="hero-top-row">
+      <label>إجمالي الالتزامات الشهرية (<span id="comHeroMonthLabel">نوفمبر 2026</span>)</label>
+      <div class="hero-ctrls">
+        <button type="button" class="dec-btn dec-toggle-btn" onclick="toggleDecimalsMode()">.00</button>
+        <button type="button" class="eye-btn privacy-toggle-btn" onclick="togglePrivacyMode()">👁</button>
+      </div>
+    </div>
+    <div class="amount" id="comHeroTotal">0 EGP</div>
     <div class="hero-foot">
       <div class="hero-pill"><span>المسدد</span><b id="comHeroPaid">0.00 EGP</b></div>
       <div class="hero-pill"><span>المتبقي</span><b id="comHeroRemain">0.00 EGP</b></div>
@@ -470,7 +511,7 @@ window.addEventListener('beforeinstallprompt', function(e) {
           <button type="button" class="picker-trigger" onclick="openCompactYMPicker('comEnd',true)"><b id="comEndLabel">مفتوح</b><span>تغيير</span></button>
           <input type="hidden" id="comEndVal" value="">
         </div>
-        <div class="field"><label>الميعاد المقترح للسداد (اختياري)</label><input id="comDueDate" type="date"></div>
+        <div class="field"><label>ميعاد السداد (اختياري)</label><input id="comDueDate" type="date"></div>
         <div class="field"><label>ملاحظة (اختياري)</label><input id="comNote" placeholder="تفاصيل إضافية"></div>
       </div>
       <button class="primary" style="margin-top:10px" onclick="addCommitment()">حفظ</button>
@@ -658,178 +699,97 @@ window.addEventListener('beforeinstallprompt', function(e) {
   <div class="greeting">تخصيص التطبيق والبيانات</div>
   <h1 data-i18n="navSettings">الإعدادات</h1>
 
-  <!-- القسم 1: إعدادات عامة -->
+  <!-- القسم 1: إعدادات عامة (مدمجة سطر واحد لكل خيار) -->
   <details class="fold">
     <summary>
       <div class="fold-left"><span class="fold-ico">🎨</span><span data-i18n="setGeneral">إعدادات عامة</span></div>
       <span class="chev">▼</span>
     </summary>
     <div class="fold-body">
-      <div class="set-card">
-        <div class="field" style="margin:0">
-          <label>اسمك الشخصي (يظهر في الترحيب بالرئيسية)</label>
-          <div style="display:flex;gap:8px;margin-top:4px">
-            <input id="prefUserName" placeholder="اكتب اسمك هنا (مثال: محمد)" style="flex:1;min-width:0">
-            <button type="button" class="primary" style="flex:0 0 auto;width:auto;padding:10px 18px" onclick="saveUserNamePref()">حفظ</button>
-          </div>
+      <div class="c-list">
+        <div class="c-row">
+          <label>مالك الحساب :</label>
+          <input id="prefUserName" placeholder="محمد خالد">
         </div>
-      </div>
-
-      <div class="set-card">
-        <div class="field" style="margin:0">
-          <label data-i18n="setLang">اللغة (Language)</label>
-          <select id="prefLang" onchange="updatePreference('lang', this.value)">
+        <div class="c-row">
+          <label data-i18n="setLang">اللغة :</label>
+          <select id="prefLang">
             <option value="ar">العربية</option>
             <option value="en">English</option>
           </select>
         </div>
-      </div>
-
-      <div class="set-card">
-        <div class="field" style="margin:0">
-          <label data-i18n="setFont">حجم الخط</label>
-          <select id="prefFontSize" onchange="updatePreference('fontSize', this.value)">
+        <div class="c-row">
+          <label data-i18n="setFont">حجم الخط :</label>
+          <select id="prefFontSize">
             <option value="0.84">صغير جدًا</option>
             <option value="0.92">صغير</option>
-            <option value="1">متوسط (افتراضي)</option>
+            <option value="1">متوسط</option>
             <option value="1.1">كبير</option>
             <option value="1.18">كبير جدًا</option>
           </select>
         </div>
-      </div>
-
-      <div class="set-card">
-        <div class="field" style="margin:0">
-          <label>الحساب الافتراضي (للحركات الجديدة)</label>
-          <select id="prefDefaultAcc" onchange="updatePreference('defaultAccount', this.value)"></select>
+        <div class="c-row">
+          <label>الحساب الافتراضي :</label>
+          <select id="prefDefaultAcc"></select>
         </div>
-      </div>
-
-      <div class="set-card">
-        <div class="field" style="margin:0">
-          <label>لون التطبيق (الثيم)</label>
+        <div class="c-row">
+          <label>الثيم :</label>
           <div class="theme-dots" id="themeSelector">
-            <button type="button" class="theme-dot" data-theme="mint" style="background:#43d6b2" onclick="updatePreference('theme','mint')"></button>
-            <button type="button" class="theme-dot" data-theme="blue" style="background:#569aff" onclick="updatePreference('theme','blue')"></button>
-            <button type="button" class="theme-dot" data-theme="gold" style="background:#f5b041" onclick="updatePreference('theme','gold')"></button>
-            <button type="button" class="theme-dot" data-theme="purple" style="background:#a582ff" onclick="updatePreference('theme','purple')"></button>
+            <button type="button" class="theme-dot" data-theme="mint" style="background:#43d6b2" onclick="selectTempTheme('mint')"></button>
+            <button type="button" class="theme-dot" data-theme="blue" style="background:#569aff" onclick="selectTempTheme('blue')"></button>
+            <button type="button" class="theme-dot" data-theme="gold" style="background:#f5b041" onclick="selectTempTheme('gold')"></button>
+            <button type="button" class="theme-dot" data-theme="purple" style="background:#a582ff" onclick="selectTempTheme('purple')"></button>
           </div>
         </div>
-      </div>
-
-      <div class="set-card" style="margin-top:12px">
-        <div class="set-head">
-          <div class="set-title">
-            <b>إظهار الكسور العشرية في الرئيسية</b>
-            <small>عرض القروش (.00) في أرقام الصفحة الرئيسية</small>
-          </div>
-          <input type="checkbox" id="prefDecimals" onchange="updatePreference('homeDecimals', this.checked)" style="width:20px;height:20px;accent-color:var(--mint)">
+        <div class="c-row">
+          <label>تثبيت التطبيق :</label>
+          <button type="button" class="smallbtn" id="installAppBtn" style="border-color:var(--mint);color:var(--mint);padding:6px 12px" onclick="installPWA()">تثبيت الآن</button>
         </div>
       </div>
-
-      <div class="set-card">
-        <div class="set-head">
-          <div class="set-title">
-            <b>إخفاء الأرصدة (وضع الخصوصية)</b>
-            <small>إخفاء الأرقام في الصفحة الرئيسية بعلامات ••••</small>
-          </div>
-          <input type="checkbox" id="prefPrivacy" onchange="updatePreference('privacy', this.checked)" style="width:20px;height:20px;accent-color:var(--mint)">
-        </div>
-      </div>
-
-      <div class="set-card" id="installAppCard">
-        <div class="set-head">
-          <div class="set-ico">📲</div>
-          <div class="set-title">
-            <b>تثبيت التطبيق على الشاشة الرئيسية</b>
-            <small id="installAppStatus">اضغط لتثبيت التطبيق كبرنامج مستقل بدون شريط المتصفح.</small>
-          </div>
-        </div>
-        <div class="set-actions">
-          <button class="primary" id="installAppBtn" onclick="installPWA()">تثبيت التطبيق الآن</button>
-        </div>
-      </div>
+      <button type="button" class="primary" style="margin-top:12px" onclick="saveGeneralSettings()">حفظ</button>
     </div>
   </details>
 
-  <!-- القسم 2: النسخ الاحتياطي والاستيراد -->
+  <!-- القسم 2: النسخ الاحتياطي والاستيراد (مدمجة) -->
   <details class="fold">
     <summary>
       <div class="fold-left"><span class="fold-ico">💾</span><span data-i18n="setBackup">النسخ الاحتياطي والاستيراد</span></div>
       <span class="chev">▼</span>
     </summary>
     <div class="fold-body">
-      <div class="set-card">
-        <div class="set-head">
-          <div class="set-ico">🔒</div>
-          <div class="set-title">
-            <b>خصوصية البيانات</b>
-            <small>التخزين محلي بالكامل على جهازك ولا يُرفع لأي سيرفر.</small>
-          </div>
-          <span class="tag">محلي</span>
+      <div class="c-list">
+        <div class="c-row">
+          <span class="c-lbl">تصدير نسخة (JSON) :</span>
+          <button type="button" class="smallbtn" style="border-color:var(--mint);color:var(--mint);padding:6px 12px" onclick="backup()">تصدير</button>
         </div>
-      </div>
-
-      <div class="set-card">
-        <div class="set-head">
-          <div class="set-ico">⬇</div>
-          <div class="set-title">
-            <b>تصدير نسخة احتياطية</b>
-            <small id="lastBackupLabel">احفظ نسخة JSON من كل بياناتك.</small>
+        <div class="c-row">
+          <span class="c-lbl">استعادة نسخة :</span>
+          <div class="c-row-btns">
+            <input id="restore" class="file-hidden" type="file" onchange="restore(event)">
+            <button type="button" class="smallbtn" onclick="openFilePicker('restore')">ملف</button>
+            <button type="button" class="smallbtn" onclick="openPasteRestoreModal()">لصق نص</button>
           </div>
         </div>
-        <div class="set-actions">
-          <button class="primary" onclick="backup()">تصدير نسخة JSON</button>
-        </div>
-      </div>
-
-      <div class="set-card">
-        <div class="set-head">
-          <div class="set-ico">↥</div>
-          <div class="set-title">
-            <b>استعادة نسخة احتياطية</b>
-            <small>استرجع بياناتك من ملف JSON سبق تصديره أو بلصق النص.</small>
+        <div class="c-row">
+          <span class="c-lbl">استيراد Excel :</span>
+          <div class="c-row-btns">
+            <input id="excelImport" class="file-hidden" type="file" accept=".xlsx,.xls,.csv" onchange="importWorkbook(event)">
+            <button type="button" class="smallbtn" onclick="openFilePicker('excelImport')">اختيار ملف</button>
           </div>
         </div>
-        <input id="restore" class="file-hidden" type="file" onchange="restore(event)">
-        <div class="set-actions">
-          <button class="secondary" onclick="openFilePicker('restore')">اختيار ملف (JSON)</button>
-          <button class="secondary" onclick="openPasteRestoreModal()">لصق نص النسخة</button>
-        </div>
-      </div>
-
-      <div class="set-card">
-        <div class="set-head">
-          <div class="set-ico">📊</div>
-          <div class="set-title">
-            <b>استيراد من Excel</b>
-            <small>نقل الدخل والمصروفات والتمويل من ملف Excel.</small>
+        <div class="c-row">
+          <span class="c-lbl">Money Manager :</span>
+          <div class="c-row-btns">
+            <input id="mmbakFile" class="file-hidden" type="file" accept=".mmbak,.db,.sqlite" onchange="readMmbak(event)">
+            <button type="button" class="smallbtn" onclick="openFilePicker('mmbakFile')">اختيار ملف</button>
           </div>
         </div>
-        <input id="excelImport" class="file-hidden" type="file" accept=".xlsx,.xls,.csv" onchange="importWorkbook(event)">
-        <div class="set-actions">
-          <button class="secondary" onclick="openFilePicker('excelImport')">اختيار ملف Excel</button>
-        </div>
       </div>
-
-      <div class="set-card">
-        <div class="set-head">
-          <div class="set-ico">🗃</div>
-          <div class="set-title">
-            <b>استيراد Money Manager</b>
-            <small>استيراد من نسخة (.mmbak / .db) مع معاينة قبل الإضافة.</small>
-          </div>
-        </div>
-        <input id="mmbakFile" class="file-hidden" type="file" accept=".mmbak,.db,.sqlite" onchange="readMmbak(event)">
-        <div class="wideform" style="margin-top:8px">
-          <div class="field"><label>من تاريخ</label><input id="mmFrom" type="date" value="2021-01-01"></div>
-          <div class="field"><label>إلى تاريخ</label><input id="mmTo" type="date" value=""></div>
-        </div>
-        <div class="set-actions">
-          <button class="secondary" onclick="openFilePicker('mmbakFile')">اختيار ملف Money Manager</button>
-        </div>
-        <div id="mmbakPreview" style="margin-top:10px"></div>
+      <div class="wideform" style="margin-top:8px">
+        <div class="field"><label>فلتر استيراد MM من</label><input id="mmFrom" type="date" value="2021-01-01"></div>
+        <div class="field"><label>إلى</label><input id="mmTo" type="date" value=""></div>
       </div>
+      <div id="mmbakPreview" style="margin-top:8px"></div>
     </div>
   </details>
 
@@ -840,33 +800,33 @@ window.addEventListener('beforeinstallprompt', function(e) {
       <span class="chev">▼</span>
     </summary>
     <div class="fold-body">
-      <div class="set-card">
-        <div class="set-head">
-          <div class="set-ico">ℹ</div>
-          <div class="set-title">
-            <b>المحفظة (Wallet) — حول التطبيق</b>
-            <small id="appVersionDetail">V10.0 · 2026-11-12</small>
-          </div>
-          <span class="tag" id="appVersionTag">V10.0</span>
+      <div class="c-list">
+        <div class="c-row">
+          <span class="c-lbl">إصدار التطبيق :</span>
+          <span class="tag" id="appVersionTag">V10.1</span>
         </div>
-        <div class="hint" id="updateStatus">بياناتك المالية تبقى على الجهاز. التحديث يخص ملفات التطبيق فقط.</div>
-        <div class="set-actions">
-          <button class="secondary" onclick="checkForUpdate()">فحص التحديثات</button>
-          <button class="primary" onclick="forceAppUpdate()">تحديث الآن</button>
+        <div class="c-row">
+          <span class="c-lbl">التحديثات :</span>
+          <div class="c-row-btns">
+            <button type="button" class="smallbtn" onclick="checkForUpdate()">فحص</button>
+            <button type="button" class="smallbtn" style="border-color:var(--mint);color:var(--mint)" onclick="forceAppUpdate()">تحديث الآن</button>
+          </div>
         </div>
       </div>
+      <div class="hint" id="updateStatus" style="margin-top:8px">بياناتك محفوظة محليًا على الجهاز ولا تتأثر بالتحديث.</div>
+    </div>
+  </details>
 
-      <div class="set-card" style="border-color:#75404b55">
-        <div class="set-head">
-          <div class="set-ico" style="background:#4a2631;color:#ffdbe1">⚠</div>
-          <div class="set-title">
-            <b>إعادة ضبط التطبيق</b>
-            <small>حذف جميع الحركات والحسابات المسجلة على هذا الجهاز نهائيًا.</small>
-          </div>
-        </div>
-        <div class="set-actions">
-          <button class="secondary danger-fill" onclick="resetApp()">مسح جميع البيانات</button>
-        </div>
+  <!-- القسم 4: مسح البيانات (منفصل تمامًا لتجنب الضغط بالخطأ) -->
+  <details class="fold" style="border-color:#75404b66">
+    <summary>
+      <div class="fold-left"><span class="fold-ico" style="background:#4a2631;color:#ffdbe1">⚠</span><span style="color:#ffb3c0">مسح البيانات</span></div>
+      <span class="chev">▼</span>
+    </summary>
+    <div class="fold-body">
+      <div class="c-row" style="border-color:#75404b66">
+        <span class="c-lbl" style="color:#ffdbe1">إعادة ضبط وحذف الكل :</span>
+        <button type="button" class="smallbtn danger" style="padding:7px 14px" onclick="resetApp()">مسح البيانات</button>
       </div>
     </div>
   </details>
@@ -939,7 +899,7 @@ window.addEventListener('beforeinstallprompt', function(e) {
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
 <script>
-const APP_VERSION='10.0';
+const APP_VERSION='10.1';
 const APP_BUILD='2026-11-12';
 const KEY='raseed_mobile_v2';
 let pendingWorkbookTransactions=null;
@@ -1069,12 +1029,12 @@ function applyPreferences(){
   setv('prefLang', lang);
   setv('prefFontSize', p.fontSize || '1');
   const uInp=document.getElementById('prefUserName'); if(uInp && document.activeElement!==uInp) uInp.value=uName;
-  const decChk = document.getElementById('prefDecimals');
-  if(decChk) decChk.checked = !!p.homeDecimals;
-  const privChk = document.getElementById('prefPrivacy');
-  if(privChk) privChk.checked = !!p.privacy;
-  const eyeBtn = document.getElementById('privacyToggleBtn');
-  if(eyeBtn) eyeBtn.textContent = p.privacy ? '🙈' : '👁';
+  document.querySelectorAll('.dec-toggle-btn').forEach(btn=>{
+    btn.classList.toggle('active', !!p.homeDecimals);
+  });
+  document.querySelectorAll('.privacy-toggle-btn').forEach(btn=>{
+    btn.textContent = p.privacy ? '🙈' : '👁';
+  });
   const defAccSel = document.getElementById('prefDefaultAcc');
   if(defAccSel){
     defAccSel.innerHTML = '<option value="">بدون افتراضي</option>' + state.accounts.map(a=>`<option value="${a.id}">${esc(a.name)}</option>`).join('');
@@ -1090,15 +1050,32 @@ function updatePreference(key, value){
 }
 
 
-function saveUserNamePref(){
-  const v = (document.getElementById('prefUserName')?.value || '').trim();
+let _pendingTheme = null;
+function selectTempTheme(thName){
+  _pendingTheme = thName;
+  document.querySelectorAll('.theme-dot').forEach(btn=>btn.classList.toggle('active', btn.dataset.theme===thName));
+  const th = THEMES[thName] || THEMES.mint;
+  document.documentElement.style.setProperty('--mint', th.mint);
+  document.documentElement.style.setProperty('--mint2', th.mint2);
+  document.documentElement.style.setProperty('--hero1', th.h1);
+  document.documentElement.style.setProperty('--hero2', th.h2);
+  document.documentElement.style.setProperty('--hero3', th.h3);
+}
+function saveGeneralSettings(){
   state.prefs = state.prefs || {};
-  state.prefs.userName = v;
+  state.prefs.userName = (document.getElementById('prefUserName')?.value || '').trim();
+  state.prefs.lang = document.getElementById('prefLang')?.value || 'ar';
+  state.prefs.fontSize = document.getElementById('prefFontSize')?.value || '1';
+  state.prefs.defaultAccount = document.getElementById('prefDefaultAcc')?.value || '';
+  if(_pendingTheme) state.prefs.theme = _pendingTheme;
+  _pendingTheme = null;
   applyPreferences();
   persist();
-  toast(v ? ('تم حفظ الاسم: ' + v) : 'تم مسح الاسم');
+  toast('تم حفظ الإعدادات بنجاح');
 }
-
+function toggleDecimalsMode(){
+  updatePreference('homeDecimals', !state.prefs?.homeDecimals);
+}
 function togglePrivacyMode(){
   updatePreference('privacy', !state.prefs?.privacy);
 }
@@ -1372,20 +1349,30 @@ function allAccountsAvailable(){
 }
 
 /* Separate Stats for Monthly Commitments vs One-Time Loans (السلف) */
+function isLoanActiveInMonth(c, m){
+  if(!c.dueDate) return true;
+  const dueYM = String(c.dueDate).slice(0, 7);
+  return m <= dueYM; // Visible up to its due month; disappears completely after that month passes
+}
 function monthCommitmentsStats(m){
-  const list=(state.commitments||[]).filter(c=>(c.freq||'monthly')==='monthly' && commitmentDue(c,m));
+  const monthlyList = (state.commitments||[]).filter(c=>(c.freq||'monthly')==='monthly' && commitmentDue(c,m));
+  const dueLoansInMonth = (state.commitments||[]).filter(c=>c.freq==='once' && c.dueDate && String(c.dueDate).slice(0,7)===m);
+  const list = [...monthlyList, ...dueLoansInMonth];
   let due=0, paid=0;
   for(const c of list){
     const cAmt=Number(c.amount)||0;
-    const cPaid=(state.commitmentPayments||[]).filter(p=>p.commitmentId===c.id&&p.month===m).reduce((s,p)=>s+(Number(p.amount)||0),0);
+    const cPaid=(c.freq==='once')
+      ? (state.commitmentPayments||[]).filter(p=>p.commitmentId===c.id).reduce((s,p)=>s+(Number(p.amount)||0),0)
+      : (state.commitmentPayments||[]).filter(p=>p.commitmentId===c.id&&p.month===m).reduce((s,p)=>s+(Number(p.amount)||0),0);
     due+=cAmt;
     paid+=Math.min(cAmt,cPaid);
   }
   return {list, due:round2(due), paid:round2(paid), remain:round2(Math.max(0,due-paid))};
 }
 
-function oneTimeDebtsStats(){
-  const list=(state.commitments||[]).filter(c=>c.freq==='once');
+function oneTimeDebtsStats(m){
+  const curM = m || selected();
+  const list=(state.commitments||[]).filter(c=>c.freq==='once' && isLoanActiveInMonth(c, curM));
   let total=0, paid=0;
   for(const c of list){
     const cAmt=Number(c.amount)||0;
@@ -1450,7 +1437,7 @@ function render(){
   const cardsDebtTotal=allCardsOutstanding();
   const availTotal=allAccountsAvailable();
   const comStats=monthCommitmentsStats(m);
-  const debtStats=oneTimeDebtsStats();
+  const debtStats=oneTimeDebtsStats(m);
 
   const homePeriodLbl=document.getElementById('homePeriodLabel');
   if(homePeriodLbl) homePeriodLbl.textContent=formatYMArabic(m);
@@ -1502,7 +1489,7 @@ function render(){
   });
   let activityItems=[...all,...ledgerItems].sort((a,b)=>String(b.date).localeCompare(String(a.date)));
   let recent=activityItems.slice(0,4);
-  document.getElementById('recent').innerHTML=recent.length?recent.map(itemHTML).join(''):'<div class="empty">لسه مفيش حركات مسجلة. ابدأ بإضافة أول حركة.</div>';
+  const recEl=document.getElementById('recent'); if(recEl) recEl.innerHTML=recent.length?recent.map(itemHTML).join(''):'<div class="empty">لسه مفيش حركات مسجلة. ابدأ بإضافة أول حركة.</div>';
   window._allActivityItems=activityItems;
   filterActivity();
 
@@ -2304,7 +2291,7 @@ function showCommitmentDetails(id){
   rows+=`
     <div class="rowline"><span>المسدد</span><b class="mint">${egp(paidAmt)}</b></div>
     <div class="rowline"><span>المتبقي</span><b class="${leftAmt?'red':'mint'}">${egp(leftAmt)}</b></div>
-    ${c.dueDate?`<div class="rowline"><span>الميعاد المقترح للسداد</span><b class="orange">${c.dueDate}</b></div>`:''}
+    ${c.dueDate?`<div class="rowline"><span>ميعاد السداد</span><b class="orange">${c.dueDate}</b></div>`:''}
     ${c.note?`<div class="rowline"><span>ملاحظات</span><b>${esc(c.note)}</b></div>`:''}
   `;
   document.getElementById('actionBody').innerHTML=rows;
@@ -2333,7 +2320,7 @@ function editCommitment(id){
       <div class="field"><label>تاريخ النهاية</label><button type="button" class="picker-trigger" onclick="openCompactYMPicker('eComEnd',true)"><b id="eComEndLabel">${formatYMArabic(c.end)}</b><span>تغيير</span></button><input type="hidden" id="eComEndVal" value="${c.end||''}"></div>
     </div>
     <div class="wideform">
-      <div class="field"><label>الميعاد المقترح للسداد</label><input id="eComDueDate" type="date" value="${c.dueDate||''}"></div>
+      <div class="field"><label>ميعاد السداد</label><input id="eComDueDate" type="date" value="${c.dueDate||''}"></div>
       <div class="field"><label>ملاحظة</label><input id="eComNote" value="${esc(c.note||'')}"></div>
     </div>
   `;
@@ -2391,39 +2378,52 @@ function renderModules(){
   if(e)e.innerHTML=state.cardOps.length?state.cardOps.map(o=>{
     const c=state.cards.find(x=>x.id===o.cardId);
     const remaining=opOutstanding(o);
-    const typeLabel=o.type==='installment'?`تقسيط ${o.months}ش`:'مسحوبات';
+    const typeLabel=o.type==='installment'?`تقسيط ${o.months}ش`:'شراء';
     return `<div class="listitem" onclick="toggleItemActions(this,event)"><div class="info"><b>${esc(o.title)} <span class="tag" style="margin-right:4px">${esc(c?.name||'بطاقة')} · ${typeLabel}</span></b><div class="tap-actions"><button class="smallbtn" onclick="showCardOpDetails('${o.id}')">تفاصيل</button><button class="smallbtn" onclick="editCardOp('${o.id}')">تعديل</button><button class="smallbtn danger" onclick="deleteCardOp('${o.id}')">حذف</button></div></div><strong class="${remaining>0?'orange':'mint'}">${egp(remaining)}</strong></div>`;
   }).join(''):'<div class="empty">لا توجد عمليات.</div>';
 
   // Render Monthly Commitments & Commitments Hero Card
   const comStats=monthCommitmentsStats(m);
-  const debtStatsHero=oneTimeDebtsStats();
+  const debtStatsHero=oneTimeDebtsStats(m);
   const cHeroM=document.getElementById('comHeroMonthLabel'); if(cHeroM) cHeroM.textContent=formatYMArabic(m);
-  const cHeroT=document.getElementById('comHeroTotal'); if(cHeroT) cHeroT.textContent=egp(comStats.due);
-  const cHeroP=document.getElementById('comHeroPaid'); if(cHeroP) cHeroP.textContent=egp(comStats.paid);
-  const cHeroR=document.getElementById('comHeroRemain'); if(cHeroR) cHeroR.textContent=egp(comStats.remain);
-  const cHeroL=document.getElementById('comHeroLoans'); if(cHeroL) cHeroL.textContent=egp(debtStatsHero.remain);
+  const cHeroT=document.getElementById('comHeroTotal'); if(cHeroT) cHeroT.textContent=maskable(egpHome(comStats.due));
+  const cHeroP=document.getElementById('comHeroPaid'); if(cHeroP) cHeroP.textContent=maskable(egpHome(comStats.paid));
+  const cHeroR=document.getElementById('comHeroRemain'); if(cHeroR) cHeroR.textContent=maskable(egpHome(comStats.remain));
+  const cHeroL=document.getElementById('comHeroLoans'); if(cHeroL) cHeroL.textContent=maskable(egpHome(debtStatsHero.remain));
   e=document.getElementById('comMonthLabel');if(e)e.textContent=formatYMArabic(m);
   e=document.getElementById('commitmentsList');
   if(e)e.innerHTML=comStats.list.length?comStats.list.map(c=>{
-    let paid=state.commitmentPayments.filter(p=>p.commitmentId===c.id&&p.month===m).reduce((s,p)=>s+(Number(p.amount)||0),0),
+    let paid=(c.freq==='once')
+      ? state.commitmentPayments.filter(p=>p.commitmentId===c.id).reduce((s,p)=>s+(Number(p.amount)||0),0)
+      : state.commitmentPayments.filter(p=>p.commitmentId===c.id&&p.month===m).reduce((s,p)=>s+(Number(p.amount)||0),0),
         left=Math.max(0,(Number(c.amount)||0)-paid);
     return `<div class="listitem" onclick="toggleItemActions(this,event)"><div class="info">${formatCommitmentLabel(c)}<div class="tap-actions"><button class="smallbtn" onclick="markCommitmentPaid('${c.id}')">${left?'تسجيل دفع':'مدفوع ✓'}</button><button class="smallbtn" onclick="showCommitmentDetails('${c.id}')">تفاصيل</button><button class="smallbtn" onclick="editCommitment('${c.id}')">تعديل</button><button class="smallbtn danger" onclick="deleteCommitment('${c.id}')">حذف</button></div></div><strong class="${left?'orange':'mint'}">${egp(left)}</strong></div>`;
   }).join(''):'<div class="empty">لا توجد التزامات شهرية في هذا الشهر.</div>';
 
   // Render السلف
-  const debtStats=oneTimeDebtsStats();
+  const debtStats=oneTimeDebtsStats(m);
   const dListEl=document.getElementById('oneTimeDebtsList');
   if(dListEl) dListEl.innerHTML=debtStats.list.length?debtStats.list.map(c=>{
     let paid=state.commitmentPayments.filter(p=>p.commitmentId===c.id).reduce((s,p)=>s+(Number(p.amount)||0),0),
         left=Math.max(0,(Number(c.amount)||0)-paid);
-    const dueBadge = c.dueDate ? `<small style="color:var(--orange);font-size:.66rem">الميعاد المقترح: ${c.dueDate}</small>` : '';
+    const dueBadge = c.dueDate ? `<small style="color:var(--orange);font-size:.66rem">ميعاد السداد: ${c.dueDate}</small>` : '';
     return `<div class="listitem" onclick="toggleItemActions(this,event)"><div class="info">${formatCommitmentLabel(c)}${dueBadge}<div class="tap-actions"><button class="smallbtn" onclick="markCommitmentPaid('${c.id}')">${left?'تسجيل سداد':'مسدد ✓'}</button><button class="smallbtn" onclick="showCommitmentDetails('${c.id}')">تفاصيل</button><button class="smallbtn" onclick="editCommitment('${c.id}')">تعديل</button><button class="smallbtn danger" onclick="deleteCommitment('${c.id}')">حذف</button></div></div><strong class="${left?'red':'mint'}">${egp(left)}</strong></div>`;
   }).join(''):'<div class="empty">لا توجد سلف مسجلة.</div>';
 }
 
+function setCardOpType(t){
+  setv('opType', t);
+  const b1 = document.getElementById('segOpSwipe');
+  const b2 = document.getElementById('segOpInst');
+  if(b1) b1.classList.toggle('active', t==='swipe');
+  if(b2) b2.classList.toggle('active', t==='installment');
+  toggleInstallmentFields();
+}
 function toggleInstallmentFields(){
-  document.querySelectorAll('.installment-only').forEach(e=>e.style.display=val('opType')==='installment'?'block':'none');
+  const isInst = val('opType')==='installment';
+  document.querySelectorAll('.installment-only').forEach(e=>{
+    e.style.display = isInst ? (e.classList.contains('c-row') ? 'flex' : 'block') : 'none';
+  });
   showCreditQuote();
 }
 
@@ -2460,7 +2460,7 @@ function addAccount(){
 function renderAccounts(){
   let list=document.getElementById('accountsList');if(!list)return;
   let total=allAccountsAvailable();
-  document.getElementById('accountsTotal').textContent=egp(total);
+  document.getElementById('accountsTotal').textContent=maskable(egpHome(total));
   const homeAvailEl=document.getElementById('homeAvailableTotal');
   if(homeAvailEl) homeAvailEl.textContent=maskable(egpHome(total));
   list.innerHTML=state.accounts.length?state.accounts.map(a=>`<div class="listitem" onclick="toggleItemActions(this,event)"><div class="actico">${a.type==='cash'?'👛':a.type==='bank'?'🏦':a.type==='wallet'?'📱':'💳'}</div><div class="info"><b>${esc(a.name)}</b><small>${({cash:'كاش',bank:'حساب بنكي',wallet:'محفظة إلكترونية',prepaid:'بطاقة مسبقة الدفع'})[a.type]||a.type}</small><div class="tap-actions"><button class="smallbtn" onclick="showAccountStatement('${a.id}')">كشف حساب</button><button class="smallbtn" onclick="editAccount('${a.id}')">تعديل</button><button class="smallbtn danger" onclick="deleteAccount('${a.id}')">حذف</button></div></div><strong>${egp(accountBalance(a))}</strong></div>`).join(''):'<div class="empty">أضف أول حساب لتتبع أرصدتك.</div>';
@@ -2916,7 +2916,7 @@ function showCardStatement(cardId){
     id: o.id,
     type: 'expense',
     title: o.title,
-    category: o.type==='installment' ? `تقسيط ${o.months} شهر` : 'مسحوبات فيزا',
+    category: o.type==='installment' ? `تقسيط ${o.months} شهر` : 'شراء بالبطاقة',
     amount: Number(o.total || o.amount) || 0,
     date: o.date,
     isCardOp: true
@@ -2970,7 +2970,7 @@ function showCardOpDetails(id){
   let rows = `
     <div class="rowline"><span>البيان</span><b>${esc(o.title)}</b></div>
     <div class="rowline"><span>البطاقة</span><b>${esc(c?.name || 'بطاقة')}</b></div>
-    <div class="rowline"><span>النوع</span><b>${o.type==='installment' ? 'شراء بالتقسيط' : 'مسحوبات فيزا'}</b></div>
+    <div class="rowline"><span>النوع</span><b>${o.type==='installment' ? 'تقسيط بالبطاقة' : 'شراء بالبطاقة'}</b></div>
     <div class="rowline"><span>التاريخ</span><b>${o.date}</b></div>
     <div class="rowline"><span>أصل العملية</span><b>${egp(o.amount)}</b></div>
   `;
