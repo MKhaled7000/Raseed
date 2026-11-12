@@ -662,7 +662,7 @@ details.fold .fold-body{padding:12px 14px}
     <summary><span>⟳ التحديثات</span><span>▼</span></summary>
     <div class="fold-body">
       <div class="c-list">
-        <div class="c-row"><span class="c-lbl">الإصدار الحالي :</span><span class="tag" id="appVersionTag">V11.4</span></div>
+        <div class="c-row"><span class="c-lbl">الإصدار الحالي :</span><span class="tag" id="appVersionTag">V11.6</span></div>
         <div class="c-row">
           <span class="c-lbl">التحديثات :</span>
           <div class="c-row-btns">
@@ -682,7 +682,7 @@ details.fold .fold-body{padding:12px 14px}
     <summary><span style="color:#ffb3c0">⚠ مسح البيانات</span><span>▼</span></summary>
     <div class="fold-body">
       <div class="c-list">
-        <div class="c-row"><span class="c-lbl" style="color:#ffbd69">تصفير المعاملات فقط :</span><button type="button" class="smallbtn" style="border-color:#ffbd69;color:#ffbd69" onclick="clearTransactionsOnly()">تصفير</button></div>
+        <div class="c-row"><span class="c-lbl" style="color:#ffbd69">تصفير المعاملات والأقسام :</span><button type="button" class="smallbtn" style="border-color:#ffbd69;color:#ffbd69" onclick="clearTransactionsAndCats()">تصفير</button></div>
         <div class="c-row"><span class="c-lbl" style="color:#ffdbe1">حذف كل بيانات التطبيق :</span><button type="button" class="smallbtn danger" onclick="resetApp()">مسح الكل</button></div>
       </div>
     </div>
@@ -821,6 +821,21 @@ details.fold .fold-body{padding:12px 14px}
   </div>
 </div>
 
+<!-- Update Available Card Modal -->
+<div class="modal center-modal" id="updateAvailableModal" onclick="if(event.target===this)this.classList.remove('show')">
+  <div class="sheet" style="max-width:390px">
+    <h3 style="margin-bottom:8px">
+      <span id="updModalTitle" style="color:var(--mint)">🚀 يتوفر تحديث جديد</span>
+      <span style="cursor:pointer;color:var(--muted)" onclick="document.getElementById('updateAvailableModal').classList.remove('show')">✕</span>
+    </h3>
+    <div id="updModalNotes" style="background:var(--surface);border:1px solid var(--line2);border-radius:14px;padding:11px;font-size:.76rem;line-height:1.7;color:var(--text-sub);max-height:220px;overflow-y:auto"></div>
+    <div class="actions">
+      <button type="button" class="primary" onclick="forceAppUpdate()">تحديث</button>
+      <button type="button" class="secondary" onclick="document.getElementById('updateAvailableModal').classList.remove('show')">لاحقاً</button>
+    </div>
+  </div>
+</div>
+
 <!-- Exit Confirmation Modal -->
 <div class="modal center-modal" id="exitConfirmModal" onclick="if(event.target===this)cancelExitApp()">
   <div class="sheet" style="max-width:340px;text-align:center">
@@ -837,32 +852,15 @@ details.fold .fold-body{padding:12px 14px}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
 <script>
-const APP_VERSION='11.4';
+const APP_VERSION='11.6';
 const APP_BUILD='2026-11-13';
 const KEY='raseed_mobile_v2';
 
 const monthNamesAr=['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
 const dayNamesAr=['الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
 
-const DEFAULT_EXP_TREE = {
-  'مصاريف': ['حلويات', 'طعام ومشروبات', 'سوبر ماركت', 'كافيهات'],
-  'مصاريف الأسرة': ['مستلزمات منزل', 'أطفال', 'هدايا'],
-  'فواتير': ['كهرباء', 'مياه', 'غاز', 'إنترنت وموبايل'],
-  'اقساط': ['قسط شقة', 'قسط بنك', 'قسط بطاقة'],
-  'تعليم': ['مصاريف دراسية', 'كتب وأدوات', 'كورسات'],
-  'مواصلات': ['بنزين', 'أوبر وكريم', 'صيانة'],
-  'ملابس': ['ملابس', 'أحذية'],
-  'الصحة': ['كشف طبي', 'أدوية', 'تحاليل'],
-  'ترفيه': ['خروجات', 'اشتراكات'],
-  'أخرى': []
-};
-const DEFAULT_INC_TREE = {
-  'راتب': ['الراتب الشهري', 'حوافز ومكافآت'],
-  'أرباح': ['أرباح أسهم', 'عوائد'],
-  'تداول': ['أرباح تداول'],
-  'قبض جمعية': [],
-  'أخرى': []
-};
+const DEFAULT_EXP_TREE = {};
+const DEFAULT_INC_TREE = {};
 
 let state;
 try{state=JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){state=null}
@@ -878,9 +876,9 @@ state.accounts=state.accounts||[];
 state.ledger=state.ledger||[];
 state.importBatches=state.importBatches||[];
 state.reportDefaults=state.reportDefaults||{};
-state.categories=state.categories||Object.keys(DEFAULT_EXP_TREE);
-state.incomeCategories=state.incomeCategories||Object.keys(DEFAULT_INC_TREE);
-state.categoryTree=state.categoryTree||{expense:JSON.parse(JSON.stringify(DEFAULT_EXP_TREE)), income:JSON.parse(JSON.stringify(DEFAULT_INC_TREE))};
+state.categories=Array.isArray(state.categories)?state.categories:[];
+state.incomeCategories=Array.isArray(state.incomeCategories)?state.incomeCategories:[];
+state.categoryTree=state.categoryTree||{expense:{}, income:{}};
 state.prefs=state.prefs||{lang:'ar',fontSize:'1',theme:'mint',bgMode:'dark',userName:'',defaultAccount:'',privacy:false,homeDecimals:false};
 
 function syncCategoryTrees(){
@@ -891,12 +889,12 @@ function syncCategoryTrees(){
   const incSubsSet = new Set(Object.values(state.categoryTree.income).flat());
   for(const c of (state.categories||[])){
     if(c && !state.categoryTree.expense[c] && !expSubsSet.has(c)){
-      state.categoryTree.expense[c] = DEFAULT_EXP_TREE[c] ? [...DEFAULT_EXP_TREE[c]] : [];
+      state.categoryTree.expense[c] = [];
     }
   }
   for(const c of (state.incomeCategories||[])){
     if(c && !state.categoryTree.income[c] && !incSubsSet.has(c)){
-      state.categoryTree.income[c] = DEFAULT_INC_TREE[c] ? [...DEFAULT_INC_TREE[c]] : [];
+      state.categoryTree.income[c] = [];
     }
   }
 }
@@ -1595,29 +1593,40 @@ function renderQuickPickers(){
 
   const tree = getActiveCatTree();
   const mainCats = Object.keys(tree);
-  if(!qmState.category || !tree[qmState.category]){
-    qmState.category = mainCats[0] || 'أخرى';
+  if(!mainCats.length){
+    qmState.category = '';
     qmState.subCategory = '';
+    document.getElementById('qmCatSelectedText').textContent = 'لا توجد أقسام (استورد .mmbak أو أضف)';
+  } else {
+    if(!qmState.category || !tree[qmState.category]){
+      qmState.category = mainCats[0];
+      qmState.subCategory = '';
+    }
+    updateQmCatLabel();
   }
-  updateQmCatLabel();
 
   const mainColEl = document.getElementById('qmMainCatList');
   const subColEl = document.getElementById('qmSubCatList');
   if(mainColEl && subColEl){
-    mainColEl.innerHTML = mainCats.map(mc=>{
-      const subsCount = (tree[mc]||[]).length;
-      return `<button type="button" class="mm-cat-item ${mc===qmState.category?'active':''}" onclick="selectQuickMainCat('${esc(mc)}')">
-        <span>${esc(mc)}</span>
-        ${subsCount ? `<small style="opacity:.7">‹</small>` : ''}
-      </button>`;
-    }).join('');
+    if(!mainCats.length){
+      mainColEl.innerHTML = '<div class="empty" style="padding:14px 4px;font-size:.68rem">القائمة فارغة.<br>اضغط «＋ رئيسي» أو استورد ملف Money Manager.</div>';
+      subColEl.innerHTML = '<div class="empty" style="padding:14px 4px;font-size:.68rem">—</div>';
+    } else {
+      mainColEl.innerHTML = mainCats.map(mc=>{
+        const subsCount = (tree[mc]||[]).length;
+        return `<button type="button" class="mm-cat-item ${mc===qmState.category?'active':''}" onclick="selectQuickMainCat('${esc(mc)}')">
+          <span>${esc(mc)}</span>
+          ${subsCount ? `<small style="opacity:.7">‹</small>` : ''}
+        </button>`;
+      }).join('');
 
-    const subs = tree[qmState.category] || [];
-    let subHtml = `<button type="button" class="mm-cat-item ${!qmState.subCategory?'active':''}" onclick="selectQuickSubCat('')"><span>عام (بدون فرعي)</span></button>`;
-    subHtml += subs.map(sc=>`
-      <button type="button" class="mm-cat-item ${sc===qmState.subCategory?'active':''}" onclick="selectQuickSubCat('${esc(sc)}')"><span>${esc(sc)}</span></button>
-    `).join('');
-    subColEl.innerHTML = subHtml;
+      const subs = tree[qmState.category] || [];
+      let subHtml = `<button type="button" class="mm-cat-item ${!qmState.subCategory?'active':''}" onclick="selectQuickSubCat('')"><span>عام (بدون فرعي)</span></button>`;
+      subHtml += subs.map(sc=>`
+        <button type="button" class="mm-cat-item ${sc===qmState.subCategory?'active':''}" onclick="selectQuickSubCat('${esc(sc)}')"><span>${esc(sc)}</span></button>
+      `).join('');
+      subColEl.innerHTML = subHtml;
+    }
   }
 }
 
@@ -1799,41 +1808,51 @@ function readMmbak(ev){
         assets = (db.exec("SELECT uid,NIC_NAME,currencyUid FROM ASSETS")[0]?.values||[]).map(r=>[r[0],r[1],r[2],0]);
       }
 
-      // Deep Parse of ALL Money Manager Category Tables & Columns (ZCATEGORY, CATEGORY, CTG, etc.)
-      let catInfoMap = {}; // any key (uid, C_UID, Z_PK, NAME) -> { name, parentName, doType }
+      // Universal SQLite Category Resolver for Money Manager (.mmbak)
+      // Scans ALL non-transaction tables in the database to find where category UIDs live,
+      // and builds the exact parent/child tree from the user's file.
+      let catInfoMap = {}; // uid -> { name, parentName, doType }
       let expTree = {};
       let incTree = {};
       try{
         const tables = (db.exec("SELECT name FROM sqlite_master WHERE type='table'")[0]?.values||[]).map(x=>String(x[0]));
-        const catTables = tables.filter(tn=>/^(Z?CATEGORY|CTG|Z?SUBCATEGORY|Z?CTG)$/i.test(tn) || (/cat|ctg/i.test(tn) && !/android|sqlite|inoutcome|asset/i.test(tn)));
+        const skipTables = new Set(['android_metadata','sqlite_sequence','inoutcome','assets','currency','tag','tx_tag','budget','favorite','memo','photo','repeat','sms','sync_log','z_primarykey','z_metadata']);
+        // Prioritize category-named tables first, then any other lookup table
+        const orderedTables = [
+          ...tables.filter(tn=>/cat|ctg/i.test(tn) && !skipTables.has(tn.toLowerCase())),
+          ...tables.filter(tn=>!/cat|ctg/i.test(tn) && !skipTables.has(tn.toLowerCase()))
+        ];
         const rawByKey = {};
         const allNodes = [];
-        for(const catTable of catTables){
-          const pragma = db.exec(`PRAGMA table_info("${catTable}")`)[0]?.values || [];
+        for(const tbl of orderedTables){
+          const pragma = db.exec(`PRAGMA table_info("${tbl}")`)[0]?.values || [];
           const cols = pragma.map(x=>String(x[1]));
           const idCols = cols.filter(c=>/^(uid|c_uid|z_pk|id|category_uid|ctg_uid)$/i.test(c));
-          const nameCol = cols.find(c=>/^(name|zname|nic_name|c_name|title|ztitle|ctg_name|zctg_name)$/i.test(c))
-                       || cols.find(c=>/name|title/i.test(c));
+          const nameCol = cols.find(c=>/^(name|zname|nic_name|c_name|title|ztitle|ctg_name|zctg_name)$/i.test(c));
+          if(!idCols.length || !nameCol) continue;
+          // Skip asset/account tables that have currencyUid or balance
+          if(cols.some(c=>/currency|balance|limit|asset/i.test(c)) && !/cat|ctg/i.test(tbl)) continue;
+
           const typeCol = cols.find(c=>/^(do_type|type|ztype|kind|zdotype|c_type|in_out|zin_out)$/i.test(c));
-          const parentCol = cols.find(c=>/^(p_uid|parent_uid|parent|zparent|zcategory|cat_uid|ctg_uid|pc_uid|zp_uid|parent_id|zparent_id)$/i.test(c));
+          const parentCol = cols.find(c=>/^(p_uid|parent_uid|parent|zparent|zcategory|cat_uid|ctg_uid|pc_uid|zp_uid|parent_id|zparent_id|upper_uid)$/i.test(c));
           const delCol = cols.find(c=>/^(is_del|zis_del|deleted)$/i.test(c));
           const orderCol = cols.find(c=>/^(order_seq|zorder|seq|sort|zsort|z_opt)$/i.test(c));
-          if(nameCol){
-            const useIds = idCols.length ? idCols : [cols[0]];
-            const selList = [...useIds, nameCol, typeCol||"''", parentCol||"''", delCol||"0"].map(c=>(c.startsWith("'")||c==="0")?c:`"${c}"`).join(',');
-            const ordSql = orderCol ? ` ORDER BY "${orderCol}" ASC` : '';
-            const rows = db.exec(`SELECT ${selList} FROM "${catTable}"${ordSql}`)[0]?.values || [];
-            for(const r of rows){
-              const keys = r.slice(0, useIds.length).map(v=>String(v??'').trim()).filter(Boolean);
-              const nm = String(r[useIds.length]??'').trim();
-              const tp = String(r[useIds.length+1]??'').trim();
-              let pid = String(r[useIds.length+2]??'').trim();
-              const isDel = Number(r[useIds.length+3]) === 1;
-              if(!nm || /^[0-9a-f-]{20,}$/i.test(nm)) continue;
-              if(pid === '0' || pid === '-1' || pid === 'null' || pid === 'NULL' || pid === 'None' || keys.includes(pid)) pid = '';
-              const node = {keys, name:nm, type:tp, parentId:pid, isDel};
-              allNodes.push(node);
-              for(const k of keys) rawByKey[k] = node;
+
+          const selList = [...idCols, nameCol, typeCol||"''", parentCol||"''", delCol||"0"].map(c=>(c.startsWith("'")||c==="0")?c:`"${c}"`).join(',');
+          const ordSql = orderCol ? ` ORDER BY "${orderCol}" ASC` : '';
+          const rows = db.exec(`SELECT ${selList} FROM "${tbl}"${ordSql}`)[0]?.values || [];
+          for(const r of rows){
+            const keys = r.slice(0, idCols.length).map(v=>String(v??'').trim()).filter(Boolean);
+            const nm = String(r[idCols.length]??'').trim();
+            const tp = String(r[idCols.length+1]??'').trim();
+            let pid = String(r[idCols.length+2]??'').trim();
+            const isDel = Number(r[idCols.length+3]) === 1;
+            if(!nm || /^[0-9a-f-]{20,}$/i.test(nm)) continue;
+            if(pid === '0' || pid === '-1' || pid === 'null' || pid === 'NULL' || pid === 'None' || keys.includes(pid)) pid = '';
+            const node = {keys, name:nm, type:tp, parentId:pid, isDel};
+            allNodes.push(node);
+            for(const k of keys){
+              if(!rawByKey[k]) rawByKey[k] = node;
             }
           }
         }
@@ -1860,7 +1879,6 @@ function readMmbak(ev){
           }
           const info = { name: obj.name, parentName: isSub ? root.name : '', doType: effType };
           for(const k of obj.keys) catInfoMap[k] = info;
-          catInfoMap[obj.name] = info;
         }
       }catch(err){ console.warn('MM Category parse:', err); }
 
@@ -2669,21 +2687,33 @@ function openPasteRestoreModal(){
     state=v; syncCategoryTrees(); applyPreferences(); persist(); toast('تم استرجاع النسخة ✓');
   }catch{ toast('النص غير صالح'); }
 }
-function checkForUpdate(){
+function showUpdateCardModal(ver, notesText){
+  const m = document.getElementById('updateAvailableModal');
+  if(!m) return;
+  document.getElementById('updModalTitle').textContent = '🚀 تحديث جديد: X-Wallet V' + ver;
+  const lines = String(notesText||'تحسينات جديدة في التطبيق').split(/\n|\+/).map(s=>s.trim()).filter(Boolean);
+  document.getElementById('updModalNotes').innerHTML =
+    '<div style="font-weight:800;margin-bottom:6px;color:var(--text)">ملخص التحديث:</div>' +
+    lines.map(s=>`<div style="margin:3px 0">• ${esc(s.replace(/^•\s*/,''))}</div>`).join('');
+  m.classList.add('show');
+}
+function checkForUpdate(silent){
   const box = document.getElementById('updateDetailsBox');
-  if(box) box.innerHTML = '<div class="hint" style="margin:0">جاري البحث عن تحديثات…</div>';
+  if(!silent && box) box.innerHTML = '<div class="hint" style="margin:0">جاري البحث عن تحديثات…</div>';
   fetch('./version.json?t='+Date.now(),{cache:'no-store'}).then(r=>r.json()).then(v=>{
     const rem = String(v.version||v.appVersion||'').trim();
     const notes = String(v.notes||'تحسينات عامة في الأداء والاستقرار').trim();
     const notesHtml = notes.split(/\n|\+/).map(s=>s.trim()).filter(Boolean).map(s=>`<div style="margin:3px 0">• ${esc(s.replace(/^•\s*/,''))}</div>`).join('');
     if(!rem || rem === APP_VERSION){
-      if(box) box.innerHTML = `
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-          <b style="color:var(--mint);font-size:.8rem">✓ أنت على أحدث إصدار (V${esc(APP_VERSION)})</b>
-        </div>
-        <div class="hint" style="margin:0;font-size:.7rem">${notesHtml}</div>
-      `;
-      toast('أنت على آخر إصدار V' + APP_VERSION);
+      if(!silent){
+        if(box) box.innerHTML = `
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+            <b style="color:var(--mint);font-size:.8rem">✓ أنت على أحدث إصدار (V${esc(APP_VERSION)})</b>
+          </div>
+          <div class="hint" style="margin:0;font-size:.7rem">${notesHtml}</div>
+        `;
+        toast('أنت على آخر إصدار V' + APP_VERSION);
+      }
     } else {
       if(box) box.innerHTML = `
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
@@ -2691,13 +2721,15 @@ function checkForUpdate(){
           <span class="tag">الحالي: V${esc(APP_VERSION)}</span>
         </div>
         <div class="hint" style="margin:0 0 10px;font-size:.72rem;color:var(--text-sub)"><b>أهم التحسينات:</b>${notesHtml}</div>
-        <button type="button" class="primary" style="padding:9px" onclick="forceAppUpdate()">تحديث الآن إلى V${esc(rem)}</button>
+        <button type="button" class="primary" style="padding:9px" onclick="forceAppUpdate()">تحديث</button>
       `;
-      toast('يتوفر تحديث جديد V' + rem);
+      showUpdateCardModal(rem, notes);
     }
   }).catch(()=>{
-    if(box) box.innerHTML = '<div class="hint" style="margin:0;color:var(--red)">تعذر الاتصال للبحث عن تحديث. تأكد من الإنترنت.</div>';
-    toast('تعذر فحص التحديث');
+    if(!silent){
+      if(box) box.innerHTML = '<div class="hint" style="margin:0;color:var(--red)">تعذر الاتصال للبحث عن تحديث. تأكد من الإنترنت.</div>';
+      toast('تعذر فحص التحديث');
+    }
   });
 }
 async function forceAppUpdate(){
@@ -2708,9 +2740,12 @@ async function forceAppUpdate(){
   }catch(_){}
   const u=new URL(location.href); u.searchParams.set('v', Date.now()); location.replace(u.toString());
 }
-function clearTransactionsOnly(){
-  if(!confirm('تصفير جميع المعاملات والتحويلات فقط؟')) return;
-  state.transactions=[]; state.ledger=[]; persist(); toast('تم تصفير المعاملات');
+function clearTransactionsAndCats(){
+  if(!confirm('تصفير جميع المعاملات والتحويلات والأقسام لتصبح فارغة؟')) return;
+  state.transactions=[]; state.ledger=[];
+  state.categories=[]; state.incomeCategories=[];
+  state.categoryTree={expense:{}, income:{}};
+  persist(); toast('تم تصفير المعاملات والأقسام ✓');
 }
 function resetApp(){
   if(!confirm('حذف كل بيانات التطبيق نهائيًا؟')) return;
@@ -2740,7 +2775,7 @@ setv('opFeeMonthVal', nYM); document.getElementById('opFeeMonthLabel').textConte
 setv('opDate', today()); setv('cardPaymentDate', today());
 toggleCommitmentFreqFields();
 renderAll();
-try{if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'}).then(r=>r.update()).catch(()=>{}))}catch(e){}
+try{if('serviceWorker'in navigator)window.addEventListener('load',()=>{navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'}).then(r=>r.update()).catch(()=>{});setTimeout(()=>checkForUpdate(true),1500);})}catch(e){}
 </script>
 </body>
 </html>
