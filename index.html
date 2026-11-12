@@ -662,7 +662,7 @@ details.fold .fold-body{padding:12px 14px}
     <summary><span>⟳ التحديثات</span><span>▼</span></summary>
     <div class="fold-body">
       <div class="c-list">
-        <div class="c-row"><span class="c-lbl">الإصدار الحالي :</span><span class="tag" id="appVersionTag">V11.6</span></div>
+        <div class="c-row"><span class="c-lbl">الإصدار الحالي :</span><span class="tag" id="appVersionTag">V11.7</span></div>
         <div class="c-row">
           <span class="c-lbl">التحديثات :</span>
           <div class="c-row-btns">
@@ -852,7 +852,7 @@ details.fold .fold-body{padding:12px 14px}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
 <script>
-const APP_VERSION='11.6';
+const APP_VERSION='11.7';
 const APP_BUILD='2026-11-13';
 const KEY='raseed_mobile_v2';
 
@@ -1306,18 +1306,20 @@ function renderTransactionsScreen(){
           ${canEdit ? `<button type="button" class="smallbtn" onclick="openEditQuickTx('${esc(it.id)}')">تعديل</button>` : ''}
           <button type="button" class="smallbtn danger" onclick="deleteTransaction('${esc(it.id)}')">حذف</button>
         </div>` : '';
+      const rawTitle = String(it.title||'').trim();
+      const isDupTitle = !rawTitle || rawTitle === String(it.category||'').trim() || rawTitle === String(it.subCategory||'').trim();
+      const memoLine = isDupTitle ? '' : rawTitle;
       return `
         <div class="tx-wrap" onclick="toggleItemActions(this, event)">
           <div class="tx-row">
             <div class="tx-amt-right ${amtClass}">${maskable(amtPrefix + fmt(Math.abs(Number(it.amount)||0)))} EGP</div>
             <div class="tx-left-info">
-              <div class="tx-cat-box">
-                <b>${esc(it.category||'أخرى')}</b>
-                ${it.subCategory ? `<small>${esc(it.subCategory)}</small>` : ''}
+              <div class="tx-cat-box" style="max-width:55%">
+                <b>${esc(it.category||'أخرى')}${it.subCategory ? ` <span style="color:var(--mint);font-weight:700">/ ${esc(it.subCategory)}</span>` : ''}</b>
+                <small>${esc(accName)}</small>
               </div>
               <div class="tx-memo-box">
-                <span>${esc(it.title||it.subCategory||it.category||'')}</span>
-                <small>${esc(accName)}</small>
+                ${memoLine ? `<span>${esc(memoLine)}</span>` : ''}
               </div>
             </div>
           </div>
@@ -1743,7 +1745,7 @@ function saveQuickModal(){
   }
 
   if(state.accounts.length && !qmState.accountId) return toast('اختر الحساب');
-  const title = note || qmState.subCategory || qmState.category || 'حركة';
+  const title = note;
   if(qmState.editId){
     const t = state.transactions.find(x=>String(x.id)===String(qmState.editId));
     if(t){
@@ -1808,79 +1810,68 @@ function readMmbak(ev){
         assets = (db.exec("SELECT uid,NIC_NAME,currencyUid FROM ASSETS")[0]?.values||[]).map(r=>[r[0],r[1],r[2],0]);
       }
 
-      // Universal SQLite Category Resolver for Money Manager (.mmbak)
-      // Scans ALL non-transaction tables in the database to find where category UIDs live,
-      // and builds the exact parent/child tree from the user's file.
+      // Exact Money Manager ZCATEGORY Parser (ID, C_IS_DEL, uid, NAME, ORDERSEQ, TYPE, STATUS, pUid)
       let catInfoMap = {}; // uid -> { name, parentName, doType }
       let expTree = {};
       let incTree = {};
       try{
         const tables = (db.exec("SELECT name FROM sqlite_master WHERE type='table'")[0]?.values||[]).map(x=>String(x[0]));
-        const skipTables = new Set(['android_metadata','sqlite_sequence','inoutcome','assets','currency','tag','tx_tag','budget','favorite','memo','photo','repeat','sms','sync_log','z_primarykey','z_metadata']);
-        // Prioritize category-named tables first, then any other lookup table
-        const orderedTables = [
-          ...tables.filter(tn=>/cat|ctg/i.test(tn) && !skipTables.has(tn.toLowerCase())),
-          ...tables.filter(tn=>!/cat|ctg/i.test(tn) && !skipTables.has(tn.toLowerCase()))
-        ];
-        const rawByKey = {};
-        const allNodes = [];
-        for(const tbl of orderedTables){
-          const pragma = db.exec(`PRAGMA table_info("${tbl}")`)[0]?.values || [];
+        const catTable = tables.find(tn=>/^ZCATEGORY$/i.test(tn)) || tables.find(tn=>/^(CATEGORY|CTG)$/i.test(tn));
+        if(catTable){
+          const pragma = db.exec(`PRAGMA table_info("${catTable}")`)[0]?.values || [];
           const cols = pragma.map(x=>String(x[1]));
-          const idCols = cols.filter(c=>/^(uid|c_uid|z_pk|id|category_uid|ctg_uid)$/i.test(c));
-          const nameCol = cols.find(c=>/^(name|zname|nic_name|c_name|title|ztitle|ctg_name|zctg_name)$/i.test(c));
-          if(!idCols.length || !nameCol) continue;
-          // Skip asset/account tables that have currencyUid or balance
-          if(cols.some(c=>/currency|balance|limit|asset/i.test(c)) && !/cat|ctg/i.test(tbl)) continue;
+          const uidCol = cols.find(c=>/^uid$/i.test(c)) || cols.find(c=>/uid|id/i.test(c));
+          const nameCol = cols.find(c=>/^NAME$/i.test(c)) || cols.find(c=>/name/i.test(c));
+          const typeCol = cols.find(c=>/^TYPE$/i.test(c)) || cols.find(c=>/type/i.test(c));
+          const pUidCol = cols.find(c=>/^pUid$/i.test(c)) || cols.find(c=>/p_?uid|parent/i.test(c));
+          const delCol = cols.find(c=>/^C_IS_DEL$/i.test(c)) || cols.find(c=>/is_del/i.test(c));
+          const ordCol = cols.find(c=>/^ORDERSEQ$/i.test(c)) || cols.find(c=>/order|seq/i.test(c));
+          const idCol = cols.find(c=>/^ID$/i.test(c)) || uidCol;
 
-          const typeCol = cols.find(c=>/^(do_type|type|ztype|kind|zdotype|c_type|in_out|zin_out)$/i.test(c));
-          const parentCol = cols.find(c=>/^(p_uid|parent_uid|parent|zparent|zcategory|cat_uid|ctg_uid|pc_uid|zp_uid|parent_id|zparent_id|upper_uid)$/i.test(c));
-          const delCol = cols.find(c=>/^(is_del|zis_del|deleted)$/i.test(c));
-          const orderCol = cols.find(c=>/^(order_seq|zorder|seq|sort|zsort|z_opt)$/i.test(c));
-
-          const selList = [...idCols, nameCol, typeCol||"''", parentCol||"''", delCol||"0"].map(c=>(c.startsWith("'")||c==="0")?c:`"${c}"`).join(',');
-          const ordSql = orderCol ? ` ORDER BY "${orderCol}" ASC` : '';
-          const rows = db.exec(`SELECT ${selList} FROM "${tbl}"${ordSql}`)[0]?.values || [];
+          const qSql = `SELECT "${uidCol}", "${nameCol}", ${typeCol?`"${typeCol}"`:'1'}, ${pUidCol?`"${pUidCol}"`:"'0'"}, ${delCol?`COALESCE("${delCol}",0)`:'0'} FROM "${catTable}" ORDER BY ${ordCol?`COALESCE("${ordCol}",0) ASC, `:''}"${idCol}" ASC`;
+          const rows = db.exec(qSql)[0]?.values || [];
+          const byUid = {};
           for(const r of rows){
-            const keys = r.slice(0, idCols.length).map(v=>String(v??'').trim()).filter(Boolean);
-            const nm = String(r[idCols.length]??'').trim();
-            const tp = String(r[idCols.length+1]??'').trim();
-            let pid = String(r[idCols.length+2]??'').trim();
-            const isDel = Number(r[idCols.length+3]) === 1;
-            if(!nm || /^[0-9a-f-]{20,}$/i.test(nm)) continue;
-            if(pid === '0' || pid === '-1' || pid === 'null' || pid === 'NULL' || pid === 'None' || keys.includes(pid)) pid = '';
-            const node = {keys, name:nm, type:tp, parentId:pid, isDel};
-            allNodes.push(node);
-            for(const k of keys){
-              if(!rawByKey[k]) rawByKey[k] = node;
+            const u = String(r[0]??'').trim();
+            const nm = String(r[1]??'').trim();
+            const tp = Number(r[2]);
+            const pu = String(r[3]??'0').trim();
+            const isDel = Number(r[4]) === 1;
+            if(u && nm) byUid[u] = {uid:u, name:nm, type:tp, pUid:pu, isDel};
+          }
+          // Pass 1: Active Main Categories (pUid === '0' or empty)
+          for(const r of rows){
+            const u = String(r[0]??'').trim();
+            const obj = byUid[u];
+            if(!obj || obj.isDel) continue;
+            if(obj.pUid === '0' || obj.pUid === ''){
+              if(obj.type === 0) incTree[obj.name] = incTree[obj.name] || [];
+              else expTree[obj.name] = expTree[obj.name] || [];
             }
           }
-        }
-        // Resolve parent chain (up to root)
-        for(const obj of allNodes){
-          let root = obj;
-          const visited = new Set([obj]);
-          while(root.parentId && rawByKey[root.parentId] && !visited.has(rawByKey[root.parentId])){
-            visited.add(rawByKey[root.parentId]);
-            root = rawByKey[root.parentId];
-          }
-          const isSub = (root !== obj);
-          const effType = obj.type || root.type || '1';
-          const isIncome = (effType === '0' || /inc/i.test(effType));
-          const targetTree = isIncome ? incTree : expTree;
-
-          if(!obj.isDel){
-            if(isSub){
-              targetTree[root.name] = targetTree[root.name] || [];
-              if(!targetTree[root.name].includes(obj.name)) targetTree[root.name].push(obj.name);
+          // Pass 2: Active Subcategories (pUid !== '0') + map all UIDs for historical transactions
+          for(const r of rows){
+            const u = String(r[0]??'').trim();
+            const obj = byUid[u];
+            if(!obj) continue;
+            if(obj.pUid !== '0' && obj.pUid !== ''){
+              const parent = byUid[obj.pUid];
+              if(parent){
+                catInfoMap[obj.uid] = { name: obj.name, parentName: parent.name, doType: String(parent.type) };
+                if(!obj.isDel && !parent.isDel){
+                  const tTree = (obj.type === 0 || parent.type === 0) ? incTree : expTree;
+                  tTree[parent.name] = tTree[parent.name] || [];
+                  if(!tTree[parent.name].includes(obj.name)) tTree[parent.name].push(obj.name);
+                }
+              } else {
+                catInfoMap[obj.uid] = { name: obj.name, parentName: '', doType: String(obj.type) };
+              }
             } else {
-              targetTree[obj.name] = targetTree[obj.name] || [];
+              catInfoMap[obj.uid] = { name: obj.name, parentName: '', doType: String(obj.type) };
             }
           }
-          const info = { name: obj.name, parentName: isSub ? root.name : '', doType: effType };
-          for(const k of obj.keys) catInfoMap[k] = info;
         }
-      }catch(err){ console.warn('MM Category parse:', err); }
+      }catch(err){ console.warn('MM ZCATEGORY parse:', err); }
 
       // Inspect INOUTCOME columns dynamically so we catch ctgUid, subCtgUid, categoryName, etc.
       const ioCols = (db.exec(`PRAGMA table_info("INOUTCOME")`)[0]?.values||[]).map(x=>String(x[1]));
@@ -1982,7 +1973,7 @@ function commitMmbakDirect(){
     } else {
       mainCat = 'أخرى';
     }
-    const titleText = usableMemo || subCat || mainCat;
+    const titleText = usableMemo;
 
     const id = t==='transfer' ? 'mm-xfer-'+transferKey : 'mm-'+uid;
     if(seen.has(id)){
