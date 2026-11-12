@@ -19,10 +19,10 @@ button{cursor:pointer}
 .avatar{width:42px;height:42px;border-radius:15px;background:#22334a;color:#c7d7ed;display:grid;place-items:center;font-weight:800}
 .greeting{font-size:13px;color:var(--muted)}
 h1{font-size:25px;line-height:1.4;margin:2px 0 15px;font-weight:800}
-.monthbar{display:flex;align-items:center;justify-content:space-between;margin:18px 0 12px}
-.monthbar select{background:#17263a;border:1px solid var(--line);color:var(--text);border-radius:12px;padding:9px 12px;outline:none}
-.period-selects{display:flex;gap:7px}
-.period-selects select{min-width:95px}
+.monthbar{display:flex;align-items:center;justify-content:space-between;margin:20px 2px 12px}
+.period-btns{display:flex;gap:7px}
+.ym-pill-btn{background:#17263a;border:1px solid var(--line);color:var(--text);border-radius:12px;padding:8px 13px;font-size:12px;font-weight:700;display:flex;align-items:center;gap:6px}
+.ym-pill-btn span{color:var(--mint);font-size:10px}
 .hero{background:linear-gradient(135deg,#1b8f83,#145e68 60%,#174b63);border:1px solid #4dd9bb44;border-radius:27px;padding:20px 19px;position:relative;overflow:hidden;box-shadow:0 18px 40px #0003}
 .hero:after{content:"";position:absolute;width:190px;height:190px;border:1px solid #ffffff18;border-radius:50%;left:-70px;top:-80px;box-shadow:0 0 0 22px #ffffff08,0 0 0 48px #ffffff05;pointer-events:none}
 .hero label{font-size:12px;color:#d5fff4}
@@ -34,7 +34,7 @@ h1{font-size:25px;line-height:1.4;margin:2px 0 15px;font-weight:800}
 .quick-row{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:12px}
 .quick-btn{background:#132136;border:1px solid #2d4463;color:#e6f2ff;border-radius:16px;padding:12px 13px;display:flex;align-items:center;justify-content:space-between;font-size:12px;font-weight:700;text-align:right}
 .quick-btn span.badge{background:#43d6b222;color:var(--mint);padding:3px 7px;border-radius:8px;font-size:10px;white-space:nowrap}
-.section-head{display:flex;justify-content:space-between;align-items:center;margin:24px 2px 12px}
+.section-head{display:flex;justify-content:space-between;align-items:center;margin:22px 2px 11px}
 .section-head h2{font-size:16px;margin:0}
 .section-head span{font-size:11px;color:var(--muted)}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:11px}
@@ -58,56 +58,72 @@ h1{font-size:25px;line-height:1.4;margin:2px 0 15px;font-weight:800}
 .progress i{height:100%;display:block;background:linear-gradient(90deg,#43d6b2,#73a7ff);border-radius:20px}
 .rowline{display:flex;justify-content:space-between;align-items:center;font-size:12px;margin:6px 0}
 .rowline span{color:var(--muted)}
-.activity{display:flex;align-items:center;gap:11px;padding:12px 0;border-bottom:1px solid #26364b}
+.activity{display:flex;align-items:flex-start;gap:11px;padding:12px 0;border-bottom:1px solid #26364b;cursor:pointer}
 .activity:last-child{border:0}
 .actico{width:39px;height:39px;border-radius:14px;background:#23354b;display:grid;place-items:center;flex-shrink:0}
 .acttxt{flex:1;min-width:0}
 .acttxt b{font-size:12px;display:block}
 .acttxt small{color:var(--muted);font-size:10px}
 .actamt{font-size:13px;font-weight:800;direction:ltr;white-space:nowrap}
-.bottom{position:fixed;bottom:0;left:0;right:0;background:#0d1726ed;backdrop-filter:blur(18px);border-top:1px solid #25354b;z-index:10;padding:9px max(10px,calc((100vw - 520px)/2)) calc(9px + env(safe-area-inset-bottom));display:flex;justify-content:space-between;gap:2px}
-.nav{border:0;background:none;color:#71839b;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;flex:1;min-width:0;padding:2px 0;white-space:nowrap}
-.nav span{font-size:20px;line-height:1.2}
-.nav.active{color:var(--mint)}
+
+/* Colored Bottom Nav Icons */
+.bottom{position:fixed;bottom:0;left:0;right:0;background:#0d1726ed;backdrop-filter:blur(18px);border-top:1px solid #25354b;z-index:10;padding:8px max(8px,calc((100vw - 520px)/2)) calc(8px + env(safe-area-inset-bottom));display:flex;justify-content:space-between;gap:2px}
+.nav{border:0;background:none;color:#71839b;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:10px;flex:1;min-width:0;padding:2px 0;white-space:nowrap;opacity:.72;transition:opacity .15s,transform .15s}
+.nav svg{width:22px;height:22px;display:block}
+.nav.active{color:var(--mint);opacity:1;font-weight:700}
+
 .fab{position:fixed;bottom:84px;left:calc(50% - 27px);z-index:11;width:54px;height:54px;border-radius:19px;border:4px solid var(--bg);background:linear-gradient(145deg,#4ce0bd,#1a9c94);color:#06221f;font-size:28px;box-shadow:0 8px 25px #1eb99b55}
 .screen{display:none}
 .screen.active{display:block}
-.listitem{display:flex;align-items:center;gap:10px;padding:13px 0;border-bottom:1px solid var(--line)}
+.listitem{display:flex;align-items:flex-start;gap:10px;padding:13px 0;border-bottom:1px solid var(--line);cursor:pointer}
 .listitem:last-child{border:0}
 .listitem .info{flex:1;min-width:0}
 .listitem b{font-size:13px}
 .listitem small{display:block;color:var(--muted);font-size:11px;line-height:1.6}
 .listitem strong{font-size:14px;white-space:nowrap}
-.tag{font-size:10px;padding:5px 8px;border-radius:9px;background:#2a3a50;color:#b9cbe2;white-space:nowrap}
+.tag{font-size:10px;padding:3px 7px;border-radius:8px;background:#2a3a50;color:#b9cbe2;white-space:nowrap}
 .empty{text-align:center;color:var(--muted);padding:26px 10px;font-size:12px}
 
-/* Top/Center Keyboard-Safe Modal */
+/* Hidden actions until tap */
+.tap-actions{display:none;margin-top:8px;gap:6px;flex-wrap:wrap}
+.listitem.expanded .tap-actions,.activity.expanded .tap-actions{display:flex}
+
+/* Modals: Input Sheet (top-aligned for keyboard) vs Centered Confirm/Picker */
 .modal{display:none;position:fixed;inset:0;background:#050a12d9;z-index:40;align-items:flex-start;justify-content:center;padding:16px 12px 45vh;overflow-y:auto;-webkit-overflow-scrolling:touch}
 .modal.show{display:flex}
+.modal.center-modal{align-items:center;padding:16px}
 .sheet{width:100%;max-width:500px;background:#142136;border:1px solid #314866;border-radius:24px;padding:18px 16px 22px;box-shadow:0 20px 50px #0008;margin-top:8px}
+.modal.center-modal .sheet{max-width:360px;margin-top:0;padding:18px 16px}
 .sheet h3{margin:0 0 12px;font-size:16px}
 .field{margin:9px 0}
 .field label{display:block;font-size:11px;color:var(--muted);margin-bottom:5px}
 .field input,.field select{width:100%;background:#0e1929;border:1px solid #30445e;border-radius:13px;padding:11px 12px;color:white;outline:none;color-scheme:dark}
-.ym-row{display:grid;grid-template-columns:1.2fr 1fr;gap:6px}
+.picker-trigger{width:100%;background:#0e1929;border:1px solid #30445e;border-radius:13px;padding:11px 12px;color:white;display:flex;justify-content:space-between;align-items:center;font-size:13px;text-align:right}
+.picker-trigger span{color:var(--mint);font-size:11px}
 .actions{display:flex;gap:9px;margin-top:16px}
-.primary,.secondary{border:0;border-radius:13px;padding:12px 16px;font-weight:800;flex:1}
+.primary,.secondary{border:0;border-radius:13px;padding:11px 14px;font-weight:800;flex:1;font-size:13px}
 .primary{background:var(--mint);color:#06221e;width:100%}
 .secondary{background:#25364d;color:#d6e1ef}
 .danger-fill{background:#7f2536;color:#ffe6ea}
-.hint{font-size:11px;color:var(--muted);line-height:1.7;margin:6px 0}
+.hint{font-size:12px;color:var(--muted);line-height:1.7;margin:6px 0}
 .wideform{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .wideform .field{margin:3px 0}
 .full{grid-column:1/-1}
-.smallbtn{border:1px solid #35506b;background:#1b2c42;color:#eaf2fb;border-radius:11px;padding:6px 10px;font-size:11px}
+.smallbtn{border:1px solid #35506b;background:#1b2c42;color:#eaf2fb;border-radius:10px;padding:5px 10px;font-size:11px}
 .smallbtn.danger{background:#4a2631;color:#ffdbe1;border:1px solid #75404b}
-.tx-actions{margin-top:6px;display:flex;gap:6px;flex-wrap:wrap}
 .filterbar{display:flex;gap:8px;margin:10px 0;flex-wrap:wrap}
 .filterbar input,.filterbar select{flex:1;min-width:120px;background:#0e1929;border:1px solid #30445e;border-radius:12px;padding:10px;color:white}
-.mutednote{font-size:10px;color:var(--muted);line-height:1.8}
 .daysep{display:flex;align-items:center;gap:10px;margin:16px 0 8px;color:#8fa3bd;font-size:11px;font-weight:700}
 .daysep:before,.daysep:after{content:"";flex:1;height:1px;background:#24344a}
 .toast{position:fixed;top:15px;left:50%;transform:translateX(-50%);background:#1d3d46;border:1px solid #43d6b2;color:#dffdf5;padding:10px 15px;border-radius:13px;z-index:60;font-size:12px;display:none;max-width:90%;text-align:center}
+
+/* Compact In-App Month/Year Grid Picker */
+.ym-year-bar{display:flex;align-items:center;justify-content:space-between;background:#0e1929;border:1px solid #283b54;border-radius:13px;padding:6px 10px;margin-bottom:10px}
+.ym-year-bar button{background:#1d2e45;border:0;color:white;width:32px;height:32px;border-radius:10px;font-weight:800;font-size:15px}
+.ym-year-bar b{font-size:15px;color:var(--mint)}
+.ym-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.ym-cell{background:#0e1929;border:1px solid #283b54;color:#d6e1ef;border-radius:11px;padding:9px 4px;font-size:12px;font-weight:700;text-align:center}
+.ym-cell.active{background:var(--mint);color:#06221e;border-color:var(--mint)}
 
 /* Collapsible Panels (Accordion) */
 details.fold{background:linear-gradient(150deg,#172438,#111b2b);border:1px solid var(--line);border-radius:22px;margin:12px 0;overflow:hidden}
@@ -155,13 +171,8 @@ details.subfold .subfold-body{padding:10px 12px}
   <div class="greeting">أهلاً بيك 👋</div>
   <h1>خلّيك متحكم في فلوسك</h1>
   <div id="backupReminderBox"></div>
-  <div class="monthbar">
-    <b>نظرة عامة</b>
-    <div class="period-selects">
-      <select id="yearSelect" aria-label="السنة" onchange="render()"></select>
-      <select id="monthSelect" aria-label="الشهر" onchange="render()"></select>
-    </div>
-  </div>
+
+  <!-- General Hero Card (Always shows overall liquid funds) -->
   <div class="hero">
     <label>إجمالي الأموال المتاحة (رصيد حساباتك)</label>
     <div class="amount" id="homeAvailableTotal">0.00 ج.م</div>
@@ -184,25 +195,45 @@ details.subfold .subfold-body{padding:10px 12px}
     </button>
   </div>
 
-  <div class="section-head"><h2>ملخصك المالي</h2><span>مؤشرات الشهر</span></div>
+  <!-- Month Selector positioned right above Monthly Summary -->
+  <div class="monthbar">
+    <b>ملخصك المالي</b>
+    <div class="period-btns">
+      <button type="button" class="ym-pill-btn" onclick="openHomePeriodPicker()"><b id="homePeriodLabel">نوفمبر 2026</b><span>▼</span></button>
+    </div>
+  </div>
+
   <div class="grid">
     <div class="metric"><div class="metric-top"><span class="ico mint" style="background:#173b3b">↙</span><small>إجمالي الدخل</small></div><strong id="incomeCard">0.00</strong><em>جنيه مصري</em></div>
     <div class="metric"><div class="metric-top"><span class="ico red" style="background:#3d222b">↗</span><small>إجمالي المصروفات</small></div><strong id="expenseCard">0.00</strong><em>جنيه مصري</em></div>
     <div class="metric"><div class="metric-top"><span class="ico orange" style="background:#3d3021">▤</span><small>مديونية البطاقات</small></div><strong id="debtCard">0.00</strong><em>المستخدم من الليمت</em></div>
     <div class="metric"><div class="metric-top"><span class="ico purple" style="background:#30294a">◈</span><small>الادخار التراكمي</small></div><strong id="savingCard">0.00</strong><em>جنيه مصري</em></div>
   </div>
+
   <div class="section-head"><h2>حركة الأموال</h2><span>آخر 6 شهور</span></div>
   <div class="chartbox">
     <div class="bars" id="bars"></div>
     <div class="chartlegend"><span><i class="dot" style="background:#43d6b2"></i>الدخل</span><span><i class="dot" style="background:#73a7ff"></i>المصروفات</span></div>
   </div>
-  <div class="section-head"><h2>الالتزامات</h2><span style="cursor:pointer;color:var(--mint)" onclick="go('commitments')">التفاصيل ←</span></div>
+
+  <!-- Separate Section 1: One-time Debts (الديون) -->
+  <div class="section-head"><h2>الديون</h2><span style="cursor:pointer;color:var(--mint)" onclick="go('commitments')">التفاصيل ←</span></div>
   <div class="panel">
-    <div class="rowline"><span>إجمالي التزامات الشهر (سلف / أقساط / جمعيات)</span><b class="orange" id="homeCommitmentsDue">0.00 ج.م</b></div>
+    <div class="rowline"><span>إجمالي الديون (سداد مرة واحدة)</span><b id="homeDebtsTotal">0.00 ج.م</b></div>
+    <div class="progress"><i id="homeDebtsProgress" style="width:0%"></i></div>
+    <div class="rowline"><span>المسدد فعليًا</span><b class="mint" id="homeDebtsPaid">0.00 ج.م</b></div>
+    <div class="rowline"><span>المتبقي للسداد</span><b class="red" id="homeDebtsRemain">0.00 ج.م</b></div>
+  </div>
+
+  <!-- Separate Section 2: Monthly Commitments (الالتزامات الشهرية) -->
+  <div class="section-head"><h2>الالتزامات الشهرية</h2><span style="cursor:pointer;color:var(--mint)" onclick="go('commitments')">التفاصيل ←</span></div>
+  <div class="panel">
+    <div class="rowline"><span>مستحق هذا الشهر (أقساط / جمعيات)</span><b class="orange" id="homeCommitmentsDue">0.00 ج.م</b></div>
     <div class="progress"><i id="homeCommitmentsProgress" style="width:0%"></i></div>
     <div class="rowline"><span>المسدد هذا الشهر</span><b class="mint" id="homeCommitmentsPaid">0.00 ج.م</b></div>
-    <div class="rowline"><span>المتبقي للسداد</span><b class="red" id="homeCommitmentsRemain">0.00 ج.م</b></div>
+    <div class="rowline"><span>المتبقي هذا الشهر</span><b class="red" id="homeCommitmentsRemain">0.00 ج.م</b></div>
   </div>
+
   <div class="section-head"><h2>آخر الحركات</h2><span style="cursor:pointer;color:var(--mint)" onclick="go('activity')">عرض الكل ←</span></div>
   <div class="panel" id="recent"></div>
 </section>
@@ -231,7 +262,7 @@ details.subfold .subfold-body{padding:10px 12px}
     </div>
   </details>
 
-  <div class="section-head"><h2>أرصدتي</h2><span>اضغط على الحساب لكشف الحركة</span></div>
+  <div class="section-head"><h2>أرصدتي</h2><span>اضغط على الحساب للخيارات</span></div>
   <div class="panel" id="accountsList"></div>
 </section>
 
@@ -267,50 +298,44 @@ details.subfold .subfold-body{padding:10px 12px}
   <div class="panel" id="allActivity"></div>
 </section>
 
-<!-- 4. الالتزامات (شاملة السلف والأقساط والجمعيات) -->
+<!-- 4. الالتزامات والديون -->
 <section id="commitments" class="screen">
-  <div class="greeting">سلف، أقساط، جمعيات والتزامات شهرية</div>
+  <div class="greeting">إدارة الديون والالتزامات الشهرية</div>
   <h1>الالتزامات</h1>
-
-  <div class="panel">
-    <div class="rowline"><span>إجمالي المستحق هذا الشهر</span><b id="comTotalDue">0.00 ج.م</b></div>
-    <div class="rowline"><span>المسدد فعليًا</span><b class="mint" id="comTotalPaid">0.00 ج.م</b></div>
-    <div class="rowline"><span>المتبقي</span><b class="red" id="comTotalRemain">0.00 ج.م</b></div>
-  </div>
 
   <details class="fold">
     <summary>
-      <div class="fold-left"><span class="fold-ico">＋</span><span>إضافة التزام جديد</span></div>
+      <div class="fold-left"><span class="fold-ico">＋</span><span>إضافة التزام أو دين جديد</span></div>
       <span class="chev">▼</span>
     </summary>
     <div class="fold-body">
       <div class="wideform">
-        <div class="field"><label>اسم الالتزام</label><input id="comTitle" placeholder="مثال: سلفة / جمعية / قسط"></div>
-        <div class="field"><label>النوع</label><select id="comType"><option>سلفة</option><option>جمعية</option><option>قسط شقة</option><option>قسط بنك</option><option>التزام شهري</option><option>فاتورة</option><option>أخرى</option></select></div>
-        <div class="field"><label>القيمة الشهرية / المبلغ</label><input id="comAmount" type="number" min="1" step="0.01" inputmode="decimal" placeholder="0"></div>
-        <div class="field"><label>يوم الاستحقاق</label><input id="comDay" type="number" min="1" max="31" value="1"></div>
-        <div class="field full">
-          <label>تاريخ البداية (الشهر والسنة)</label>
-          <div class="ym-row">
-            <select id="comStartMonth"></select>
-            <select id="comStartYear"></select>
-          </div>
+        <div class="field full"><label>نظام السداد</label><select id="comFreq" onchange="toggleCommitmentFreqFields()"><option value="monthly">شهري (قسط / جمعية / فاتورة)</option><option value="once">مرة واحدة (دين / سلفة)</option></select></div>
+        <div class="field"><label>الاسم</label><input id="comTitle" placeholder="مثال: سلفة / جمعية / قسط"></div>
+        <div class="field"><label>التصنيف</label><select id="comType"><option>سلفة</option><option>جمعية</option><option>قسط شقة</option><option>قسط بنك</option><option>التزام شهري</option><option>فاتورة</option><option>أخرى</option></select></div>
+        <div class="field"><label>المبلغ</label><input id="comAmount" type="number" min="1" step="0.01" inputmode="decimal" placeholder="0"></div>
+        <div class="field com-monthly-only"><label>يوم الاستحقاق</label><input id="comDay" type="number" min="1" max="31" value="1"></div>
+        <div class="field com-monthly-only">
+          <label>تاريخ البداية</label>
+          <button type="button" class="picker-trigger" onclick="openCompactYMPicker('comStart')"><b id="comStartLabel">نوفمبر 2026</b><span>تغيير</span></button>
+          <input type="hidden" id="comStartVal">
         </div>
-        <div class="field full">
-          <label>تاريخ النهاية (اختياري — اتركه مفتوح لو مستمر)</label>
-          <div class="ym-row">
-            <select id="comEndMonth"><option value="">بدون نهاية</option></select>
-            <select id="comEndYear"><option value="">—</option></select>
-          </div>
+        <div class="field com-monthly-only">
+          <label>تاريخ النهاية (اختياري)</label>
+          <button type="button" class="picker-trigger" onclick="openCompactYMPicker('comEnd',true)"><b id="comEndLabel">مفتوح</b><span>تغيير</span></button>
+          <input type="hidden" id="comEndVal" value="">
         </div>
         <div class="field full"><label>ملاحظة (اختياري)</label><input id="comNote" placeholder="تفاصيل إضافية"></div>
       </div>
-      <button class="primary" style="margin-top:10px" onclick="addCommitment()">إضافة الالتزام</button>
+      <button class="primary" style="margin-top:10px" onclick="addCommitment()">حفظ</button>
     </div>
   </details>
 
-  <div class="section-head"><h2>الالتزامات المسجلة</h2><span id="comMonthLabel"></span></div>
-  <div class="panel" id="commitmentsList"><div class="empty">لا توجد التزامات مسجلة في هذا الشهر.</div></div>
+  <div class="section-head"><h2>الالتزامات الشهرية</h2><span id="comMonthLabel"></span></div>
+  <div class="panel" id="commitmentsList"><div class="empty">لا توجد التزامات شهرية في هذا الشهر.</div></div>
+
+  <div class="section-head"><h2>الديون (سداد مرة واحدة)</h2><span>اضغط على العنصر للخيارات</span></div>
+  <div class="panel" id="oneTimeDebtsList"><div class="empty">لا توجد ديون مسجلة.</div></div>
 
   <div class="section-head"><h2>الادخار</h2><span>الرصيد الحالي</span></div>
   <div class="hero">
@@ -440,11 +465,9 @@ details.subfold .subfold-body{padding:10px 12px}
         <div class="field"><label>تاريخ العملية</label><input id="opDate" type="date"></div>
         <div class="field installment-only"><label>مدة التقسيط</label><select id="opMonths" onchange="showCreditQuote()"><option>3</option><option>6</option><option>9</option><option selected>12</option><option>15</option><option>18</option><option>24</option><option>36</option></select></div>
         <div class="field installment-only">
-          <label>شهر بداية القسط / الرسوم</label>
-          <div class="ym-row">
-            <select id="opStartMonth"></select>
-            <select id="opStartYear"></select>
-          </div>
+          <label>شهر بداية القسط</label>
+          <button type="button" class="picker-trigger" onclick="openCompactYMPicker('opStart')"><b id="opStartLabel">نوفمبر 2026</b><span>تغيير</span></button>
+          <input type="hidden" id="opStartVal">
         </div>
       </div>
       <div id="creditQuote" class="panel" style="margin-top:10px;background:#0e1929"><div class="empty">اختر البطاقة والمبلغ والمدة لعرض القسط والفائدة والرسوم.</div></div>
@@ -468,7 +491,7 @@ details.subfold .subfold-body{padding:10px 12px}
     </div>
   </details>
 
-  <div class="section-head"><h2>البطاقات المسجلة</h2></div>
+  <div class="section-head"><h2>البطاقات المسجلة</h2><span>اضغط على البطاقة للخيارات</span></div>
   <div class="panel" id="cardsList"><div class="empty">لا توجد بطاقات مسجلة.</div></div>
 
   <div class="section-head"><h2>عمليات البطاقات</h2><span>مديونية وجدول استحقاق</span></div>
@@ -584,9 +607,9 @@ details.subfold .subfold-body{padding:10px 12px}
       <div class="set-ico">ℹ</div>
       <div class="set-title">
         <b>Raseed — حول التطبيق</b>
-        <small id="appVersionDetail">V8.7 · 2026-11-12</small>
+        <small id="appVersionDetail">V8.8 · 2026-11-12</small>
       </div>
-      <span class="tag" id="appVersionTag">V8.7</span>
+      <span class="tag" id="appVersionTag">V8.8</span>
     </div>
     <div class="hint" id="updateStatus">بياناتك المالية تبقى على الجهاز. التحديث يخص ملفات التطبيق فقط.</div>
     <div class="set-actions">
@@ -612,14 +635,32 @@ details.subfold .subfold-body{padding:10px 12px}
 
 <button class="fab" onclick="openModal('transaction')">＋</button>
 
-<!-- Clean 6-item Bottom Bar -->
+<!-- Colored Custom SVG Bottom Bar -->
 <nav class="bottom">
-  <button class="nav active" data-page="home" onclick="go('home',this)"><span>⌂</span>الرئيسية</button>
-  <button class="nav" data-page="accounts" onclick="go('accounts',this)"><span>▣</span>حساباتي</button>
-  <button class="nav" data-page="commitments" onclick="go('commitments',this)"><span>▤</span>الالتزامات</button>
-  <button class="nav" data-page="cards" onclick="go('cards',this)"><span>💳</span>البطاقات</button>
-  <button class="nav" data-page="reports" onclick="go('reports',this)"><span>▥</span>التقارير</button>
-  <button class="nav" data-page="settings" onclick="go('settings',this)"><span>⚙</span>الإعدادات</button>
+  <button class="nav active" data-page="home" onclick="go('home',this)">
+    <svg viewBox="0 0 24 24" fill="none"><path d="M3 10.5L12 3l9 7.5V20a1.5 1.5 0 0 1-1.5 1.5h-5v-6h-5v6h-5A1.5 1.5 0 0 1 3 20v-9.5Z" fill="#43d6b2" fill-opacity=".22" stroke="#43d6b2" stroke-width="1.8" stroke-linejoin="round"/></svg>
+    الرئيسية
+  </button>
+  <button class="nav" data-page="accounts" onclick="go('accounts',this)">
+    <svg viewBox="0 0 24 24" fill="none"><rect x="2.5" y="5.5" width="19" height="13" rx="3" fill="#73a7ff" fill-opacity=".22" stroke="#73a7ff" stroke-width="1.8"/><circle cx="16.5" cy="12" r="1.5" fill="#73a7ff"/></svg>
+    حساباتي
+  </button>
+  <button class="nav" data-page="commitments" onclick="go('commitments',this)">
+    <svg viewBox="0 0 24 24" fill="none"><rect x="4" y="3.5" width="16" height="17" rx="3" fill="#ff7285" fill-opacity=".22" stroke="#ff7285" stroke-width="1.8"/><path d="M8 8.5h8M8 12.5h8M8 16.5h5" stroke="#ff7285" stroke-width="1.8" stroke-linecap="round"/></svg>
+    الالتزامات
+  </button>
+  <button class="nav" data-page="cards" onclick="go('cards',this)">
+    <svg viewBox="0 0 24 24" fill="none"><rect x="2.5" y="5" width="19" height="14" rx="3" fill="#ffbd69" fill-opacity=".25" stroke="#ffbd69" stroke-width="1.8"/><path d="M2.5 9.5h19" stroke="#ffbd69" stroke-width="2"/><rect x="6" y="13.5" width="5" height="2" rx="1" fill="#ffbd69"/></svg>
+    البطاقات
+  </button>
+  <button class="nav" data-page="reports" onclick="go('reports',this)">
+    <svg viewBox="0 0 24 24" fill="none"><rect x="3.5" y="3.5" width="17" height="17" rx="3" fill="#b69aff" fill-opacity=".22" stroke="#b69aff" stroke-width="1.8"/><path d="M8 16v-4M12 16V8M16 16v-6" stroke="#b69aff" stroke-width="2" stroke-linecap="round"/></svg>
+    التقارير
+  </button>
+  <button class="nav" data-page="settings" onclick="go('settings',this)">
+    <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" fill="#91a2b9" fill-opacity=".3" stroke="#91a2b9" stroke-width="1.8"/><path d="M12 3v2.2M12 18.8V21M3 12h2.2M18.8 12H21M5.6 5.6l1.6 1.6M16.8 16.8l1.6 1.6M18.4 5.6l-1.6 1.6M7.2 16.8l-1.6 1.6" stroke="#91a2b9" stroke-width="1.8" stroke-linecap="round"/></svg>
+    الإعدادات
+  </button>
 </nav>
 
 <div class="modal" id="modal" onclick="if(event.target===this)closeModal()">
@@ -662,7 +703,7 @@ details.subfold .subfold-body{padding:10px 12px}
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
 <script>
-const APP_VERSION='8.7';
+const APP_VERSION='8.8';
 const APP_BUILD='2026-11-12';
 const KEY='raseed_mobile_v2';
 let pendingWorkbookTransactions=null;
@@ -685,11 +726,15 @@ state.importBatches=state.importBatches||[];
 state.debts=state.debts||[];
 state.categories=state.categories||[...DEFAULT_CATS];
 
+// Active period state (replaces large native selects on Home)
+let activeYear = new Date().getFullYear();
+let activeMonth = new Date().getMonth() + 1;
+
 const fmt=n=>(Math.round((Number(n)||0)*100)/100).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
 const egp=n=>fmt(n)+' ج.م';
 const today=()=>new Date().toISOString().slice(0,10);
 const monthKey=d=>String(d||'').slice(0,7);
-const selected=()=>document.getElementById('yearSelect').value+'-'+String(Number(document.getElementById('monthSelect').value)).padStart(2,'0');
+const selected=()=>String(activeYear)+'-'+String(activeMonth).padStart(2,'0');
 const num=id=>Number(document.getElementById(id)?.value)||0;
 const val=id=>document.getElementById(id)?.value||'';
 const setv=(id,v)=>{let e=document.getElementById(id);if(e)e.value=v??''};
@@ -706,10 +751,25 @@ function persist(){
   render();
 }
 
-/* Migrate legacy debts into unified commitments so zero user data is lost */
+/* Toggle Tap Actions on List Items */
+function toggleItemActions(el, ev){
+  if(ev && ev.target.closest('button')) return;
+  const wasExpanded = el.classList.contains('expanded');
+  document.querySelectorAll('.listitem.expanded, .activity.expanded').forEach(x=>x.classList.remove('expanded'));
+  if(!wasExpanded) el.classList.add('expanded');
+}
+
+/* Migrate legacy debts into one-time commitments (`freq: 'once'`) */
 function migrateLegacyDebtsToCommitments(){
   let changed=false;
   const curYM=new Date().toISOString().slice(0,7);
+  // Ensure existing commitments have freq property
+  for(const c of state.commitments){
+    if(!c.freq){
+      c.freq = (c.type==='سلفة' || String(c.id).startsWith('com-migrated-')) ? 'once' : 'monthly';
+      changed=true;
+    }
+  }
   if(state.debts && state.debts.length){
     for(const d of state.debts){
       const cid='com-migrated-'+d.id;
@@ -718,6 +778,7 @@ function migrateLegacyDebtsToCommitments(){
           id:cid,
           title:d.title||'سلفة',
           type:'سلفة',
+          freq:'once',
           amount:Number(d.amount)||0,
           start:curYM,
           end:'',
@@ -747,6 +808,7 @@ function migrateLegacyDebtsToCommitments(){
         id:cid,
         title:'سلفة مسجلة سابقًا',
         type:'سلفة',
+        freq:'once',
         amount:Number(state.debtTotal)||0,
         start:curYM,
         end:'',
@@ -771,9 +833,9 @@ function migrateLegacyDebtsToCommitments(){
   if(changed) try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}
 }
 
-/* In-App Arabic Confirmation Dialog (Replaces browser native Chinese/English confirm()) */
+/* Centered In-App Confirmation Dialog */
 function appConfirm(title, message, okLabel, onConfirm){
-  ensureActionDialog();
+  ensureActionDialog(true);
   document.getElementById('actionTitle').textContent=title;
   document.getElementById('actionBody').innerHTML=`<p class="hint" style="font-size:13px;color:#dce8f8">${esc(message)}</p>`;
   const okBtn=document.getElementById('actionOk');
@@ -786,7 +848,82 @@ function appConfirm(title, message, okLabel, onConfirm){
   };
   const dlg=document.getElementById('actionDialog');
   dlg.classList.add('show');
-  dlg.scrollTop=0;
+}
+
+/* Compact In-App Month/Year Grid Picker (Replaces giant native browser select popup) */
+let ymPickerState = { year: new Date().getFullYear(), month: new Date().getMonth()+1, allowClear: false, onSelect: null };
+function openCompactYMPicker(targetPrefix, allowClear){
+  let curVal = val(targetPrefix+'Val') || selected();
+  let [y, m] = curVal.includes('-') ? curVal.split('-').map(Number) : [new Date().getFullYear(), new Date().getMonth()+1];
+  ymPickerState = {
+    year: y || new Date().getFullYear(),
+    month: m || (new Date().getMonth()+1),
+    allowClear: !!allowClear,
+    onSelect: (chosenYM) => {
+      setv(targetPrefix+'Val', chosenYM);
+      const lbl = document.getElementById(targetPrefix+'Label');
+      if(lbl) lbl.textContent = chosenYM ? formatYMArabic(chosenYM) : 'مفتوح';
+    }
+  };
+  renderCompactYMPicker();
+}
+function openHomePeriodPicker(){
+  ymPickerState = {
+    year: activeYear,
+    month: activeMonth,
+    allowClear: false,
+    onSelect: (chosenYM) => {
+      const [y, m] = chosenYM.split('-').map(Number);
+      activeYear = y;
+      activeMonth = m;
+      render();
+    }
+  };
+  renderCompactYMPicker();
+}
+function renderCompactYMPicker(){
+  ensureActionDialog(true);
+  document.getElementById('actionTitle').textContent = 'اختر الشهر والسنة';
+  const gridHtml = monthNames.map((n, i) => {
+    const mNum = i + 1;
+    const isSel = mNum === ymPickerState.month;
+    return `<button type="button" class="ym-cell ${isSel?'active':''}" onclick="selectCompactYMMonth(${mNum})">${n}</button>`;
+  }).join('');
+  const clearBtnHtml = ymPickerState.allowClear
+    ? `<button type="button" class="smallbtn" style="width:100%;margin-top:10px;padding:8px" onclick="clearCompactYM()">بدون نهاية (مفتوح)</button>`
+    : '';
+  document.getElementById('actionBody').innerHTML = `
+    <div class="ym-year-bar">
+      <button type="button" onclick="shiftCompactYMYear(-1)">‹</button>
+      <b>${ymPickerState.year}</b>
+      <button type="button" onclick="shiftCompactYMYear(1)">›</button>
+    </div>
+    <div class="ym-grid">${gridHtml}</div>
+    ${clearBtnHtml}
+  `;
+  const okBtn = document.getElementById('actionOk');
+  okBtn.textContent = 'تأكيد';
+  okBtn.className = 'primary';
+  okBtn.onclick = () => {
+    const res = String(ymPickerState.year) + '-' + String(ymPickerState.month).padStart(2,'0');
+    closeActionDialog();
+    if(ymPickerState.onSelect) ymPickerState.onSelect(res);
+  };
+  document.getElementById('actionDialog').classList.add('show');
+}
+function shiftCompactYMYear(delta){
+  ymPickerState.year += delta;
+  renderCompactYMPicker();
+}
+function selectCompactYMMonth(mNum){
+  ymPickerState.month = mNum;
+  const res = String(ymPickerState.year) + '-' + String(mNum).padStart(2,'0');
+  closeActionDialog();
+  if(ymPickerState.onSelect) ymPickerState.onSelect(res);
+}
+function clearCompactYM(){
+  closeActionDialog();
+  if(ymPickerState.onSelect) ymPickerState.onSelect('');
 }
 
 /* Navigation + Back Button Exit Confirmation */
@@ -817,7 +954,6 @@ try{
       try{history.pushState({screen:'home'},'','#home')}catch(_){}
       return;
     }
-    // User is on home and pressed back -> ask confirmation in Arabic
     try{history.pushState({screen:'home'},'','#home')}catch(_){}
     appConfirm('الخروج من التطبيق','هل تريد الخروج من تطبيق رَصيد؟','نعم، خروج',()=>{
       window.close();
@@ -828,32 +964,13 @@ try{
 
 /* Scroll active input into view inside top-aligned modal */
 document.addEventListener('focusin',e=>{
-  if(e.target.closest('.modal.show')){
+  if(e.target.closest('.modal.show:not(.center-modal)')){
     setTimeout(()=>e.target.scrollIntoView({block:'nearest',behavior:'smooth'}),100);
   }
 });
 
-/* Populate Dark Arabic Month/Year Dropdowns */
-function populateMonthYearSelectors(mId, yId, allowEmpty){
-  const ms=document.getElementById(mId), ys=document.getElementById(yId);
-  if(!ms || !ys) return;
-  const curY=new Date().getFullYear(), curM=new Date().getMonth()+1;
-  ms.innerHTML=allowEmpty ? '<option value="">بدون نهاية</option>' : '';
-  monthNames.forEach((n,i)=>ms.add(new Option(n,String(i+1).padStart(2,'0'))));
-  ys.innerHTML=allowEmpty ? '<option value="">—</option>' : '';
-  for(let y=curY-3;y<=curY+15;y++) ys.add(new Option(String(y),String(y)));
-  if(!allowEmpty){
-    ms.value=String(curM).padStart(2,'0');
-    ys.value=String(curY);
-  }
-}
-function readYM(mId, yId){
-  const m=val(mId), y=val(yId);
-  if(!m || !y) return '';
-  return y+'-'+m;
-}
 function formatYMArabic(ym){
-  if(!ym || !ym.includes('-')) return 'مفتوح (مستمر)';
+  if(!ym || !ym.includes('-')) return 'مفتوح';
   const [y,m]=ym.split('-');
   const mName=monthNames[Number(m)-1]||m;
   return `${mName} ${y}`;
@@ -878,9 +995,9 @@ function allAccountsAvailable(){
   return round2((state.accounts||[]).filter(a=>a.type!=='credit').reduce((s,a)=>s+accountBalance(a),0));
 }
 
-/* Commitments Summary for Selected Month */
+/* Separate Stats for Monthly Commitments vs One-Time Debts */
 function monthCommitmentsStats(m){
-  const list=(state.commitments||[]).filter(c=>commitmentDue(c,m));
+  const list=(state.commitments||[]).filter(c=>(c.freq||'monthly')==='monthly' && commitmentDue(c,m));
   let due=0, paid=0;
   for(const c of list){
     const cAmt=Number(c.amount)||0;
@@ -889,6 +1006,18 @@ function monthCommitmentsStats(m){
     paid+=Math.min(cAmt,cPaid);
   }
   return {list, due:round2(due), paid:round2(paid), remain:round2(Math.max(0,due-paid))};
+}
+
+function oneTimeDebtsStats(){
+  const list=(state.commitments||[]).filter(c=>c.freq==='once');
+  let total=0, paid=0;
+  for(const c of list){
+    const cAmt=Number(c.amount)||0;
+    const cPaid=(state.commitmentPayments||[]).filter(p=>p.commitmentId===c.id).reduce((s,p)=>s+(Number(p.amount)||0),0);
+    total+=cAmt;
+    paid+=Math.min(cAmt,cPaid);
+  }
+  return {list, total:round2(total), paid:round2(paid), remain:round2(Math.max(0,total-paid))};
 }
 
 /* Backup Reminder */
@@ -913,19 +1042,14 @@ function checkBackupReminder(){
 }
 
 function init(){
-  let ms=document.getElementById('monthSelect'),ys=document.getElementById('yearSelect');
-  monthNames.forEach((n,i)=>ms.add(new Option(n,String(i+1))));
-  let current=new Date().getFullYear();
-  for(let y=current-5;y<=current+15;y++)ys.add(new Option(y,String(y)));
-  ys.value=String(current);
-  ms.value=String(new Date().getMonth()+1);
   document.getElementById('date').value=today();
   document.getElementById('paymentDate').value=today();
-
-  populateMonthYearSelectors('comStartMonth','comStartYear',false);
-  populateMonthYearSelectors('comEndMonth','comEndYear',true);
-  populateMonthYearSelectors('opStartMonth','opStartYear',false);
-
+  const curYM = selected();
+  setv('comStartVal', curYM);
+  document.getElementById('comStartLabel').textContent = formatYMArabic(curYM);
+  setv('opStartVal', curYM);
+  document.getElementById('opStartLabel').textContent = formatYMArabic(curYM);
+  toggleCommitmentFreqFields();
   showAppVersion();
   render();
 }
@@ -944,6 +1068,10 @@ function render(){
   const cardsDebtTotal=allCardsOutstanding();
   const availTotal=allAccountsAvailable();
   const comStats=monthCommitmentsStats(m);
+  const debtStats=oneTimeDebtsStats();
+
+  const homePeriodLbl=document.getElementById('homePeriodLabel');
+  if(homePeriodLbl) homePeriodLbl.textContent=formatYMArabic(m);
 
   const homeAvailEl=document.getElementById('homeAvailableTotal');
   if(homeAvailEl) homeAvailEl.textContent=egp(availTotal);
@@ -957,7 +1085,17 @@ function render(){
   document.getElementById('savingCard').textContent=fmt((Number(state.savings)||0)+t.net);
   document.getElementById('savingBig').textContent=egp((Number(state.savings)||0)+t.net);
 
-  // Home Commitments card (Unified, clean, reflects selected month)
+  // Home Section 1: One-Time Debts
+  const hdTot=document.getElementById('homeDebtsTotal');
+  const hdPaid=document.getElementById('homeDebtsPaid');
+  const hdRem=document.getElementById('homeDebtsRemain');
+  const hdProg=document.getElementById('homeDebtsProgress');
+  if(hdTot) hdTot.textContent=egp(debtStats.total);
+  if(hdPaid) hdPaid.textContent=egp(debtStats.paid);
+  if(hdRem) hdRem.textContent=egp(debtStats.remain);
+  if(hdProg) hdProg.style.width=(debtStats.total>0?Math.min(100,(debtStats.paid/debtStats.total)*100):0)+'%';
+
+  // Home Section 2: Monthly Commitments
   const hcDue=document.getElementById('homeCommitmentsDue');
   const hcPaid=document.getElementById('homeCommitmentsPaid');
   const hcRem=document.getElementById('homeCommitmentsRemain');
@@ -1066,8 +1204,8 @@ function itemHTML(t){
       color=t.type==='expense'?'red':t.type==='credit_payment'?'blue':t.type==='income'?'mint':t.type==='adjust'?(Number(t.amount)<0?'red':'mint'):'orange',
       amountText=t.type==='transfer'?'⇄ '+fmt(t.amount):((t.type==='expense'||t.type==='credit_payment'||(t.type==='adjust'&&Number(t.amount)<0))?'−':'+')+fmt(Math.abs(Number(t.amount)||0));
   const canEdit=t.id&&!String(t.id).startsWith('mm-xfer')&&t.type!=='transfer'&&t.type!=='adjust';
-  const actions=canEdit?`<div class="tx-actions"><button class="smallbtn" onclick="editTransaction('${String(t.id).replace(/'/g,"\\'")}')">تعديل</button><button class="smallbtn danger" onclick="deleteTransaction('${String(t.id).replace(/'/g,"\\'")}')">حذف</button></div>`:'';
-  return `<div class="activity"><div class="actico">${sym}</div><div class="acttxt"><b>${esc(t.title)}</b><small>${esc(t.category)} · ${t.date}${t.accountId?(' · '+(state.accounts.find(a=>a.id===t.accountId)?.name||'')):''}</small>${actions}</div><div class="actamt ${color}">${amountText} ج</div></div>`;
+  const actions=canEdit?`<div class="tap-actions"><button class="smallbtn" onclick="editTransaction('${String(t.id).replace(/'/g,"\\'")}')">تعديل</button><button class="smallbtn danger" onclick="deleteTransaction('${String(t.id).replace(/'/g,"\\'")}')">حذف</button></div>`:'';
+  return `<div class="activity" onclick="toggleItemActions(this,event)"><div class="actico">${sym}</div><div class="acttxt"><b>${esc(t.title)}</b><small>${esc(t.category)} · ${t.date}${t.accountId?(' · '+(state.accounts.find(a=>a.id===t.accountId)?.name||'')):''}</small>${actions}</div><div class="actamt ${color}">${amountText} ج</div></div>`;
 }
 
 function deleteTransaction(id){
@@ -1247,15 +1385,14 @@ function checkForUpdate(){
       toast('لا يوجد تحديث جديد');
     } else {
       if(st)st.textContent='يتوفر إصدار جديد: V'+remote+(notes?' — '+notes:'');
-      ensureActionDialog();
+      ensureActionDialog(true);
       document.getElementById('actionTitle').textContent='تحديث متاح';
       document.getElementById('actionBody').innerHTML=`<p>الإصدار الحالي: <b>V${APP_VERSION}</b></p><p>الإصدار الجديد: <b>V${remote}</b></p>${notes?('<p class="hint">'+esc(notes)+'</p>'):''}<p>التحديث لن يحذف بياناتك المحلية.</p>`;
       const okBtn=document.getElementById('actionOk');
       okBtn.textContent='تحديث الآن';
       okBtn.className='primary';
       okBtn.onclick=()=>{closeActionDialog();forceAppUpdate()};
-      const dlg=document.getElementById('actionDialog');
-      dlg.classList.add('show');dlg.scrollTop=0;
+      document.getElementById('actionDialog').classList.add('show');
     }
   }).catch(err=>{
     console.warn(err);
@@ -1425,7 +1562,7 @@ function showSalaryResult(){
   el.innerHTML=`<div class="rowline"><span>سعر الساعة الأساسي</span><b>${egp(r.hourly)}</b></div><div class="rowline"><span>مكافأة البدل</span><b>${egp(r.allowancePay)}</b></div><div class="rowline"><span>مكافأة الراحة</span><b>${egp(r.restPay)}</b></div><div class="rowline"><span>مكافأة الإضافي</span><b>${egp(r.overtimePay)}</b></div><div class="rowline"><span>مكافأة العيد</span><b>${egp(r.holidayPay)}</b></div><div class="rowline"><span>الوجبة</span><b>${egp(r.meal)}</b></div><div class="rowline"><span>إجمالي المرتب</span><b>${egp(r.gross)}</b></div><div class="rowline"><span>أساس التأمين المحسوب</span><b>${egp(r.insuranceBase)}</b></div><div class="rowline"><span>صندوق الشهداء</span><b>${egp(r.martyrs)}</b></div><div class="rowline"><span>التأمين</span><b>${egp(r.insurance)}</b></div><div class="rowline"><span>ضريبة الدخل</span><b>${egp(r.tax)}</b></div><div class="hero" style="margin-top:12px"><label>صافي المرتب</label><div class="amount">${egp(r.net)}</div></div>`;
 }
 
-/* Credit Cards (Limit vs Available Logic) */
+/* Credit Cards */
 function previewNewCardDebt(){
   const lim=num('cardLimit'),avail=num('cardAvailable');
   const debt=round2(Math.max(0,lim-avail));
@@ -1463,7 +1600,7 @@ function addCard(){
 }
 function editCard(id){
   const c=state.cards.find(x=>x.id===id);if(!c)return;
-  ensureActionDialog();
+  ensureActionDialog(false);
   document.getElementById('actionTitle').textContent='تعديل البطاقة';
   const opsDebt=cardOpsOutstandingFor(c.id);
   const curLimit=Number(c.limit)||0;
@@ -1534,7 +1671,7 @@ function addCardOperation(){
   let op={id:'op-'+Date.now(),cardId:card.id,type,title,amount,date,paid:0,dueDate:dueDateFor(card,date)};
   if(type==='installment'){
     let q=creditQuote();if(!q)return toast('راجع شروط البطاقة');
-    let start=readYM('opStartMonth','opStartYear')||dueDateFor(card,date).slice(0,7);
+    let start=val('opStartVal')||dueDateFor(card,date).slice(0,7);
     op.months=q.months;op.interest=q.interest;op.adminFee=q.fee;op.installment=q.base;op.total=q.total;op.feeMonth=start;
     let [sy,sm]=start.split('-').map(Number);op.feeDue=q.fee;op.feePaid=0;
     op.schedules=Array.from({length:q.months},(_,i)=>{let dt=new Date(sy,sm+1+i,1);return{month:dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0'),amount:q.base,principalAndInterest:q.base,fee:0,paid:0}});
@@ -1585,100 +1722,112 @@ function payCard(){
   persist();renderModules();renderAccounts();setv('cardPaymentAmount','');toast('تم تسجيل السداد وتحديث الرصيد المتاح للبطاقة');
 }
 
-/* Unified Commitments (سلف، أقساط، جمعيات) with Details Modal & Clean Cards */
+/* Commitments & One-Time Debts */
+function toggleCommitmentFreqFields(){
+  const isMonthly = val('comFreq') !== 'once';
+  document.querySelectorAll('.com-monthly-only').forEach(e=>e.style.display=isMonthly?'block':'none');
+}
 function addCommitment(){
-  let title=val('comTitle').trim(),amount=num('comAmount'),start=readYM('comStartMonth','comStartYear');
-  let end=readYM('comEndMonth','comEndYear');
-  if(!title||amount<=0||!start)return toast('أكمل اسم الالتزام والمبلغ وتاريخ البداية');
-  if(end && end<start)return toast('تاريخ النهاية لا يمكن أن يكون قبل البداية');
+  const freq=val('comFreq')||'monthly';
+  let title=val('comTitle').trim(),amount=num('comAmount');
+  let start=freq==='monthly' ? (val('comStartVal')||selected()) : selected();
+  let end=freq==='monthly' ? val('comEndVal') : '';
+  if(!title||amount<=0)return toast('أدخل الاسم والمبلغ بشكل صحيح');
+  if(freq==='monthly' && end && end<start)return toast('تاريخ النهاية لا يمكن أن يكون قبل البداية');
   state.commitments.push({
     id:'com-'+Date.now(),
     title,
     type:val('comType'),
+    freq,
     amount,
     start,
     end,
-    day:num('comDay')||1,
+    day:freq==='monthly'?(num('comDay')||1):1,
     note:val('comNote').trim()
   });
-  persist();setv('comTitle','');setv('comAmount','');setv('comNote','');renderModules();toast('تمت إضافة الالتزام');
+  persist();setv('comTitle','');setv('comAmount','');setv('comNote','');renderModules();toast(freq==='once'?'تمت إضافة الدين':'تمت إضافة الالتزام الشهري');
 }
 function commitmentDue(c,month){return month>=c.start&&(!c.end||month<=c.end)}
 
 function showCommitmentDetails(id){
   const c=state.commitments.find(x=>x.id===id);if(!c)return;
+  const isOnce=c.freq==='once';
   const m=selected();
-  const paidThisMonth=state.commitmentPayments.filter(p=>p.commitmentId===c.id&&p.month===m).reduce((s,p)=>s+(Number(p.amount)||0),0);
-  const leftThisMonth=Math.max(0,(Number(c.amount)||0)-paidThisMonth);
-  const totalPaidAll=state.commitmentPayments.filter(p=>p.commitmentId===c.id).reduce((s,p)=>s+(Number(p.amount)||0),0);
+  const paidAmt=isOnce
+    ? state.commitmentPayments.filter(p=>p.commitmentId===c.id).reduce((s,p)=>s+(Number(p.amount)||0),0)
+    : state.commitmentPayments.filter(p=>p.commitmentId===c.id&&p.month===m).reduce((s,p)=>s+(Number(p.amount)||0),0);
+  const leftAmt=Math.max(0,(Number(c.amount)||0)-paidAmt);
 
-  ensureActionDialog();
-  document.getElementById('actionTitle').textContent='تفاصيل الالتزام';
-  document.getElementById('actionBody').innerHTML=`
+  ensureActionDialog(true);
+  document.getElementById('actionTitle').textContent=isOnce?'تفاصيل الدين':'تفاصيل الالتزام';
+  let rows=`
     <div class="rowline"><span>الاسم</span><b>${esc(c.title)}</b></div>
-    <div class="rowline"><span>النوع</span><b>${esc(c.type||'التزام')}</b></div>
-    <div class="rowline"><span>القيمة الشهرية</span><b>${egp(c.amount)}</b></div>
-    <div class="rowline"><span>يبدأ من</span><b>${formatYMArabic(c.start)}</b></div>
-    <div class="rowline"><span>ينتهي في</span><b>${formatYMArabic(c.end)}</b></div>
-    <div class="rowline"><span>يوم الاستحقاق</span><b>يوم ${c.day||1} من الشهر</b></div>
-    <div class="rowline"><span>مدفوع هذا الشهر (${m})</span><b class="mint">${egp(paidThisMonth)}</b></div>
-    <div class="rowline"><span>متبقي هذا الشهر</span><b class="${leftThisMonth?'red':'mint'}">${egp(leftThisMonth)}</b></div>
-    <div class="rowline"><span>إجمالي المدفوعات المسجلة</span><b>${egp(totalPaidAll)}</b></div>
+    <div class="rowline"><span>التصنيف</span><b>${esc(c.type||'التزام')}</b></div>
+    <div class="rowline"><span>نظام السداد</span><b>${isOnce?'مرة واحدة (دين)':'شهري'}</b></div>
+    <div class="rowline"><span>المبلغ</span><b>${egp(c.amount)}</b></div>
+  `;
+  if(!isOnce){
+    rows+=`
+      <div class="rowline"><span>يبدأ من</span><b>${formatYMArabic(c.start)}</b></div>
+      <div class="rowline"><span>ينتهي في</span><b>${formatYMArabic(c.end)}</b></div>
+      <div class="rowline"><span>يوم الاستحقاق</span><b>يوم ${c.day||1}</b></div>
+    `;
+  }
+  rows+=`
+    <div class="rowline"><span>المسدد</span><b class="mint">${egp(paidAmt)}</b></div>
+    <div class="rowline"><span>المتبقي</span><b class="${leftAmt?'red':'mint'}">${egp(leftAmt)}</b></div>
     ${c.note?`<div class="rowline"><span>ملاحظات</span><b>${esc(c.note)}</b></div>`:''}
   `;
+  document.getElementById('actionBody').innerHTML=rows;
   const okBtn=document.getElementById('actionOk');
   okBtn.textContent='إغلاق';okBtn.className='primary';
   okBtn.onclick=closeActionDialog;
-  const dlg=document.getElementById('actionDialog');
-  dlg.classList.add('show');dlg.scrollTop=0;
+  document.getElementById('actionDialog').classList.add('show');
 }
 
 function editCommitment(id){
   const c=state.commitments.find(x=>x.id===id);if(!c)return;
-  ensureActionDialog();
-  const [sy,sm]=(c.start||today().slice(0,7)).split('-');
-  const [ey,em]=(c.end||'').split('-');
-  const curY=new Date().getFullYear();
-  let startMOpts=monthNames.map((n,i)=>{const v=String(i+1).padStart(2,'0');return `<option value="${v}" ${v===sm?'selected':''}>${n}</option>`}).join('');
-  let startYOpts=Array.from({length:19},(_,i)=>{const y=String(curY-3+i);return `<option value="${y}" ${y===sy?'selected':''}>${y}</option>`}).join('');
-  let endMOpts='<option value="">بدون نهاية</option>'+monthNames.map((n,i)=>{const v=String(i+1).padStart(2,'0');return `<option value="${v}" ${v===em?'selected':''}>${n}</option>`}).join('');
-  let endYOpts='<option value="">—</option>'+Array.from({length:19},(_,i)=>{const y=String(curY-3+i);return `<option value="${y}" ${y===ey?'selected':''}>${y}</option>`}).join('');
-
-  document.getElementById('actionTitle').textContent='تعديل الالتزام';
+  ensureActionDialog(false);
+  const isOnce=c.freq==='once';
+  document.getElementById('actionTitle').textContent=isOnce?'تعديل الدين':'تعديل الالتزام';
   document.getElementById('actionBody').innerHTML=`
-    <div class="field"><label>اسم الالتزام</label><input id="eComTitle" value="${esc(c.title)}"></div>
-    <div class="field"><label>النوع</label><select id="eComType"><option>سلفة</option><option>جمعية</option><option>قسط شقة</option><option>قسط بنك</option><option>التزام شهري</option><option>فاتورة</option><option>أخرى</option></select></div>
+    <div class="field"><label>نظام السداد</label><select id="eComFreq" onchange="document.querySelectorAll('.ecom-m-only').forEach(x=>x.style.display=this.value==='monthly'?'block':'none')"><option value="monthly" ${!isOnce?'selected':''}>شهري</option><option value="once" ${isOnce?'selected':''}>مرة واحدة (دين)</option></select></div>
+    <div class="field"><label>الاسم</label><input id="eComTitle" value="${esc(c.title)}"></div>
+    <div class="field"><label>التصنيف</label><select id="eComType"><option>سلفة</option><option>جمعية</option><option>قسط شقة</option><option>قسط بنك</option><option>التزام شهري</option><option>فاتورة</option><option>أخرى</option></select></div>
     <div class="wideform">
-      <div class="field"><label>القيمة الشهرية</label><input id="eComAmount" type="number" step="0.01" value="${c.amount}"></div>
-      <div class="field"><label>يوم الاستحقاق</label><input id="eComDay" type="number" min="1" max="31" value="${c.day||1}"></div>
+      <div class="field"><label>المبلغ</label><input id="eComAmount" type="number" step="0.01" value="${c.amount}"></div>
+      <div class="field ecom-m-only" style="display:${isOnce?'none':'block'}"><label>يوم الاستحقاق</label><input id="eComDay" type="number" min="1" max="31" value="${c.day||1}"></div>
     </div>
-    <div class="field"><label>تاريخ البداية</label><div class="ym-row"><select id="eComStartM">${startMOpts}</select><select id="eComStartY">${startYOpts}</select></div></div>
-    <div class="field"><label>تاريخ النهاية (اختياري)</label><div class="ym-row"><select id="eComEndM">${endMOpts}</select><select id="eComEndY">${endYOpts}</select></div></div>
+    <div class="wideform ecom-m-only" style="display:${isOnce?'none':'grid'}">
+      <div class="field"><label>تاريخ البداية</label><button type="button" class="picker-trigger" onclick="openCompactYMPicker('eComStart')"><b id="eComStartLabel">${formatYMArabic(c.start)}</b><span>تغيير</span></button><input type="hidden" id="eComStartVal" value="${c.start||''}"></div>
+      <div class="field"><label>تاريخ النهاية</label><button type="button" class="picker-trigger" onclick="openCompactYMPicker('eComEnd',true)"><b id="eComEndLabel">${formatYMArabic(c.end)}</b><span>تغيير</span></button><input type="hidden" id="eComEndVal" value="${c.end||''}"></div>
+    </div>
     <div class="field"><label>ملاحظة</label><input id="eComNote" value="${esc(c.note||'')}"></div>
   `;
   document.getElementById('eComType').value=c.type||'التزام شهري';
   const okBtn=document.getElementById('actionOk');
   okBtn.textContent='حفظ التعديلات';okBtn.className='primary';
   okBtn.onclick=()=>{
+    const freq=document.getElementById('eComFreq').value;
     const title=document.getElementById('eComTitle').value.trim();
     const amount=Number(document.getElementById('eComAmount').value)||0;
-    const start=readYM('eComStartM','eComStartY');
-    const end=readYM('eComEndM','eComEndY');
-    if(!title||amount<=0||!start)return toast('أكمل البيانات بشكل صحيح');
-    if(end && end<start)return toast('تاريخ النهاية لا يمكن أن يكون قبل البداية');
-    c.title=title;c.type=document.getElementById('eComType').value;c.amount=amount;
+    const start=document.getElementById('eComStartVal').value||c.start||selected();
+    const end=freq==='monthly'?(document.getElementById('eComEndVal').value||''):'';
+    if(!title||amount<=0)return toast('أكمل البيانات بشكل صحيح');
+    if(freq==='monthly' && end && end<start)return toast('تاريخ النهاية لا يمكن أن يكون قبل البداية');
+    c.freq=freq;c.title=title;c.type=document.getElementById('eComType').value;c.amount=amount;
     c.start=start;c.end=end;c.day=Number(document.getElementById('eComDay').value)||1;
     c.note=document.getElementById('eComNote').value.trim();
-    persist();closeActionDialog();renderModules();toast('تم تعديل الالتزام');
+    persist();closeActionDialog();renderModules();toast('تم التعديل بنجاح');
   };
   const dlg=document.getElementById('actionDialog');
   dlg.classList.add('show');dlg.scrollTop=0;
 }
 function deleteCommitment(id){
   const c=state.commitments.find(x=>x.id===id);if(!c)return;
-  appConfirm('حذف الالتزام','هل تريد حذف التزام «'+c.title+'»؟','نعم، احذف',()=>{
+  appConfirm('حذف العنصر','هل تريد حذف «'+c.title+'»؟','نعم، احذف',()=>{
     state.commitments=state.commitments.filter(x=>x.id!==id);
-    persist();renderModules();toast('تم حذف الالتزام');
+    persist();renderModules();toast('تم الحذف');
   });
 }
 
@@ -1699,8 +1848,8 @@ function renderModules(){
     const totalCardDebt=cardTotalOutstanding(c);
     const avail=cardCurrentAvailable(c);
     const lim=Number(c.limit)||0;
-    const availText=lim>0 ? `المتاح: ${egp(avail)}` : 'اضغط تعديل لضبط الليمت';
-    return `<div class="listitem"><div class="info"><b>${esc(c.name)}</b><small>${availText}</small><div class="tx-actions"><button class="smallbtn" onclick="editCard('${c.id}')">تعديل</button><button class="smallbtn danger" onclick="deleteCard('${c.id}')">حذف</button></div></div><div style="text-align:left"><strong class="${totalCardDebt>0?'orange':'mint'}">${egp(totalCardDebt)}</strong><small style="font-size:10px;color:var(--muted)">مديونية</small></div></div>`;
+    const availText=lim>0 ? `المتاح: ${egp(avail)}` : 'اضغط للتعديل وضبط الليمت';
+    return `<div class="listitem" onclick="toggleItemActions(this,event)"><div class="info"><b>${esc(c.name)}</b><small>${availText}</small><div class="tap-actions"><button class="smallbtn" onclick="editCard('${c.id}')">تعديل</button><button class="smallbtn danger" onclick="deleteCard('${c.id}')">حذف</button></div></div><div style="text-align:left"><strong class="${totalCardDebt>0?'orange':'mint'}">${egp(totalCardDebt)}</strong><small style="font-size:10px;color:var(--muted)">مديونية</small></div></div>`;
   }).join(''):'<div class="empty">لا توجد بطاقات مسجلة.</div>';
 
   e=document.getElementById('cardOpsList');
@@ -1710,19 +1859,24 @@ function renderModules(){
     return `<div class="listitem"><div class="info"><b>${esc(o.title)} — ${esc(c?.name||'بطاقة')}</b><small>${sub} · ${o.date}</small><small>الأصل ${fmt(o.amount)} · المتبقي ${fmt(remaining)}</small></div><span class="tag">${o.type==='swipe'?'مسحوبات':'تقسيط'}</span></div>`;
   }).join(''):'<div class="empty">لا توجد عمليات.</div>';
 
-  // Render clean Commitments list (no cluttered inline details, with Details button)
-  const stats=monthCommitmentsStats(m);
-  const cDueEl=document.getElementById('comTotalDue');if(cDueEl)cDueEl.textContent=egp(stats.due);
-  const cPaidEl=document.getElementById('comTotalPaid');if(cPaidEl)cPaidEl.textContent=egp(stats.paid);
-  const cRemEl=document.getElementById('comTotalRemain');if(cRemEl)cRemEl.textContent=egp(stats.remain);
-
+  // Render Monthly Commitments (tap to reveal actions)
+  const comStats=monthCommitmentsStats(m);
   e=document.getElementById('comMonthLabel');if(e)e.textContent=formatYMArabic(m);
   e=document.getElementById('commitmentsList');
-  if(e)e.innerHTML=stats.list.length?stats.list.map(c=>{
+  if(e)e.innerHTML=comStats.list.length?comStats.list.map(c=>{
     let paid=state.commitmentPayments.filter(p=>p.commitmentId===c.id&&p.month===m).reduce((s,p)=>s+(Number(p.amount)||0),0),
         left=Math.max(0,(Number(c.amount)||0)-paid);
-    return `<div class="listitem"><div class="info"><b>${esc(c.title)} <span class="tag" style="margin-right:4px">${esc(c.type||'التزام')}</span></b><small>مدفوع ${egp(paid)} · متبقي ${egp(left)}</small><div class="tx-actions"><button class="smallbtn" onclick="markCommitmentPaid('${c.id}')">${left?'تسجيل دفع':'مدفوع ✓'}</button><button class="smallbtn" onclick="showCommitmentDetails('${c.id}')">تفاصيل</button><button class="smallbtn" onclick="editCommitment('${c.id}')">تعديل</button><button class="smallbtn danger" onclick="deleteCommitment('${c.id}')">حذف</button></div></div><strong class="${left?'orange':'mint'}">${egp(left)}</strong></div>`;
-  }).join(''):'<div class="empty">لا توجد التزامات مستحقة في هذا الشهر.</div>';
+    return `<div class="listitem" onclick="toggleItemActions(this,event)"><div class="info"><b>${esc(c.title)} <span class="tag" style="margin-right:4px">${esc(c.type||'التزام')}</span></b><small>مدفوع ${egp(paid)} · متبقي ${egp(left)}</small><div class="tap-actions"><button class="smallbtn" onclick="markCommitmentPaid('${c.id}')">${left?'تسجيل دفع':'مدفوع ✓'}</button><button class="smallbtn" onclick="showCommitmentDetails('${c.id}')">تفاصيل</button><button class="smallbtn" onclick="editCommitment('${c.id}')">تعديل</button><button class="smallbtn danger" onclick="deleteCommitment('${c.id}')">حذف</button></div></div><strong class="${left?'orange':'mint'}">${egp(left)}</strong></div>`;
+  }).join(''):'<div class="empty">لا توجد التزامات شهرية في هذا الشهر.</div>';
+
+  // Render One-Time Debts (tap to reveal actions)
+  const debtStats=oneTimeDebtsStats();
+  const dListEl=document.getElementById('oneTimeDebtsList');
+  if(dListEl) dListEl.innerHTML=debtStats.list.length?debtStats.list.map(c=>{
+    let paid=state.commitmentPayments.filter(p=>p.commitmentId===c.id).reduce((s,p)=>s+(Number(p.amount)||0),0),
+        left=Math.max(0,(Number(c.amount)||0)-paid);
+    return `<div class="listitem" onclick="toggleItemActions(this,event)"><div class="info"><b>${esc(c.title)} <span class="tag" style="margin-right:4px">${esc(c.type||'دين')}</span></b><small>مدفوع ${egp(paid)} · متبقي ${egp(left)}</small><div class="tap-actions"><button class="smallbtn" onclick="markCommitmentPaid('${c.id}')">${left?'تسجيل سداد':'مسدد ✓'}</button><button class="smallbtn" onclick="showCommitmentDetails('${c.id}')">تفاصيل</button><button class="smallbtn" onclick="editCommitment('${c.id}')">تعديل</button><button class="smallbtn danger" onclick="deleteCommitment('${c.id}')">حذف</button></div></div><strong class="${left?'red':'mint'}">${egp(left)}</strong></div>`;
+  }).join(''):'<div class="empty">لا توجد ديون مسجلة.</div>';
 }
 
 function toggleInstallmentFields(){
@@ -1766,12 +1920,12 @@ function renderAccounts(){
   document.getElementById('accountsTotal').textContent=egp(total);
   const homeAvailEl=document.getElementById('homeAvailableTotal');
   if(homeAvailEl) homeAvailEl.textContent=egp(total);
-  list.innerHTML=state.accounts.length?state.accounts.map(a=>`<div class="listitem"><div class="actico" style="cursor:pointer" onclick="showAccountStatement('${a.id}')">${a.type==='cash'?'👛':a.type==='bank'?'🏦':a.type==='wallet'?'📱':'💳'}</div><div class="info" onclick="showAccountStatement('${a.id}')" style="cursor:pointer"><b>${esc(a.name)}</b><small>${({cash:'كاش',bank:'حساب بنكي',wallet:'محفظة إلكترونية',prepaid:'بطاقة مسبقة الدفع'})[a.type]||a.type} · اضغط لكشف الحساب</small><div class="tx-actions"><button class="smallbtn" onclick="event.stopPropagation();editAccount('${a.id}')">تعديل</button><button class="smallbtn danger" onclick="event.stopPropagation();deleteAccount('${a.id}')">حذف</button></div></div><strong style="cursor:pointer" onclick="showAccountStatement('${a.id}')">${egp(accountBalance(a))}</strong></div>`).join(''):'<div class="empty">أضف أول حساب لتتبع أرصدتك.</div>';
+  list.innerHTML=state.accounts.length?state.accounts.map(a=>`<div class="listitem" onclick="toggleItemActions(this,event)"><div class="actico">${a.type==='cash'?'👛':a.type==='bank'?'🏦':a.type==='wallet'?'📱':'💳'}</div><div class="info"><b>${esc(a.name)}</b><small>${({cash:'كاش',bank:'حساب بنكي',wallet:'محفظة إلكترونية',prepaid:'بطاقة مسبقة الدفع'})[a.type]||a.type}</small><div class="tap-actions"><button class="smallbtn" onclick="showAccountStatement('${a.id}')">كشف حساب</button><button class="smallbtn" onclick="editAccount('${a.id}')">تعديل</button><button class="smallbtn danger" onclick="deleteAccount('${a.id}')">حذف</button></div></div><strong>${egp(accountBalance(a))}</strong></div>`).join(''):'<div class="empty">أضف أول حساب لتتبع أرصدتك.</div>';
   refreshAccountSelects();
 }
 function editAccount(id){
   const a=state.accounts.find(x=>x.id===id);if(!a)return;
-  ensureActionDialog();
+  ensureActionDialog(false);
   document.getElementById('actionTitle').textContent='تعديل الحساب';
   document.getElementById('actionBody').innerHTML=`<div class="field"><label>اسم الحساب</label><input id="editAccName" value="${esc(a.name)}"></div><div class="field"><label>النوع</label><select id="editAccType"><option value="cash">كاش</option><option value="bank">حساب بنكي</option><option value="wallet">محفظة إلكترونية</option><option value="prepaid">بطاقة مسبقة الدفع</option></select></div><div class="field"><label>الرصيد الافتتاحي</label><input id="editAccOpening" type="number" step="0.01" value="${a.opening??0}"></div><p class="hint">تعديل الرصيد الافتتاحي يغيّر الرصيد المحسوب مع الحركات.</p>`;
   document.getElementById('editAccType').value=a.type||'cash';
@@ -1806,14 +1960,13 @@ function showAccountStatement(accId){
     return {id:l.id,type:'adjust',title:'تسوية رصيد',category:l.note||'تسوية',amount:Number(l.delta??l.amount)||0,date:l.date,kind:'ledger'};
   });
   const items=[...txs,...ledgers].sort((x,y)=>String(y.date).localeCompare(String(x.date)));
-  ensureActionDialog();
+  ensureActionDialog(true);
   document.getElementById('actionTitle').textContent='كشف حساب: '+a.name;
   document.getElementById('actionBody').innerHTML=`<div class="rowline"><span>الرصيد الحالي</span><b>${egp(accountBalance(a))}</b></div><div class="rowline"><span>الرصيد الافتتاحي</span><b>${egp(a.opening||0)}</b></div><div style="max-height:50vh;overflow:auto;margin-top:10px">${items.length?items.map(t=>itemHTML(t)).join(''):'<div class="empty">لا توجد حركات على هذا الحساب</div>'}</div>`;
   const okBtn=document.getElementById('actionOk');
   okBtn.textContent='إغلاق';okBtn.className='primary';
   okBtn.onclick=closeActionDialog;
-  const dlg=document.getElementById('actionDialog');
-  dlg.classList.add('show');dlg.scrollTop=0;
+  document.getElementById('actionDialog').classList.add('show');
 }
 function refreshAccountSelects(){
   let opts=state.accounts.map(a=>`<option value="${a.id}">${esc(a.name)}</option>`).join('')||'<option value="">أضف حسابًا أولًا</option>';
@@ -1855,7 +2008,7 @@ function mmDefaultType(name,currency){
   return 'bank';
 }
 function mmTypeSelect(i,selected){
-  const opts=[['cash','كاش'],['bank','بنك / Debit'],['wallet','محفظة إلكترونية'],['prepaid','مسبقة الدفع'],['skip','استبعاد']];
+  const opts=[['cash','كاش'],['bank','بنك / Debit'],['wallet','محفظة إلكترونية'],['prepaid','محفظة / بطاقة مسبقة'],['skip','استبعاد']];
   return `<select class="mmtype" data-index="${i}" style="min-width:0;width:100%;background:#0e1929;color:white;border:1px solid #30445e;border-radius:9px;padding:7px">${opts.map(([v,l])=>`<option value="${v}" ${selected===v?'selected':''}>${l}</option>`).join('')}</select>`;
 }
 let mmPending=null;
@@ -1994,26 +2147,33 @@ function undoLastMmbak(){
   persist();renderAccounts();document.getElementById('mmbakPreview').textContent='تم التراجع عن آخر عملية استيراد.';toast('تم التراجع عن الاستيراد');
 }
 
-/* Unified In-App Action Dialogs */
-function ensureActionDialog(){
-  if(document.getElementById('actionDialog'))return;
-  let d=document.createElement('div');d.id='actionDialog';d.className='modal';
-  d.innerHTML='<div class="sheet"><h3 id="actionTitle"></h3><div id="actionBody"></div><div class="actions"><button class="primary" id="actionOk">تأكيد</button><button class="secondary" onclick="closeActionDialog()">إلغاء</button></div></div>';
-  document.body.appendChild(d);
+/* Unified In-App Action Dialogs (supports centered confirm/picker vs top-aligned input) */
+function ensureActionDialog(centered){
+  let d=document.getElementById('actionDialog');
+  if(!d){
+    d=document.createElement('div');d.id='actionDialog';d.className='modal';
+    d.onclick=e=>{if(e.target===d)closeActionDialog()};
+    d.innerHTML='<div class="sheet"><h3 id="actionTitle"></h3><div id="actionBody"></div><div class="actions"><button class="primary" id="actionOk">تأكيد</button><button class="secondary" onclick="closeActionDialog()">إلغاء</button></div></div>';
+    document.body.appendChild(d);
+  }
+  d.classList.toggle('center-modal', !!centered);
 }
 function closeActionDialog(){
   let d=document.getElementById('actionDialog');
-  if(d)d.classList.remove('show');
+  if(d){d.classList.remove('show');d.classList.remove('center-modal');}
 }
 
 let pendingCommitmentId=null;
 function markCommitmentPaid(id){
   let c=state.commitments.find(x=>x.id===id),m=selected();if(!c)return;
-  let already=state.commitmentPayments.filter(p=>p.commitmentId===id&&p.month===m).reduce((s,p)=>s+(Number(p.amount)||0),0),
-      remain=Math.max(0,(Number(c.amount)||0)-already);
-  if(!remain)return toast('الالتزام مدفوع بالكامل هذا الشهر');
+  const isOnce=c.freq==='once';
+  let already=isOnce
+    ? state.commitmentPayments.filter(p=>p.commitmentId===id).reduce((s,p)=>s+(Number(p.amount)||0),0)
+    : state.commitmentPayments.filter(p=>p.commitmentId===id&&p.month===m).reduce((s,p)=>s+(Number(p.amount)||0),0);
+  let remain=Math.max(0,(Number(c.amount)||0)-already);
+  if(!remain)return toast(isOnce?'الدين مسدد بالكامل':'الالتزام مدفوع بالكامل هذا الشهر');
   pendingCommitmentId=id;
-  ensureActionDialog();
+  ensureActionDialog(false);
   document.getElementById('actionTitle').textContent='تسجيل سداد: '+c.title;
   document.getElementById('actionBody').innerHTML=`<div class="field"><label>المبلغ المدفوع (المتبقي ${fmt(remain)} جنيه)</label><input id="commitPaidAmount" type="number" step="0.01" value="${remain}" inputmode="decimal"></div><div class="field"><label>تاريخ الدفع</label><input id="commitPaidDate" type="date" value="${today()}"></div><div class="field"><label>حساب السداد</label><select id="commitPaidAccount">${state.accounts.map(a=>`<option value="${a.id}">${esc(a.name)}</option>`).join('')||'<option value="">—</option>'}</select></div>`;
   const okBtn=document.getElementById('actionOk');
@@ -2023,9 +2183,12 @@ function markCommitmentPaid(id){
   dlg.classList.add('show');dlg.scrollTop=0;
 }
 function saveCommitmentPayment(){
-  let id=pendingCommitmentId,c=state.commitments.find(x=>x.id===id),m=selected(),
-      already=state.commitmentPayments.filter(p=>p.commitmentId===id&&p.month===m).reduce((s,p)=>s+(Number(p.amount)||0),0),
-      remain=Math.max(0,(Number(c.amount)||0)-already),amount=num('commitPaidAmount'),date=val('commitPaidDate')||today(),accountId=val('commitPaidAccount');
+  let id=pendingCommitmentId,c=state.commitments.find(x=>x.id===id),m=selected();
+  const isOnce=c.freq==='once';
+  let already=isOnce
+    ? state.commitmentPayments.filter(p=>p.commitmentId===id).reduce((s,p)=>s+(Number(p.amount)||0),0)
+    : state.commitmentPayments.filter(p=>p.commitmentId===id&&p.month===m).reduce((s,p)=>s+(Number(p.amount)||0),0);
+  let remain=Math.max(0,(Number(c.amount)||0)-already),amount=num('commitPaidAmount'),date=val('commitPaidDate')||today(),accountId=val('commitPaidAccount');
   if(amount<=0||amount>remain)return toast('راجع مبلغ السداد');
   if(state.accounts.length&&!accountId)return toast('حدد حساب السداد');
   state.commitmentPayments.push({id:'cmp-'+Date.now(),commitmentId:id,month:m,amount,date,accountId:accountId||null});
