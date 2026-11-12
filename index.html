@@ -739,6 +739,35 @@ window.addEventListener('beforeinstallprompt', function(e) {
       <span class="chev">▼</span>
     </summary>
     <div class="fold-body">
+      <div class="set-card">
+        <div class="set-head">
+          <div class="set-ico">ℹ</div>
+          <div class="set-title">
+            <b>المحفظة (Wallet) — حول التطبيق</b>
+            <small id="appVersionDetail">V9.5 · 2026-11-12</small>
+          </div>
+          <span class="tag" id="appVersionTag">V9.5</span>
+        </div>
+        <div class="hint" id="updateStatus">بياناتك المالية تبقى على الجهاز. التحديث يخص ملفات التطبيق فقط.</div>
+        <div class="set-actions">
+          <button class="secondary" onclick="checkForUpdate()">فحص التحديثات</button>
+          <button class="primary" onclick="forceAppUpdate()">تحديث الآن</button>
+        </div>
+      </div>
+
+      <div class="set-card" style="border-color:#75404b55">
+        <div class="set-head">
+          <div class="set-ico" style="background:#4a2631;color:#ffdbe1">⚠</div>
+          <div class="set-title">
+            <b>إعادة ضبط التطبيق</b>
+            <small>حذف جميع الحركات والحسابات المسجلة على هذا الجهاز نهائيًا.</small>
+          </div>
+        </div>
+        <div class="set-actions">
+          <button class="secondary danger-fill" onclick="resetApp()">مسح جميع البيانات</button>
+        </div>
+      </div>
+    </div>
   </details>
 </section>
 </div>
@@ -809,7 +838,7 @@ window.addEventListener('beforeinstallprompt', function(e) {
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
 <script>
-const APP_VERSION='9.4';
+const APP_VERSION='9.5';
 const APP_BUILD='2026-11-12';
 const KEY='raseed_mobile_v2';
 let pendingWorkbookTransactions=null;
@@ -2498,25 +2527,46 @@ async function installPWA(){
     }
     return;
   }
-  // If current browser hasn't fired prompt yet (e.g., Xiaomi Mi Browser or already dismissed),
-  // trigger direct Android Chrome Intent to open & install natively, or show 1-tap action!
+  const isChrome = /Chrome\//.test(navigator.userAgent) && !/MiuiBrowser|XiaoMi|EdgA|OPR/.test(navigator.userAgent);
   const cleanUrl = location.href.split('#')[0].split('?')[0];
   const noProto = cleanUrl.replace(/^https?:\/\//, '');
   const chromeIntent = `intent://${noProto}#Intent;scheme=https;package=com.android.chrome;end`;
   ensureActionDialog(true);
-  document.getElementById('actionTitle').textContent = 'تثبيت التطبيق المستقل';
-  document.getElementById('actionBody').innerHTML = `
-    <p class="hint" style="color:#dce8f8;font-size:12px">متصفح شاومي يمنع نافذة التثبيت التلقائية قبل تفاعل كافٍ. اضغط الزرار بالأسفل لفتح التطبيق في محرك التثبيت المباشر (Chrome) وتثبيته فورًا:</p>
-  `;
-  const okBtn = document.getElementById('actionOk');
-  okBtn.textContent = 'فتح للتثبيت الفوري 📲';
-  okBtn.className = 'primary';
-  okBtn.onclick = () => {
-    closeActionDialog();
-    location.href = chromeIntent;
-  };
+  document.getElementById('actionTitle').textContent = 'تثبيت التطبيق المستقل (بدون شريط المتصفح)';
+  if(isChrome){
+    document.getElementById('actionBody').innerHTML = `
+      <p class="hint" style="color:#dce8f8;font-size:12px">اضغط على القائمة <b>⋮</b> أعلى يسار Chrome ثم اختر <b>«تثبيت التطبيق» (Install app)</b> لتثبيته كبرنامج مستقل.</p>
+    `;
+    const okBtn = document.getElementById('actionOk');
+    okBtn.textContent = 'تمام';
+    okBtn.className = 'primary';
+    okBtn.onclick = closeActionDialog;
+  } else {
+    document.getElementById('actionBody').innerHTML = `
+      <p class="hint" style="color:#dce8f8;font-size:12px">متصفح شاومي بيضيف رابط متصفح عادي بالشريط العلوي. عشان يتثبت كتطبيق مستقل تمامًا (WebAPK) اضغط الزرار لفتحه في <b>Chrome</b> وتثبيته:</p>
+    `;
+    const okBtn = document.getElementById('actionOk');
+    okBtn.textContent = 'فتح في Chrome للتثبيت 📲';
+    okBtn.className = 'primary';
+    okBtn.onclick = () => {
+      closeActionDialog();
+      location.href = chromeIntent;
+    };
+  }
   document.getElementById('actionDialog').classList.add('show');
 }
+
+
+/* Exclusive Accordion: Opening one fold panel closes other open fold panels in the same screen */
+document.addEventListener('toggle', e => {
+  const el = e.target;
+  if (el.tagName === 'DETAILS' && el.classList.contains('fold') && el.open) {
+    const scope = el.closest('.screen') || document;
+    scope.querySelectorAll('details.fold[open]').forEach(other => {
+      if (other !== el) other.removeAttribute('open');
+    });
+  }
+}, true);
 
 /* Initial Boot */
 try{
