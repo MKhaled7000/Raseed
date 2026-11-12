@@ -18,7 +18,7 @@ button{cursor:pointer}
 .logo svg{width:26px;height:26px;display:block}
 .brand b{font-size:1.3rem;letter-spacing:-.5px}
 .brand small{display:block;color:var(--muted);font-size:.68rem;margin-top:-2px}
-.avatar{width:42px;height:42px;border-radius:15px;background:#22334a;color:#c7d7ed;display:grid;place-items:center;font-weight:800;font-size:1rem}
+.avatar{min-width:42px;height:42px;padding:0 12px;border-radius:15px;background:#22334a;color:#c7d7ed;display:grid;place-items:center;font-weight:800;font-size:.85rem;white-space:nowrap}
 .greeting{font-size:.8rem;color:var(--muted)}
 h1{font-size:1.55rem;line-height:1.4;margin:2px 0 15px;font-weight:800}
 .monthbar{display:flex;align-items:center;justify-content:space-between;margin:20px 2px 12px}
@@ -253,23 +253,11 @@ window.addEventListener('beforeinstallprompt', function(e) {
     </div>
   </div>
 
-  <div class="metric-list">
-    <div class="metric-row">
-      <div class="metric-row-right"><span class="ico mint" style="background:#173b3b">↙</span><div class="metric-row-title"><b data-i18n="totalIncome">إجمالي الدخل</b><small data-i18n="currencyFull">EGP</small></div></div>
-      <strong class="mint" id="incomeCard">0</strong>
-    </div>
-    <div class="metric-row">
-      <div class="metric-row-right"><span class="ico red" style="background:#3d222b">↗</span><div class="metric-row-title"><b data-i18n="totalExpense">إجمالي المصروفات</b><small data-i18n="currencyFull">EGP</small></div></div>
-      <strong class="red" id="expenseCard">0</strong>
-    </div>
-    <div class="metric-row">
-      <div class="metric-row-right"><span class="ico orange" style="background:#3d3021">▤</span><div class="metric-row-title"><b data-i18n="cardsDebt">مديونية البطاقات</b><small data-i18n="usedFromLimit">المستخدم من الليمت</small></div></div>
-      <strong class="orange" id="debtCard">0</strong>
-    </div>
-    <div class="metric-row">
-      <div class="metric-row-right"><span class="ico purple" style="background:#30294a">◈</span><div class="metric-row-title"><b data-i18n="cumSavings">الادخار التراكمي</b><small data-i18n="currencyFull">EGP</small></div></div>
-      <strong class="purple" id="savingCard">0</strong>
-    </div>
+  <div class="grid">
+    <div class="metric"><div class="metric-top"><span class="ico mint" style="background:#173b3b">↙</span><small data-i18n="totalIncome">إجمالي الدخل</small></div><strong id="incomeCard">0</strong><em data-i18n="currencyFull">EGP</em></div>
+    <div class="metric"><div class="metric-top"><span class="ico red" style="background:#3d222b">↗</span><small data-i18n="totalExpense">إجمالي المصروفات</small></div><strong id="expenseCard">0</strong><em data-i18n="currencyFull">EGP</em></div>
+    <div class="metric"><div class="metric-top"><span class="ico orange" style="background:#3d3021">▤</span><small data-i18n="cardsDebt">مديونية البطاقات</small></div><strong id="debtCard">0</strong><em data-i18n="usedFromLimit">المستخدم من الليمت</em></div>
+    <div class="metric"><div class="metric-top"><span class="ico purple" style="background:#30294a">◈</span><small data-i18n="cumSavings">الادخار التراكمي</small></div><strong id="savingCard">0</strong><em data-i18n="currencyFull">EGP</em></div>
   </div>
 
   <!-- Separate Section 1: السلف (Tap card to reveal Paid/Remaining) -->
@@ -596,15 +584,28 @@ window.addEventListener('beforeinstallprompt', function(e) {
       <span class="chev">▼</span>
     </summary>
     <div class="fold-body">
-      <div class="wideform">
-        <div class="field">
+      <div class="set-card">
+        <div class="field" style="margin:0">
+          <label>اسمك الشخصي (يظهر في الترحيب بالرئيسية)</label>
+          <div style="display:flex;gap:8px;margin-top:4px">
+            <input id="prefUserName" placeholder="اكتب اسمك هنا (مثال: محمد)" style="flex:1;min-width:0">
+            <button type="button" class="primary" style="flex:0 0 auto;width:auto;padding:10px 18px" onclick="saveUserNamePref()">حفظ</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="set-card">
+        <div class="field" style="margin:0">
           <label data-i18n="setLang">اللغة (Language)</label>
           <select id="prefLang" onchange="updatePreference('lang', this.value)">
             <option value="ar">العربية</option>
             <option value="en">English</option>
           </select>
         </div>
-        <div class="field">
+      </div>
+
+      <div class="set-card">
+        <div class="field" style="margin:0">
           <label data-i18n="setFont">حجم الخط</label>
           <select id="prefFontSize" onchange="updatePreference('fontSize', this.value)">
             <option value="0.84">صغير جدًا</option>
@@ -614,26 +615,24 @@ window.addEventListener('beforeinstallprompt', function(e) {
             <option value="1.18">كبير جدًا</option>
           </select>
         </div>
-        <div class="field">
-          <label>اسمك الشخصي</label>
-          <div style="display:flex;gap:6px">
-            <input id="prefUserName" placeholder="مثال: محمد" onchange="saveUserNamePref()" style="flex:1;min-width:0">
-            <button type="button" class="smallbtn" style="padding:0 10px;border-color:var(--mint);color:var(--mint)" onclick="saveUserNamePref()">حفظ</button>
-          </div>
-        </div>
-        <div class="field">
-          <label>الحساب الافتراضي</label>
+      </div>
+
+      <div class="set-card">
+        <div class="field" style="margin:0">
+          <label>الحساب الافتراضي (للحركات الجديدة)</label>
           <select id="prefDefaultAcc" onchange="updatePreference('defaultAccount', this.value)"></select>
         </div>
       </div>
 
-      <div class="field" style="margin-top:12px">
-        <label>لون التطبيق (الثيم)</label>
-        <div class="theme-dots" id="themeSelector">
-          <button type="button" class="theme-dot" data-theme="mint" style="background:#43d6b2" onclick="updatePreference('theme','mint')"></button>
-          <button type="button" class="theme-dot" data-theme="blue" style="background:#569aff" onclick="updatePreference('theme','blue')"></button>
-          <button type="button" class="theme-dot" data-theme="gold" style="background:#f5b041" onclick="updatePreference('theme','gold')"></button>
-          <button type="button" class="theme-dot" data-theme="purple" style="background:#a582ff" onclick="updatePreference('theme','purple')"></button>
+      <div class="set-card">
+        <div class="field" style="margin:0">
+          <label>لون التطبيق (الثيم)</label>
+          <div class="theme-dots" id="themeSelector">
+            <button type="button" class="theme-dot" data-theme="mint" style="background:#43d6b2" onclick="updatePreference('theme','mint')"></button>
+            <button type="button" class="theme-dot" data-theme="blue" style="background:#569aff" onclick="updatePreference('theme','blue')"></button>
+            <button type="button" class="theme-dot" data-theme="gold" style="background:#f5b041" onclick="updatePreference('theme','gold')"></button>
+            <button type="button" class="theme-dot" data-theme="purple" style="background:#a582ff" onclick="updatePreference('theme','purple')"></button>
+          </div>
         </div>
       </div>
 
@@ -765,9 +764,9 @@ window.addEventListener('beforeinstallprompt', function(e) {
           <div class="set-ico">ℹ</div>
           <div class="set-title">
             <b>المحفظة (Wallet) — حول التطبيق</b>
-            <small id="appVersionDetail">V9.6 · 2026-11-12</small>
+            <small id="appVersionDetail">V9.7 · 2026-11-12</small>
           </div>
-          <span class="tag" id="appVersionTag">V9.6</span>
+          <span class="tag" id="appVersionTag">V9.7</span>
         </div>
         <div class="hint" id="updateStatus">بياناتك المالية تبقى على الجهاز. التحديث يخص ملفات التطبيق فقط.</div>
         <div class="set-actions">
@@ -859,7 +858,7 @@ window.addEventListener('beforeinstallprompt', function(e) {
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
 <script>
-const APP_VERSION='9.6';
+const APP_VERSION='9.7';
 const APP_BUILD='2026-11-12';
 const KEY='raseed_mobile_v2';
 let pendingWorkbookTransactions=null;
@@ -976,7 +975,7 @@ function applyPreferences(){
   // Personal Name -> Greeting + First letter in Avatar
   const uName = (p.userName || '').trim();
   const av = document.getElementById('userAvatarLetter');
-  if(av) av.textContent = uName ? uName.charAt(0).toUpperCase() : (lang==='en'?'W':'م');
+  if(av) av.textContent = uName ? uName.slice(0, 12) : (lang==='en'?'W':'م');
   const gr = document.getElementById('homeGreetingText');
   if(gr){
     if(lang === 'en'){
