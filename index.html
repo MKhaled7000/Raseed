@@ -213,8 +213,8 @@ details.subfold .subfold-body{padding:10px 12px}
 
 /* Hero Quick Controls (👁 & .00) */
 .hero-ctrls{display:flex;gap:6px;align-items:center;position:relative;z-index:2}
-.dec-btn{background:#ffffff1f;border:1px solid #ffffff2a;color:white;border-radius:10px;padding:4px 8px;font-size:.68rem;font-weight:800;font-family:monospace}
-.dec-btn.active{background:var(--mint);color:#06221e;border-color:var(--mint)}
+.dec-btn{background:#ffffff1f;border:1px solid #ffffff2a;color:#ffd97d;border-radius:10px;padding:4px 9px;font-size:.7rem;font-weight:900;letter-spacing:.5px;direction:ltr;display:inline-flex;align-items:center;justify-content:center;line-height:1.2}
+.dec-btn.active{background:#ffd97d2e;color:#ffe699;border-color:#ffd97d88;box-shadow:0 0 0 1px #ffd97d44}
 
 </style>
 <script>
@@ -249,22 +249,17 @@ window.addEventListener('beforeinstallprompt', function(e) {
   <h1 data-i18n="heroHeadline">خلّيك متحكم في فلوسك</h1>
   <div id="backupReminderBox"></div>
 
-  <!-- General Hero Card -->
+  <!-- General Hero Card (Overall Liquidity Only) -->
   <div class="hero">
     <div class="hero-top-row">
       <label data-i18n="totalAvail">إجمالي الأموال المتاحة (رصيد حساباتك)</label>
       <div class="hero-ctrls">
-        <button type="button" class="dec-btn dec-toggle-btn" onclick="toggleDecimalsMode()">.00</button>
+        <button type="button" class="dec-btn dec-toggle-btn" onclick="toggleDecimalsMode()">00</button>
         <button type="button" class="eye-btn privacy-toggle-btn" onclick="togglePrivacyMode()">👁</button>
       </div>
     </div>
     <div class="amount" id="homeAvailableTotal">0 EGP</div>
     <div class="sub" data-i18n="totalAvailSub">إجمالي السيولة الفعلية في الكاش والبنوك والمحافظ</div>
-    <div class="hero-foot">
-      <div class="hero-pill"><span data-i18n="netMonth">صافي الشهر</span><b id="remaining">0 EGP</b></div>
-      <div class="hero-pill"><span data-i18n="incMonth">دخل الشهر</span><b id="incomeHero">0 EGP</b></div>
-      <div class="hero-pill"><span data-i18n="expMonth">مصروف الشهر</span><b id="expenseHero">0 EGP</b></div>
-    </div>
   </div>
 
   <!-- 3 Quick Action Buttons -->
@@ -293,14 +288,33 @@ window.addEventListener('beforeinstallprompt', function(e) {
     </div>
   </div>
 
-  <div class="grid">
-    <div class="metric"><div class="metric-top"><span class="ico mint" style="background:#173b3b">↙</span><small data-i18n="totalIncome">إجمالي الدخل</small></div><strong id="incomeCard">0</strong><em data-i18n="currencyFull">EGP</em></div>
-    <div class="metric"><div class="metric-top"><span class="ico red" style="background:#3d222b">↗</span><small data-i18n="totalExpense">إجمالي المصروفات</small></div><strong id="expenseCard">0</strong><em data-i18n="currencyFull">EGP</em></div>
-    <div class="metric"><div class="metric-top"><span class="ico orange" style="background:#3d3021">▤</span><small data-i18n="cardsDebt">مديونية البطاقات</small></div><strong id="debtCard">0</strong><em data-i18n="usedFromLimit">المستخدم من الليمت</em></div>
-    <div class="metric"><div class="metric-top"><span class="ico purple" style="background:#30294a">◈</span><small data-i18n="cumSavings">الادخار التراكمي</small></div><strong id="savingCard">0</strong><em data-i18n="currencyFull">EGP</em></div>
+  <!-- Month Cash Flow Strip (دخل الشهر - مصروف الشهر - فائض/عجز الشهر) -->
+  <div class="panel" style="padding:12px;margin-bottom:11px">
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center">
+      <div style="background:#0e1929;border:1px solid #25354b;border-radius:14px;padding:10px 6px">
+        <small style="display:block;font-size:.66rem;color:var(--muted)" data-i18n="incMonth">دخل الشهر</small>
+        <b class="mint" id="incomeHero" style="display:block;font-size:.86rem;margin-top:4px;direction:ltr">0 EGP</b>
+      </div>
+      <div style="background:#0e1929;border:1px solid #25354b;border-radius:14px;padding:10px 6px">
+        <small style="display:block;font-size:.66rem;color:var(--muted)" data-i18n="expMonth">مصروف الشهر</small>
+        <b class="red" id="expenseHero" style="display:block;font-size:.86rem;margin-top:4px;direction:ltr">0 EGP</b>
+      </div>
+      <div style="background:#0e1929;border:1px solid #25354b;border-radius:14px;padding:10px 6px">
+        <small style="display:block;font-size:.66rem;color:var(--muted)" id="netMonthLabel">فائض الشهر</small>
+        <b id="remaining" style="display:block;font-size:.86rem;margin-top:4px;direction:ltr">0 EGP</b>
+      </div>
+    </div>
   </div>
 
-  <!-- Separate Section 1: السلف (Tap card to reveal Paid/Remaining) -->
+  <!-- Non-Duplicate 2x2 Summary Grid -->
+  <div class="grid">
+    <div class="metric"><div class="metric-top"><span class="ico orange" style="background:#3d3021">▤</span><small data-i18n="cardsDebt">مديونية البطاقات</small></div><strong id="debtCard">0</strong><em data-i18n="usedFromLimit">المستخدم من الليمت</em></div>
+    <div class="metric"><div class="metric-top"><span class="ico blue" style="background:#1b3252">📅</span><small>مستحق البطاقات</small></div><strong class="blue" id="homeCardDueMonth">0</strong><em>مستحق هذا الشهر</em></div>
+    <div class="metric"><div class="metric-top"><span class="ico purple" style="background:#30294a">◈</span><small data-i18n="cumSavings">الادخار التراكمي</small></div><strong id="savingCard">0</strong><em>إجمالي الفائض التراكمي</em></div>
+    <div class="metric"><div class="metric-top"><span class="ico red" style="background:#3d222b">⏳</span><small>المتبقي من السلف</small></div><strong class="red" id="homeLoansRemainCard">0</strong><em data-i18n="currencyFull">EGP</em></div>
+  </div>
+
+  <!-- Separate Section 1: السلف -->
   <div class="section-head"><h2 data-i18n="loansTitle">السلف</h2><span style="cursor:pointer;color:var(--mint)" onclick="go('commitments')" data-i18n="detailsLink">التفاصيل ←</span></div>
   <div class="panel home-fold-panel" onclick="this.classList.toggle('expanded')">
     <div class="rowline"><span data-i18n="totalLoans">إجمالي السلف</span><b id="homeDebtsTotal">0 EGP</b></div>
@@ -311,7 +325,7 @@ window.addEventListener('beforeinstallprompt', function(e) {
     </div>
   </div>
 
-  <!-- Separate Section 2: الالتزامات الشهرية (Tap card to reveal Paid/Remaining) -->
+  <!-- Separate Section 2: الالتزامات الشهرية -->
   <div class="section-head"><h2 data-i18n="monthlyCommitments">الالتزامات الشهرية</h2><span style="cursor:pointer;color:var(--mint)" onclick="go('commitments')" data-i18n="detailsLink">التفاصيل ←</span></div>
   <div class="panel home-fold-panel" onclick="this.classList.toggle('expanded')">
     <div class="rowline"><span data-i18n="dueThisMonth">مستحق هذا الشهر</span><b class="orange" id="homeCommitmentsDue">0 EGP</b></div>
@@ -321,8 +335,6 @@ window.addEventListener('beforeinstallprompt', function(e) {
       <div class="rowline"><span data-i18n="remainThisMonth">المتبقي هذا الشهر</span><b class="red" id="homeCommitmentsRemain">0 EGP</b></div>
     </div>
   </div>
-
-
 </section>
 
 <!-- 2. الحسابات -->
@@ -333,7 +345,7 @@ window.addEventListener('beforeinstallprompt', function(e) {
     <div class="hero-top-row">
       <label>إجمالي الأموال المتاحة</label>
       <div class="hero-ctrls">
-        <button type="button" class="dec-btn dec-toggle-btn" onclick="toggleDecimalsMode()">.00</button>
+        <button type="button" class="dec-btn dec-toggle-btn" onclick="toggleDecimalsMode()">00</button>
         <button type="button" class="eye-btn privacy-toggle-btn" onclick="togglePrivacyMode()">👁</button>
       </div>
     </div>
@@ -362,10 +374,17 @@ window.addEventListener('beforeinstallprompt', function(e) {
 <!-- 3. البطاقات (قبل الالتزامات) -->
 <section id="cards" class="screen">
   <div class="greeting">إدارة البطاقات الائتمانية ودورات السداد</div>
-  <h1 data-i18n="navCards">البطاقات</h1>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin:2px 0 15px">
+    <h1 style="margin:0" data-i18n="navCards">البطاقات</h1>
+    <div class="ym-stepper">
+      <button type="button" class="step-arrow" onclick="shiftActiveMonth(-1)">‹</button>
+      <button type="button" class="step-label" onclick="openHomePeriodPicker()" id="cardsPeriodLabel">نوفمبر 2026</button>
+      <button type="button" class="step-arrow" onclick="shiftActiveMonth(1)">›</button>
+    </div>
+  </div>
   <div class="grid">
     <div class="metric"><small>إجمالي المديونية (المستخدم)</small><strong id="cardDebtTotal">0.00</strong><em>EGP</em></div>
-    <div class="metric"><small>مستحق هذا الشهر</small><strong id="cardDueTotal">0.00</strong><em>EGP</em></div>
+    <div class="metric"><small>مستحق (<span id="cardDueMonthName">نوفمبر</span>)</small><strong class="blue" id="cardDueTotal">0.00</strong><em>EGP</em></div>
   </div>
 
   <!-- Horizontal 3-Button Bar -->
@@ -464,7 +483,10 @@ window.addEventListener('beforeinstallprompt', function(e) {
   <div class="section-head"><h2>البطاقات المسجلة</h2></div>
   <div class="panel" id="cardsList"><div class="empty">لا توجد بطاقات مسجلة.</div></div>
 
-  <div class="section-head"><h2>عمليات البطاقات</h2><span>مديونية وجدول استحقاق</span></div>
+  <div class="section-head"><h2>مستحقات الشهر (<span id="cardMonthScheduleLabel">نوفمبر 2026</span>)</h2><span>أقساط ومصاريف الشهر</span></div>
+  <div class="panel" id="cardMonthlyDueList"><div class="empty">لا توجد مستحقات للبطاقات في هذا الشهر.</div></div>
+
+  <div class="section-head"><h2>كل عمليات البطاقات</h2><span>اضغط للتفاصيل والتعديل</span></div>
   <div class="panel" id="cardOpsList"><div class="empty">لا توجد عمليات.</div></div>
 </section>
 
@@ -477,7 +499,7 @@ window.addEventListener('beforeinstallprompt', function(e) {
     <div class="hero-top-row">
       <label>إجمالي الالتزامات الشهرية (<span id="comHeroMonthLabel">نوفمبر 2026</span>)</label>
       <div class="hero-ctrls">
-        <button type="button" class="dec-btn dec-toggle-btn" onclick="toggleDecimalsMode()">.00</button>
+        <button type="button" class="dec-btn dec-toggle-btn" onclick="toggleDecimalsMode()">00</button>
         <button type="button" class="eye-btn privacy-toggle-btn" onclick="togglePrivacyMode()">👁</button>
       </div>
     </div>
@@ -803,7 +825,7 @@ window.addEventListener('beforeinstallprompt', function(e) {
       <div class="c-list">
         <div class="c-row">
           <span class="c-lbl">إصدار التطبيق :</span>
-          <span class="tag" id="appVersionTag">V10.1</span>
+          <span class="tag" id="appVersionTag">V10.2</span>
         </div>
         <div class="c-row">
           <span class="c-lbl">التحديثات :</span>
@@ -824,9 +846,15 @@ window.addEventListener('beforeinstallprompt', function(e) {
       <span class="chev">▼</span>
     </summary>
     <div class="fold-body">
-      <div class="c-row" style="border-color:#75404b66">
-        <span class="c-lbl" style="color:#ffdbe1">إعادة ضبط وحذف الكل :</span>
-        <button type="button" class="smallbtn danger" style="padding:7px 14px" onclick="resetApp()">مسح البيانات</button>
+      <div class="c-list">
+        <div class="c-row" style="border-color:#ffbd6944">
+          <span class="c-lbl" style="color:#ffbd69">تصفير المعاملات فقط :</span>
+          <button type="button" class="smallbtn" style="border-color:#ffbd69;color:#ffbd69;padding:7px 12px" onclick="clearTransactionsOnly()">تصفير المعاملات</button>
+        </div>
+        <div class="c-row" style="border-color:#75404b66">
+          <span class="c-lbl" style="color:#ffdbe1">حذف كل بيانات التطبيق :</span>
+          <button type="button" class="smallbtn danger" style="padding:7px 14px" onclick="resetApp()">مسح الكل</button>
+        </div>
       </div>
     </div>
   </details>
@@ -899,7 +927,7 @@ window.addEventListener('beforeinstallprompt', function(e) {
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
 <script>
-const APP_VERSION='10.1';
+const APP_VERSION='10.2';
 const APP_BUILD='2026-11-12';
 const KEY='raseed_mobile_v2';
 let pendingWorkbookTransactions=null;
@@ -951,6 +979,7 @@ function toast(s){let x=document.getElementById('toast');x.textContent=s;x.style
 function persist(){
   try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){toast('تعذر حفظ البيانات على هذا المتصفح')}
   render();
+  if(typeof renderAccounts==='function') renderAccounts();
 }
 
 /* Preferences */
@@ -1423,13 +1452,33 @@ function init(){
   render();
 }
 
+function isCardPurchaseTx(t){
+  return t.type==='card_purchase' || String(t.source||'').startsWith('card-purchase:');
+}
 function monthTx(m){return state.transactions.filter(t=>monthKey(t.date)===m)}
 function totals(m){
   let a=monthTx(m),
-      inc=a.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0),
-      exp=a.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0),
-      fund=a.filter(t=>t.type==='fund').reduce((s,t)=>s+t.amount,0);
-  return{a,inc,exp,fund,net:inc-exp};
+      inc=round2(a.filter(t=>t.type==='income').reduce((s,t)=>s+(Number(t.amount)||0),0)),
+      exp=round2(a.filter(t=>(t.type==='expense' || t.type==='credit_payment') && !isCardPurchaseTx(t)).reduce((s,t)=>s+(Number(t.amount)||0),0)),
+      fund=round2(a.filter(t=>t.type==='fund').reduce((s,t)=>s+(Number(t.amount)||0),0));
+  return{a,inc,exp,fund,net:round2(inc-exp)};
+}
+function cumulativeSurplusAllTime(){
+  const inc=state.transactions.filter(t=>t.type==='income').reduce((s,t)=>s+(Number(t.amount)||0),0);
+  const exp=state.transactions.filter(t=>(t.type==='expense' || t.type==='credit_payment') && !isCardPurchaseTx(t)).reduce((s,t)=>s+(Number(t.amount)||0),0);
+  return round2((Number(state.savings)||0) + (inc - exp));
+}
+function cardDueForMonth(m){
+  let due=0;
+  (state.cardOps||[]).forEach(o=>{
+    if(o.type==='swipe'){
+      if(o.dueDate && o.dueDate.slice(0,7)===m) due += opOutstanding(o);
+    } else {
+      if(o.feeMonth===m) due += Math.max(0,(o.feeDue||0)-(o.feePaid||0));
+      (o.schedules||[]).forEach(sc=>{ if(sc.month===m) due += Math.max(0,sc.amount-sc.paid); });
+    }
+  });
+  return round2(due);
 }
 
 function render(){
@@ -1446,14 +1495,25 @@ function render(){
   const homeAvailEl=document.getElementById('homeAvailableTotal');
   if(homeAvailEl) homeAvailEl.textContent=maskable(egpHome(availTotal));
 
-  document.getElementById('remaining').textContent=maskable(egpHome(t.net));
+  const netEl = document.getElementById('remaining');
+  const netLbl = document.getElementById('netMonthLabel');
+  if(netLbl) netLbl.textContent = t.net >= 0 ? 'فائض الشهر' : 'عجز الشهر';
+  if(netEl){
+    netEl.textContent = maskable(egpHome(t.net));
+    netEl.className = t.net >= 0 ? 'mint' : 'red';
+  }
   document.getElementById('incomeHero').textContent=maskable(egpHome(t.inc));
   document.getElementById('expenseHero').textContent=maskable(egpHome(t.exp));
-  document.getElementById('incomeCard').textContent=maskable(fmtHomeNum(t.inc));
-  document.getElementById('expenseCard').textContent=maskable(fmtHomeNum(t.exp));
+
+  const cumSav = cumulativeSurplusAllTime();
+  const cDueM = cardDueForMonth(m);
   document.getElementById('debtCard').textContent=maskable(fmtHomeNum(cardsDebtTotal));
-  document.getElementById('savingCard').textContent=maskable(fmtHomeNum((Number(state.savings)||0)+t.net));
-  document.getElementById('savingBig').textContent=egp((Number(state.savings)||0)+t.net);
+  const hCardDueEl = document.getElementById('homeCardDueMonth');
+  if(hCardDueEl) hCardDueEl.textContent = maskable(fmtHomeNum(cDueM));
+  document.getElementById('savingCard').textContent=maskable(fmtHomeNum(cumSav));
+  const hLoansRemEl = document.getElementById('homeLoansRemainCard');
+  if(hLoansRemEl) hLoansRemEl.textContent = maskable(fmtHomeNum(debtStats.remain));
+  document.getElementById('savingBig').textContent=egp(cumSav);
 
   // Home Section 1: السلف (Details hidden until tap)
   const hdTot=document.getElementById('homeDebtsTotal');
@@ -2174,7 +2234,7 @@ function addCardOperation(){
     });
   }
   state.cardOps.push(op);
-  state.transactions.push({id:'card-purchase-'+op.id,type:'expense',title:'شراء بالبطاقة - '+title,category:'مشتريات بطاقة',amount,date,accountId:null,source:'card-purchase:'+op.id});
+  state.transactions.push({id:'card-purchase-'+op.id,type:'card_purchase',title:'شراء بالبطاقة - '+title,category:'مشتريات بطاقة',amount,date,accountId:null,source:'card-purchase:'+op.id});
   if(type==='installment'){
     normalizeExistingInstallmentSchedules();
   syncCardInstallmentsToCommitments();
@@ -2354,17 +2414,48 @@ function deleteCommitment(id){
 }
 
 function renderModules(){
-  let m=selected(),due=0,debt=allCardsOutstanding();
+  let m=selected(),due=0,debt=allCardsOutstanding(),monthDueItems=[];
+  const mListNames=getMonthNames();
+  const curMName=mListNames[activeMonth-1]||'';
+  const cpLbl=document.getElementById('cardsPeriodLabel'); if(cpLbl) cpLbl.textContent=formatYMArabic(m);
+  const cdMName=document.getElementById('cardDueMonthName'); if(cdMName) cdMName.textContent=curMName;
+  const cmSchedLbl=document.getElementById('cardMonthScheduleLabel'); if(cmSchedLbl) cmSchedLbl.textContent=formatYMArabic(m);
+
   state.cardOps.forEach(o=>{
+    const card=state.cards.find(x=>x.id===o.cardId);
+    const cName=card?card.name:'بطاقة';
     if(o.type==='swipe'){
-      if(o.dueDate&&o.dueDate.slice(0,7)===m)due+=opOutstanding(o);
+      if(o.dueDate&&o.dueDate.slice(0,7)===m){
+        const rem=opOutstanding(o);
+        due+=rem;
+        monthDueItems.push({title:o.title, card:cName, kind:'شراء بالبطاقة', amount:o.amount, remaining:rem});
+      }
     } else {
-      if(o.feeMonth===m)due+=Math.max(0,(o.feeDue||0)-(o.feePaid||0));
-      o.schedules.forEach(sc=>{if(sc.month===m)due+=Math.max(0,sc.amount-sc.paid)});
+      if(o.feeMonth===m){
+        const remFee=Math.max(0,(o.feeDue||0)-(o.feePaid||0));
+        due+=remFee;
+        monthDueItems.push({title:`مصاريف إدارية: ${o.title}`, card:cName, kind:'رسوم تقسيط', amount:o.feeDue||0, remaining:remFee});
+      }
+      (o.schedules||[]).forEach((sc,idx)=>{
+        if(sc.month===m){
+          const remSc=Math.max(0,sc.amount-sc.paid);
+          due+=remSc;
+          monthDueItems.push({title:`قسط (${idx+1}/${o.months}): ${o.title}`, card:cName, kind:'قسط شهري', amount:sc.amount, remaining:remSc});
+        }
+      });
     }
   });
   let e=document.getElementById('cardDebtTotal');if(e)e.textContent=fmt(debt);
   e=document.getElementById('cardDueTotal');if(e)e.textContent=fmt(due);
+  const mDueEl=document.getElementById('cardMonthlyDueList');
+  if(mDueEl){
+    mDueEl.innerHTML=monthDueItems.length ? monthDueItems.map(it=>`
+      <div class="listitem" style="cursor:default">
+        <div class="info"><b>${esc(it.title)} <span class="tag" style="margin-right:4px">${esc(it.card)} · ${it.kind}</span></b></div>
+        <strong class="${it.remaining>0?'blue':'mint'}">${egp(it.remaining>0?it.remaining:it.amount)}</strong>
+      </div>
+    `).join('') : '<div class="empty">لا توجد مستحقات للبطاقات في هذا الشهر.</div>';
+  }
   e=document.getElementById('cardsList');
   if(e)e.innerHTML=state.cards.length?state.cards.map(c=>{
     const totalCardDebt=cardTotalOutstanding(c);
@@ -2463,7 +2554,7 @@ function renderAccounts(){
   document.getElementById('accountsTotal').textContent=maskable(egpHome(total));
   const homeAvailEl=document.getElementById('homeAvailableTotal');
   if(homeAvailEl) homeAvailEl.textContent=maskable(egpHome(total));
-  list.innerHTML=state.accounts.length?state.accounts.map(a=>`<div class="listitem" onclick="toggleItemActions(this,event)"><div class="actico">${a.type==='cash'?'👛':a.type==='bank'?'🏦':a.type==='wallet'?'📱':'💳'}</div><div class="info"><b>${esc(a.name)}</b><small>${({cash:'كاش',bank:'حساب بنكي',wallet:'محفظة إلكترونية',prepaid:'بطاقة مسبقة الدفع'})[a.type]||a.type}</small><div class="tap-actions"><button class="smallbtn" onclick="showAccountStatement('${a.id}')">كشف حساب</button><button class="smallbtn" onclick="editAccount('${a.id}')">تعديل</button><button class="smallbtn danger" onclick="deleteAccount('${a.id}')">حذف</button></div></div><strong>${egp(accountBalance(a))}</strong></div>`).join(''):'<div class="empty">أضف أول حساب لتتبع أرصدتك.</div>';
+  list.innerHTML=state.accounts.length?state.accounts.map(a=>`<div class="listitem" onclick="toggleItemActions(this,event)"><div class="actico">${a.type==='cash'?'👛':a.type==='bank'?'🏦':a.type==='wallet'?'📱':'💳'}</div><div class="info"><b>${esc(a.name)}</b><small>${({cash:'كاش',bank:'حساب بنكي',wallet:'محفظة إلكترونية',prepaid:'بطاقة مسبقة الدفع'})[a.type]||a.type}</small><div class="tap-actions"><button class="smallbtn" onclick="showAccountStatement('${a.id}')">كشف حساب</button><button class="smallbtn" onclick="editAccount('${a.id}')">تعديل</button><button class="smallbtn danger" onclick="deleteAccount('${a.id}')">حذف</button></div></div><strong>${maskable(egpHome(accountBalance(a)))}</strong></div>`).join(''):'<div class="empty">أضف أول حساب لتتبع أرصدتك.</div>';
   refreshAccountSelects();
 }
 function editAccount(id){
@@ -2575,26 +2666,25 @@ function readMmbak(ev){
       let tx=db.exec("SELECT uid,assetUid,toAssetUid,ZDATE,DO_TYPE,ZMONEY,ZCONTENT,ctgUid,currencyUid,WDATE,txUidTrans FROM INOUTCOME WHERE COALESCE(IS_DEL,0)=0 ORDER BY CASE WHEN DO_TYPE='3' THEN 0 ELSE 1 END")[0]?.values||[];
       let catMap={};
       try{
-        const catTables=['CATEGORY','CTG','CATEGORIES','category'];
-        for(const tn of catTables){
+        const allTables=(db.exec("SELECT name FROM sqlite_master WHERE type='table'")[0]?.values||[]).map(x=>String(x[0]));
+        const candidateTables=allTables.filter(tn=>/cat|ctg/i.test(tn));
+        for(const tn of candidateTables){
           try{
-            const rows=db.exec(`SELECT uid,NAME FROM ${tn}`)[0]?.values||db.exec(`SELECT uid,NIC_NAME FROM ${tn}`)[0]?.values||[];
-            if(rows.length){rows.forEach(r=>{catMap[String(r[0])]=String(r[1]||'');});break}
+            const cols=(db.exec(`PRAGMA table_info("${tn}")`)[0]?.values||[]).map(x=>String(x[1]));
+            const nameCols=cols.filter(c=>/^(name|zname|nic_name|c_name|title|content)$/i.test(c));
+            const idCols=cols.filter(c=>/^(uid|z_pk|id|ctg_uid|category_uid)$/i.test(c));
+            if(!nameCols.length || !idCols.length) continue;
+            const nCol=nameCols[0];
+            const selectCols=[...idCols, nCol].map(c=>`"${c}"`).join(',');
+            const rows=db.exec(`SELECT ${selectCols} FROM "${tn}"`)[0]?.values||[];
+            for(const r of rows){
+              const cName=String(r[r.length-1]||'').trim();
+              if(!cName) continue;
+              for(let k=0;k<idCols.length;k++){
+                if(r[k]!==null && r[k]!==undefined) catMap[String(r[k]).trim()]=cName;
+              }
+            }
           }catch(_){}
-        }
-        if(!Object.keys(catMap).length){
-          const info=db.exec("SELECT name FROM sqlite_master WHERE type='table'")[0]?.values||[];
-          for(const [tn] of info){
-            if(!/cat/i.test(tn)) continue;
-            try{
-              const cols=(db.exec(`PRAGMA table_info(${tn})`)[0]?.values||[]).map(x=>String(x[1]));
-              const nameCol=cols.find(x=>/name|title|content/i.test(x))||cols[1];
-              const uidCol=cols.find(x=>/uid|id/i.test(x))||cols[0];
-              const rows=db.exec(`SELECT ${uidCol},${nameCol} FROM ${tn}`)[0]?.values||[];
-              rows.forEach(r=>{catMap[String(r[0])]=String(r[1]||'');});
-              if(Object.keys(catMap).length) break;
-            }catch(_){}
-          }
         }
       }catch(e){console.warn('cat map',e)}
       mmPending={assets,tx,plan:null,catMap};
@@ -2636,8 +2726,13 @@ function prepareMmbakImport(){
     if(t==='transfer'&&!map.has(to)){skippedTransfers++;continue}
     const id=t==='transfer'?'mm-xfer-'+transferKey:'mm-'+uid;if(seen.has(id)){duplicateCount++;continue}
     seen.add(id);
-    const catName=(mmPending.catMap&&mmPending.catMap[String(cat)])||(String(cat||'').match(/^[0-9a-f-]{20,}$/i)?'مستورد':String(cat||'مستورد'));
-    const titleText=(String(content||'').trim()&&!String(content).match(/^[0-9a-f-]{20,}$/i))?String(content).trim():(catName!=='مستورد'?catName:'حركة مستوردة');
+    const rawCatKey = String(cat??'').trim();
+    const mappedCat = (mmPending.catMap && mmPending.catMap[rawCatKey]) || '';
+    const isUuid = /^[0-9a-f-]{16,}$/i.test(rawCatKey);
+    const catName = mappedCat || (!isUuid && rawCatKey ? rawCatKey : 'أخرى');
+    const cleanMemo = String(content??'').trim();
+    const isMemoUuid = /^[0-9a-f-]{16,}$/i.test(cleanMemo);
+    const titleText = (cleanMemo && !isMemoUuid) ? cleanMemo : catName;
     txs.push({id,type:t,title:titleText,category:catName,amount:n,date:ds,accountId:map.get(asset),toAccountId:t==='transfer'?map.get(to):null,importSource:'mmbak'});
   }
   const netByAcc={};
@@ -2738,6 +2833,24 @@ function saveCommitmentPayment(){
   state.transactions.push({id:'com-pay-'+Date.now(),type:'expense',title:'سداد '+c.title,category:c.type||'التزام',amount,date,accountId:accountId||null,source:'commitment-payment'});
   persist();closeActionDialog();renderModules();renderAccounts();toast('تم تسجيل السداد');
 }
+
+function clearTransactionsOnly(){
+  appConfirm(
+    'تصفير المعاملات',
+    'سيتم حذف جميع المعاملات والتحويلات المسجلة فقط، مع الإبقاء على الحسابات والبطاقات والالتزامات والإعدادات كما هي. هل تريد المتابعة؟',
+    'نعم، صفّر المعاملات',
+    () => {
+      state.transactions = [];
+      state.ledger = [];
+      state.importBatches = [];
+      persist();
+      renderAccounts();
+      renderModules();
+      toast('تم تصفير جميع المعاملات بنجاح');
+    }
+  );
+}
+
 function resetApp(){
   appConfirm('إعادة ضبط التطبيق','سيتم حذف جميع الحركات والحسابات والبطاقات والالتزامات المحفوظة على هذا الجهاز نهائيًا. تأكد من تصدير نسخة احتياطية أولًا.','نعم، امسح الكل',()=>{
     state={transactions:[],paid:0,savings:0,debtTotal:0,salaryConfig:{},salaryMonths:{},cards:[],cardOps:[],cardPayments:[],commitments:[],commitmentPayments:[],accounts:[],ledger:[],debts:[],categories:[...DEFAULT_CATS],prefs:{lang:'ar',fontSize:'1',theme:'mint',userName:'',defaultAccount:'',privacy:false,homeDecimals:false}};
