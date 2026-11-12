@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,interactive-widget=resizes-content"><meta name="theme-color" content="#101827"><meta name="description" content="مديرك المالي الشخصي">
-<title>رَصيد | مديرك المالي</title>
+<title>المحفظة | Wallet</title>
 <link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png">
 <style>
 :root{--bg:#0b1220;--panel:#121d2e;--panel2:#18263a;--line:#25354b;--muted:#91a2b9;--text:#f4f7fb;--mint:#43d6b2;--blue:#73a7ff;--orange:#ffbd69;--red:#ff7285;--purple:#b69aff;--radius:22px}
@@ -13,9 +13,10 @@ button{cursor:pointer}
 .app{max-width:520px;margin:auto;padding:20px 17px 30px}
 .top{display:flex;justify-content:space-between;align-items:center;margin:8px 0 23px}
 .brand{display:flex;align-items:center;gap:10px}
-.logo{width:43px;height:43px;border-radius:15px;background:linear-gradient(145deg,#53e1bd,#208c89);display:grid;place-items:center;color:#071b22;font-weight:900;font-size:22px;box-shadow:0 8px 28px #43d6b233}
+.logo{width:43px;height:43px;border-radius:15px;background:#121d2e;border:1px solid #2a3e59;display:grid;place-items:center;box-shadow:0 8px 28px #43d6b222}
+.logo svg{width:26px;height:26px;display:block}
 .brand b{font-size:21px;letter-spacing:-.5px}
-.brand small{display:block;color:var(--muted);font-size:11px;margin-top:-5px}
+.brand small{display:block;color:var(--muted);font-size:11px;margin-top:-3px}
 .avatar{width:42px;height:42px;border-radius:15px;background:#22334a;color:#c7d7ed;display:grid;place-items:center;font-weight:800}
 .greeting{font-size:13px;color:var(--muted)}
 h1{font-size:25px;line-height:1.4;margin:2px 0 15px;font-weight:800}
@@ -31,9 +32,9 @@ h1{font-size:25px;line-height:1.4;margin:2px 0 15px;font-weight:800}
 .hero-foot{display:flex;gap:8px;margin-top:16px}
 .hero-pill{background:#ffffff19;border:1px solid #ffffff22;padding:8px 10px;border-radius:13px;font-size:10px;flex:1}
 .hero-pill b{display:block;font-size:13px;margin-top:2px}
-.quick-row{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:12px}
-.quick-btn{background:#132136;border:1px solid #2d4463;color:#e6f2ff;border-radius:16px;padding:12px 13px;display:flex;align-items:center;justify-content:space-between;font-size:12px;font-weight:700;text-align:right}
-.quick-btn span.badge{background:#43d6b222;color:var(--mint);padding:3px 7px;border-radius:8px;font-size:10px;white-space:nowrap}
+.quick-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.quick-btn{background:#132136;border:1px solid #2d4463;color:#e6f2ff;border-radius:15px;padding:11px 8px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:11px;font-weight:700;text-align:center}
+.quick-btn span.q-ico{font-size:16px;color:var(--mint)}
 .section-head{display:flex;justify-content:space-between;align-items:center;margin:22px 2px 11px}
 .section-head h2{font-size:16px;margin:0}
 .section-head span{font-size:11px;color:var(--muted)}
@@ -66,8 +67,8 @@ h1{font-size:25px;line-height:1.4;margin:2px 0 15px;font-weight:800}
 .acttxt small{color:var(--muted);font-size:10px}
 .actamt{font-size:13px;font-weight:800;direction:ltr;white-space:nowrap}
 
-/* Colored Bottom Nav Icons */
-.bottom{position:fixed;bottom:0;left:0;right:0;background:#0d1726ed;backdrop-filter:blur(18px);border-top:1px solid #25354b;z-index:10;padding:8px max(8px,calc((100vw - 520px)/2)) calc(8px + env(safe-area-inset-bottom));display:flex;justify-content:space-between;gap:2px}
+/* Clean 5-item Colored Bottom Nav Bar */
+.bottom{position:fixed;bottom:0;left:0;right:0;background:#0d1726ed;backdrop-filter:blur(18px);border-top:1px solid #25354b;z-index:10;padding:8px max(12px,calc((100vw - 520px)/2)) calc(8px + env(safe-area-inset-bottom));display:flex;justify-content:space-around;gap:4px}
 .nav{border:0;background:none;color:#71839b;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:10px;flex:1;min-width:0;padding:2px 0;white-space:nowrap;opacity:.72;transition:opacity .15s,transform .15s}
 .nav svg{width:22px;height:22px;display:block}
 .nav.active{color:var(--mint);opacity:1;font-weight:700}
@@ -84,8 +85,10 @@ h1{font-size:25px;line-height:1.4;margin:2px 0 15px;font-weight:800}
 .tag{font-size:10px;padding:3px 7px;border-radius:8px;background:#2a3a50;color:#b9cbe2;white-space:nowrap}
 .empty{text-align:center;color:var(--muted);padding:26px 10px;font-size:12px}
 
-/* Hidden actions until tap */
+/* Hidden details & actions until tap */
+.tap-details{display:none;margin-top:4px}
 .tap-actions{display:none;margin-top:8px;gap:6px;flex-wrap:wrap}
+.listitem.expanded .tap-details,.activity.expanded .tap-details{display:block}
 .listitem.expanded .tap-actions,.activity.expanded .tap-actions{display:flex}
 
 /* Modals: Input Sheet (top-aligned for keyboard) vs Centered Confirm/Picker */
@@ -160,8 +163,15 @@ details.subfold .subfold-body{padding:10px 12px}
 <div class="app">
 <header class="top">
   <div class="brand">
-    <div class="logo">ر</div>
-    <div><b>رَصيد</b><small>مديرك المالي الشخصي</small></div>
+    <div class="logo">
+      <svg viewBox="0 0 32 32" fill="none">
+        <rect x="6" y="6" width="18" height="9" rx="3" fill="#73a7ff"/>
+        <rect x="4" y="9" width="22" height="17" rx="4" fill="#43d6b2"/>
+        <rect x="19" y="14.5" width="9" height="6" rx="2.5" fill="#0b1220"/>
+        <circle cx="21.8" cy="17.5" r="1.4" fill="#43d6b2"/>
+      </svg>
+    </div>
+    <div><b>المحفظة</b><small>Wallet · مديرك المالي الشخصي</small></div>
   </div>
   <div class="avatar">م</div>
 </header>
@@ -172,7 +182,7 @@ details.subfold .subfold-body{padding:10px 12px}
   <h1>خلّيك متحكم في فلوسك</h1>
   <div id="backupReminderBox"></div>
 
-  <!-- General Hero Card (Always shows overall liquid funds) -->
+  <!-- General Hero Card -->
   <div class="hero">
     <label>إجمالي الأموال المتاحة (رصيد حساباتك)</label>
     <div class="amount" id="homeAvailableTotal">0.00 ج.م</div>
@@ -184,18 +194,23 @@ details.subfold .subfold-body{padding:10px 12px}
     </div>
   </div>
 
+  <!-- 3 Quick Action Buttons: المرتب، الحركات، التقارير -->
   <div class="quick-row">
     <button class="quick-btn" onclick="go('salary')">
-      <span>₪ حساب المرتب</span>
-      <span class="badge">فتح ←</span>
+      <span class="q-ico">₪</span>
+      <span>حساب المرتب</span>
     </button>
     <button class="quick-btn" onclick="go('activity')">
-      <span>⇄ سجل الحركات</span>
-      <span class="badge">عرض ←</span>
+      <span class="q-ico" style="color:var(--blue)">⇄</span>
+      <span>سجل الحركات</span>
+    </button>
+    <button class="quick-btn" onclick="go('reports')">
+      <span class="q-ico" style="color:var(--purple)">▥</span>
+      <span>التقارير</span>
     </button>
   </div>
 
-  <!-- Month Selector positioned right above Monthly Summary -->
+  <!-- Month Selector right above Monthly Summary -->
   <div class="monthbar">
     <b>ملخصك المالي</b>
     <div class="period-btns">
@@ -210,22 +225,16 @@ details.subfold .subfold-body{padding:10px 12px}
     <div class="metric"><div class="metric-top"><span class="ico purple" style="background:#30294a">◈</span><small>الادخار التراكمي</small></div><strong id="savingCard">0.00</strong><em>جنيه مصري</em></div>
   </div>
 
-  <div class="section-head"><h2>حركة الأموال</h2><span>آخر 6 شهور</span></div>
-  <div class="chartbox">
-    <div class="bars" id="bars"></div>
-    <div class="chartlegend"><span><i class="dot" style="background:#43d6b2"></i>الدخل</span><span><i class="dot" style="background:#73a7ff"></i>المصروفات</span></div>
-  </div>
-
-  <!-- Separate Section 1: One-time Debts (الديون) -->
-  <div class="section-head"><h2>الديون</h2><span style="cursor:pointer;color:var(--mint)" onclick="go('commitments')">التفاصيل ←</span></div>
+  <!-- Separate Section 1: السلف -->
+  <div class="section-head"><h2>السلف</h2><span style="cursor:pointer;color:var(--mint)" onclick="go('commitments')">التفاصيل ←</span></div>
   <div class="panel">
-    <div class="rowline"><span>إجمالي الديون (سداد مرة واحدة)</span><b id="homeDebtsTotal">0.00 ج.م</b></div>
+    <div class="rowline"><span>إجمالي السلف</span><b id="homeDebtsTotal">0.00 ج.م</b></div>
     <div class="progress"><i id="homeDebtsProgress" style="width:0%"></i></div>
     <div class="rowline"><span>المسدد فعليًا</span><b class="mint" id="homeDebtsPaid">0.00 ج.م</b></div>
     <div class="rowline"><span>المتبقي للسداد</span><b class="red" id="homeDebtsRemain">0.00 ج.م</b></div>
   </div>
 
-  <!-- Separate Section 2: Monthly Commitments (الالتزامات الشهرية) -->
+  <!-- Separate Section 2: الالتزامات الشهرية -->
   <div class="section-head"><h2>الالتزامات الشهرية</h2><span style="cursor:pointer;color:var(--mint)" onclick="go('commitments')">التفاصيل ←</span></div>
   <div class="panel">
     <div class="rowline"><span>مستحق هذا الشهر (أقساط / جمعيات)</span><b class="orange" id="homeCommitmentsDue">0.00 ج.م</b></div>
@@ -298,21 +307,21 @@ details.subfold .subfold-body{padding:10px 12px}
   <div class="panel" id="allActivity"></div>
 </section>
 
-<!-- 4. الالتزامات والديون -->
+<!-- 4. الالتزامات والسلف -->
 <section id="commitments" class="screen">
-  <div class="greeting">إدارة الديون والالتزامات الشهرية</div>
+  <div class="greeting">إدارة السلف والالتزامات الشهرية</div>
   <h1>الالتزامات</h1>
 
   <details class="fold">
     <summary>
-      <div class="fold-left"><span class="fold-ico">＋</span><span>إضافة التزام أو دين جديد</span></div>
+      <div class="fold-left"><span class="fold-ico">＋</span><span>إضافة التزام أو سلفة جديدة</span></div>
       <span class="chev">▼</span>
     </summary>
     <div class="fold-body">
       <div class="wideform">
-        <div class="field full"><label>نظام السداد</label><select id="comFreq" onchange="toggleCommitmentFreqFields()"><option value="monthly">شهري (قسط / جمعية / فاتورة)</option><option value="once">مرة واحدة (دين / سلفة)</option></select></div>
-        <div class="field"><label>الاسم</label><input id="comTitle" placeholder="مثال: سلفة / جمعية / قسط"></div>
+        <div class="field full"><label>نظام السداد</label><select id="comFreq" onchange="toggleCommitmentFreqFields()"><option value="monthly">شهري (قسط / جمعية / فاتورة)</option><option value="once">سلفة (مرة واحدة)</option></select></div>
         <div class="field"><label>التصنيف</label><select id="comType"><option>سلفة</option><option>جمعية</option><option>قسط شقة</option><option>قسط بنك</option><option>التزام شهري</option><option>فاتورة</option><option>أخرى</option></select></div>
+        <div class="field"><label>الاسم (اختياري)</label><input id="comTitle" placeholder="يأخذ اسم التصنيف لو فارغ"></div>
         <div class="field"><label>المبلغ</label><input id="comAmount" type="number" min="1" step="0.01" inputmode="decimal" placeholder="0"></div>
         <div class="field com-monthly-only"><label>يوم الاستحقاق</label><input id="comDay" type="number" min="1" max="31" value="1"></div>
         <div class="field com-monthly-only">
@@ -334,8 +343,8 @@ details.subfold .subfold-body{padding:10px 12px}
   <div class="section-head"><h2>الالتزامات الشهرية</h2><span id="comMonthLabel"></span></div>
   <div class="panel" id="commitmentsList"><div class="empty">لا توجد التزامات شهرية في هذا الشهر.</div></div>
 
-  <div class="section-head"><h2>الديون (سداد مرة واحدة)</h2><span>اضغط على العنصر للخيارات</span></div>
-  <div class="panel" id="oneTimeDebtsList"><div class="empty">لا توجد ديون مسجلة.</div></div>
+  <div class="section-head"><h2>السلف</h2><span>اضغط على العنصر للخيارات</span></div>
+  <div class="panel" id="oneTimeDebtsList"><div class="empty">لا توجد سلف مسجلة.</div></div>
 
   <div class="section-head"><h2>الادخار</h2><span>الرصيد الحالي</span></div>
   <div class="hero">
@@ -498,7 +507,7 @@ details.subfold .subfold-body{padding:10px 12px}
   <div class="panel" id="cardOpsList"><div class="empty">لا توجد عمليات.</div></div>
 </section>
 
-<!-- 7. التقارير -->
+<!-- 7. التقارير (تُفتح من الرئيسية) -->
 <section id="reports" class="screen">
   <div class="greeting">قراءة أعمق لأموالك</div>
   <h1>التقارير</h1>
@@ -556,7 +565,7 @@ details.subfold .subfold-body{padding:10px 12px}
       <div class="set-ico">↥</div>
       <div class="set-title">
         <b>استعادة نسخة احتياطية</b>
-        <small>اختر ملف raseed-backup.json سبق تصديره لاسترجاع بياناتك.</small>
+        <small>اختر ملف wallet-backup.json سبق تصديره لاسترجاع بياناتك.</small>
       </div>
     </div>
     <input id="restore" class="file-hidden" type="file" accept="application/json,.json" onchange="restore(event)">
@@ -606,10 +615,10 @@ details.subfold .subfold-body{padding:10px 12px}
     <div class="set-head">
       <div class="set-ico">ℹ</div>
       <div class="set-title">
-        <b>Raseed — حول التطبيق</b>
-        <small id="appVersionDetail">V8.8 · 2026-11-12</small>
+        <b>المحفظة (Wallet) — حول التطبيق</b>
+        <small id="appVersionDetail">V8.9 · 2026-11-12</small>
       </div>
-      <span class="tag" id="appVersionTag">V8.8</span>
+      <span class="tag" id="appVersionTag">V8.9</span>
     </div>
     <div class="hint" id="updateStatus">بياناتك المالية تبقى على الجهاز. التحديث يخص ملفات التطبيق فقط.</div>
     <div class="set-actions">
@@ -635,7 +644,7 @@ details.subfold .subfold-body{padding:10px 12px}
 
 <button class="fab" onclick="openModal('transaction')">＋</button>
 
-<!-- Colored Custom SVG Bottom Bar -->
+<!-- Clean 5-Item Colored Bottom Bar -->
 <nav class="bottom">
   <button class="nav active" data-page="home" onclick="go('home',this)">
     <svg viewBox="0 0 24 24" fill="none"><path d="M3 10.5L12 3l9 7.5V20a1.5 1.5 0 0 1-1.5 1.5h-5v-6h-5v6h-5A1.5 1.5 0 0 1 3 20v-9.5Z" fill="#43d6b2" fill-opacity=".22" stroke="#43d6b2" stroke-width="1.8" stroke-linejoin="round"/></svg>
@@ -653,10 +662,6 @@ details.subfold .subfold-body{padding:10px 12px}
     <svg viewBox="0 0 24 24" fill="none"><rect x="2.5" y="5" width="19" height="14" rx="3" fill="#ffbd69" fill-opacity=".25" stroke="#ffbd69" stroke-width="1.8"/><path d="M2.5 9.5h19" stroke="#ffbd69" stroke-width="2"/><rect x="6" y="13.5" width="5" height="2" rx="1" fill="#ffbd69"/></svg>
     البطاقات
   </button>
-  <button class="nav" data-page="reports" onclick="go('reports',this)">
-    <svg viewBox="0 0 24 24" fill="none"><rect x="3.5" y="3.5" width="17" height="17" rx="3" fill="#b69aff" fill-opacity=".22" stroke="#b69aff" stroke-width="1.8"/><path d="M8 16v-4M12 16V8M16 16v-6" stroke="#b69aff" stroke-width="2" stroke-linecap="round"/></svg>
-    التقارير
-  </button>
   <button class="nav" data-page="settings" onclick="go('settings',this)">
     <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" fill="#91a2b9" fill-opacity=".3" stroke="#91a2b9" stroke-width="1.8"/><path d="M12 3v2.2M12 18.8V21M3 12h2.2M18.8 12H21M5.6 5.6l1.6 1.6M16.8 16.8l1.6 1.6M18.4 5.6l-1.6 1.6M7.2 16.8l-1.6 1.6" stroke="#91a2b9" stroke-width="1.8" stroke-linecap="round"/></svg>
     الإعدادات
@@ -668,10 +673,10 @@ details.subfold .subfold-body{padding:10px 12px}
     <h3 id="modalTitle">إضافة حركة</h3>
     <div id="transactionFields">
       <div class="field"><label>نوع الحركة</label><select id="type" onchange="updateTransactionAccountOptions()"><option value="expense">مصروف</option><option value="income">دخل مكتسب</option><option value="fund">تمويل / قرض / جمعية</option></select></div>
-      <div class="field"><label>البيان</label><input id="title" placeholder="مثال: مشتريات البيت"></div>
-      <div class="field"><label>المبلغ بالجنيه</label><input id="amount" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="0"></div>
       <div class="field"><label>التصنيف</label><select id="category"></select></div>
       <div class="field full"><label>أو أضف تصنيفًا جديدًا</label><div style="display:flex;gap:8px"><input id="newCategory" placeholder="اسم التصنيف الجديد" style="flex:1"><button type="button" class="secondary" style="flex:0;padding:10px 14px" onclick="addCustomCategory()">إضافة</button></div></div>
+      <div class="field"><label>البيان (اختياري — يأخذ اسم التصنيف لو فارغ)</label><input id="title" placeholder="اتركه فارغًا أو اكتب تفصيل"></div>
+      <div class="field"><label>المبلغ بالجنيه</label><input id="amount" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="0"></div>
       <div class="field"><label>التاريخ</label><input id="date" type="date"></div>
       <div class="field full"><label>حساب الدفع / الاستلام</label><select id="transactionAccount"></select></div>
     </div>
@@ -703,7 +708,7 @@ details.subfold .subfold-body{padding:10px 12px}
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
 <script>
-const APP_VERSION='8.8';
+const APP_VERSION='8.9';
 const APP_BUILD='2026-11-12';
 const KEY='raseed_mobile_v2';
 let pendingWorkbookTransactions=null;
@@ -726,7 +731,6 @@ state.importBatches=state.importBatches||[];
 state.debts=state.debts||[];
 state.categories=state.categories||[...DEFAULT_CATS];
 
-// Active period state (replaces large native selects on Home)
 let activeYear = new Date().getFullYear();
 let activeMonth = new Date().getMonth() + 1;
 
@@ -751,7 +755,7 @@ function persist(){
   render();
 }
 
-/* Toggle Tap Actions on List Items */
+/* Toggle Tap Details & Actions on List Items */
 function toggleItemActions(el, ev){
   if(ev && ev.target.closest('button')) return;
   const wasExpanded = el.classList.contains('expanded');
@@ -763,7 +767,6 @@ function toggleItemActions(el, ev){
 function migrateLegacyDebtsToCommitments(){
   let changed=false;
   const curYM=new Date().toISOString().slice(0,7);
-  // Ensure existing commitments have freq property
   for(const c of state.commitments){
     if(!c.freq){
       c.freq = (c.type==='سلفة' || String(c.id).startsWith('com-migrated-')) ? 'once' : 'monthly';
@@ -850,7 +853,7 @@ function appConfirm(title, message, okLabel, onConfirm){
   dlg.classList.add('show');
 }
 
-/* Compact In-App Month/Year Grid Picker (Replaces giant native browser select popup) */
+/* Compact In-App Month/Year Grid Picker */
 let ymPickerState = { year: new Date().getFullYear(), month: new Date().getMonth()+1, allowClear: false, onSelect: null };
 function openCompactYMPicker(targetPrefix, allowClear){
   let curVal = val(targetPrefix+'Val') || selected();
@@ -955,7 +958,7 @@ try{
       return;
     }
     try{history.pushState({screen:'home'},'','#home')}catch(_){}
-    appConfirm('الخروج من التطبيق','هل تريد الخروج من تطبيق رَصيد؟','نعم، خروج',()=>{
+    appConfirm('الخروج من التطبيق','هل تريد الخروج من تطبيق المحفظة؟','نعم، خروج',()=>{
       window.close();
       toast('يمكنك إغلاق التطبيق الآن');
     });
@@ -995,7 +998,7 @@ function allAccountsAvailable(){
   return round2((state.accounts||[]).filter(a=>a.type!=='credit').reduce((s,a)=>s+accountBalance(a),0));
 }
 
-/* Separate Stats for Monthly Commitments vs One-Time Debts */
+/* Separate Stats for Monthly Commitments vs One-Time Loans (السلف) */
 function monthCommitmentsStats(m){
   const list=(state.commitments||[]).filter(c=>(c.freq||'monthly')==='monthly' && commitmentDue(c,m));
   let due=0, paid=0;
@@ -1085,7 +1088,7 @@ function render(){
   document.getElementById('savingCard').textContent=fmt((Number(state.savings)||0)+t.net);
   document.getElementById('savingBig').textContent=egp((Number(state.savings)||0)+t.net);
 
-  // Home Section 1: One-Time Debts
+  // Home Section 1: السلف
   const hdTot=document.getElementById('homeDebtsTotal');
   const hdPaid=document.getElementById('homeDebtsPaid');
   const hdRem=document.getElementById('homeDebtsRemain');
@@ -1095,7 +1098,7 @@ function render(){
   if(hdRem) hdRem.textContent=egp(debtStats.remain);
   if(hdProg) hdProg.style.width=(debtStats.total>0?Math.min(100,(debtStats.paid/debtStats.total)*100):0)+'%';
 
-  // Home Section 2: Monthly Commitments
+  // Home Section 2: الالتزامات الشهرية
   const hcDue=document.getElementById('homeCommitmentsDue');
   const hcPaid=document.getElementById('homeCommitmentsPaid');
   const hcRem=document.getElementById('homeCommitmentsRemain');
@@ -1141,7 +1144,7 @@ function render(){
     ? catEntries.slice(0,5).map(([k,v],i)=>`<div class="rowline"><span>${i+1}. ${esc(k)}</span><b>${egp(v)}</b></div>`).join('')
     : '<div class="empty">لا توجد بيانات كافية</div>';
 
-  // Year summary
+  // Year summary in Reports
   const y=m.slice(0,4);
   const yearTx=state.transactions.filter(x=>String(x.date).startsWith(y));
   const yInc=yearTx.filter(x=>x.type==='income').reduce((s,x)=>s+Number(x.amount)||0,0);
@@ -1150,7 +1153,7 @@ function render(){
   if(yl) yl.textContent=y;
   if(ys) ys.innerHTML=`<div class="rowline"><span>إجمالي دخل ${y}</span><b>${egp(yInc)}</b></div><div class="rowline"><span>إجمالي مصروفات ${y}</span><b>${egp(yExp)}</b></div><div class="rowline"><span>صافي السنة</span><b>${egp(yInc-yExp)}</b></div>`;
 
-  // Full vertical Arabic month names on charts
+  // 12-Month Comparison Chart in Reports
   const yb=document.getElementById('yearBars');
   if(yb){
     const months={};
@@ -1158,15 +1161,6 @@ function render(){
     const max=Math.max(1,...Object.values(months).flatMap(v=>[v.inc,v.exp]));
     yb.innerHTML=Object.entries(months).map(([k,v])=>`<div class="barcol"><div class="barpair"><div class="bar inc" style="height:${Math.max(3,v.inc/max*100)}%"></div><div class="bar exp" style="height:${Math.max(3,v.exp/max*100)}%"></div></div><span class="vmonth">${monthNames[Number(k.slice(5,7))-1]}</span></div>`).join('');
   }
-
-  let months=[];
-  for(let i=5;i>=0;i--){
-    let d=new Date(Number(m.slice(0,4)),Number(m.slice(5,7))-1-i,1),
-        k=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
-    months.push([k,totals(k)]);
-  }
-  let max=Math.max(1,...months.flatMap(x=>[x[1].inc,x[1].exp]));
-  document.getElementById('bars').innerHTML=months.map(([k,v])=>`<div class="barwrap"><div class="barpair"><div class="bar" style="height:${Math.max(3,v.inc/max*100)}%"></div><div class="bar exp" style="height:${Math.max(3,v.exp/max*100)}%"></div></div><span class="vmonth">${monthNames[Number(k.slice(5,7))-1]}</span></div>`).join('');
 
   if(typeof renderModules==='function'){renderModules();showCreditQuote();}
 }
@@ -1232,7 +1226,7 @@ function editTransaction(id){
   window._editingTxId=String(id);
 }
 
-/* Unified Modal Open & Save */
+/* Unified Modal Open & Save (Title optional -> defaults to category name) */
 function openModal(which){
   const m=document.getElementById('modal');
   m.classList.add('show');
@@ -1252,8 +1246,8 @@ function closeModal(){
 }
 
 function saveModal(){
-  let type=val('type'),title=val('title').trim(),amount=num('amount'),category=val('category'),date=val('date'),accountId=val('transactionAccount');
-  if(!title||amount<=0||!date)return toast('أكمل البيانات بشكل صحيح');
+  let type=val('type'),category=val('category'),rawTitle=val('title').trim(),title=rawTitle||category||'حركة',amount=num('amount'),date=val('date'),accountId=val('transactionAccount');
+  if(!amount||amount<=0||!date)return toast('أدخل المبلغ والتاريخ بشكل صحيح');
   if((type==='expense'||type==='income'||type==='fund')&&state.accounts.length&&!accountId)return toast('حدد الحساب');
   if(window._editingTxId){
     const t=state.transactions.find(x=>String(x.id)===String(window._editingTxId));
@@ -1349,7 +1343,7 @@ function backup(){
   try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}
   checkBackupReminder();
   let b=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}),a=document.createElement('a');
-  a.href=URL.createObjectURL(b);a.download='raseed-backup-'+today()+'.json';a.click();URL.revokeObjectURL(a.href);
+  a.href=URL.createObjectURL(b);a.download='wallet-backup-'+today()+'.json';a.click();URL.revokeObjectURL(a.href);
   toast('تم تصدير النسخة الاحتياطية');
 }
 function restore(e){
@@ -1405,7 +1399,7 @@ async function forceAppUpdate(){
   try{
     if('caches' in window){
       const keys=await caches.keys();
-      await Promise.all(keys.filter(k=>k.startsWith('raseed-')).map(k=>caches.delete(k)));
+      await Promise.all(keys.filter(k=>k.startsWith('raseed-')||k.startsWith('wallet-')).map(k=>caches.delete(k)));
     }
     if('serviceWorker' in navigator){
       const regs=await navigator.serviceWorker.getRegistrations();
@@ -1722,22 +1716,26 @@ function payCard(){
   persist();renderModules();renderAccounts();setv('cardPaymentAmount','');toast('تم تسجيل السداد وتحديث الرصيد المتاح للبطاقة');
 }
 
-/* Commitments & One-Time Debts */
+/* Commitments & السلف (Optional Name -> defaults to category name) */
 function toggleCommitmentFreqFields(){
   const isMonthly = val('comFreq') !== 'once';
   document.querySelectorAll('.com-monthly-only').forEach(e=>e.style.display=isMonthly?'block':'none');
+  if(!isMonthly) setv('comType','سلفة');
 }
 function addCommitment(){
   const freq=val('comFreq')||'monthly';
-  let title=val('comTitle').trim(),amount=num('comAmount');
+  const catType=val('comType')||(freq==='once'?'سلفة':'التزام شهري');
+  const rawTitle=val('comTitle').trim();
+  const title=rawTitle||catType;
+  const amount=num('comAmount');
   let start=freq==='monthly' ? (val('comStartVal')||selected()) : selected();
   let end=freq==='monthly' ? val('comEndVal') : '';
-  if(!title||amount<=0)return toast('أدخل الاسم والمبلغ بشكل صحيح');
+  if(!amount||amount<=0)return toast('أدخل المبلغ بشكل صحيح');
   if(freq==='monthly' && end && end<start)return toast('تاريخ النهاية لا يمكن أن يكون قبل البداية');
   state.commitments.push({
     id:'com-'+Date.now(),
     title,
-    type:val('comType'),
+    type:catType,
     freq,
     amount,
     start,
@@ -1745,7 +1743,7 @@ function addCommitment(){
     day:freq==='monthly'?(num('comDay')||1):1,
     note:val('comNote').trim()
   });
-  persist();setv('comTitle','');setv('comAmount','');setv('comNote','');renderModules();toast(freq==='once'?'تمت إضافة الدين':'تمت إضافة الالتزام الشهري');
+  persist();setv('comTitle','');setv('comAmount','');setv('comNote','');renderModules();toast(freq==='once'?'تمت إضافة السلفة':'تمت إضافة الالتزام الشهري');
 }
 function commitmentDue(c,month){return month>=c.start&&(!c.end||month<=c.end)}
 
@@ -1759,11 +1757,11 @@ function showCommitmentDetails(id){
   const leftAmt=Math.max(0,(Number(c.amount)||0)-paidAmt);
 
   ensureActionDialog(true);
-  document.getElementById('actionTitle').textContent=isOnce?'تفاصيل الدين':'تفاصيل الالتزام';
+  document.getElementById('actionTitle').textContent=isOnce?'تفاصيل السلفة':'تفاصيل الالتزام';
   let rows=`
     <div class="rowline"><span>الاسم</span><b>${esc(c.title)}</b></div>
     <div class="rowline"><span>التصنيف</span><b>${esc(c.type||'التزام')}</b></div>
-    <div class="rowline"><span>نظام السداد</span><b>${isOnce?'مرة واحدة (دين)':'شهري'}</b></div>
+    <div class="rowline"><span>نظام السداد</span><b>${isOnce?'سلفة (مرة واحدة)':'شهري'}</b></div>
     <div class="rowline"><span>المبلغ</span><b>${egp(c.amount)}</b></div>
   `;
   if(!isOnce){
@@ -1789,11 +1787,11 @@ function editCommitment(id){
   const c=state.commitments.find(x=>x.id===id);if(!c)return;
   ensureActionDialog(false);
   const isOnce=c.freq==='once';
-  document.getElementById('actionTitle').textContent=isOnce?'تعديل الدين':'تعديل الالتزام';
+  document.getElementById('actionTitle').textContent=isOnce?'تعديل السلفة':'تعديل الالتزام';
   document.getElementById('actionBody').innerHTML=`
-    <div class="field"><label>نظام السداد</label><select id="eComFreq" onchange="document.querySelectorAll('.ecom-m-only').forEach(x=>x.style.display=this.value==='monthly'?'block':'none')"><option value="monthly" ${!isOnce?'selected':''}>شهري</option><option value="once" ${isOnce?'selected':''}>مرة واحدة (دين)</option></select></div>
-    <div class="field"><label>الاسم</label><input id="eComTitle" value="${esc(c.title)}"></div>
+    <div class="field"><label>نظام السداد</label><select id="eComFreq" onchange="document.querySelectorAll('.ecom-m-only').forEach(x=>x.style.display=this.value==='monthly'?'block':'none')"><option value="monthly" ${!isOnce?'selected':''}>شهري</option><option value="once" ${isOnce?'selected':''}>سلفة (مرة واحدة)</option></select></div>
     <div class="field"><label>التصنيف</label><select id="eComType"><option>سلفة</option><option>جمعية</option><option>قسط شقة</option><option>قسط بنك</option><option>التزام شهري</option><option>فاتورة</option><option>أخرى</option></select></div>
+    <div class="field"><label>الاسم</label><input id="eComTitle" value="${esc(c.title)}"></div>
     <div class="wideform">
       <div class="field"><label>المبلغ</label><input id="eComAmount" type="number" step="0.01" value="${c.amount}"></div>
       <div class="field ecom-m-only" style="display:${isOnce?'none':'block'}"><label>يوم الاستحقاق</label><input id="eComDay" type="number" min="1" max="31" value="${c.day||1}"></div>
@@ -1809,13 +1807,14 @@ function editCommitment(id){
   okBtn.textContent='حفظ التعديلات';okBtn.className='primary';
   okBtn.onclick=()=>{
     const freq=document.getElementById('eComFreq').value;
-    const title=document.getElementById('eComTitle').value.trim();
+    const catType=document.getElementById('eComType').value;
+    const title=document.getElementById('eComTitle').value.trim()||catType;
     const amount=Number(document.getElementById('eComAmount').value)||0;
     const start=document.getElementById('eComStartVal').value||c.start||selected();
     const end=freq==='monthly'?(document.getElementById('eComEndVal').value||''):'';
-    if(!title||amount<=0)return toast('أكمل البيانات بشكل صحيح');
+    if(!amount||amount<=0)return toast('أدخل المبلغ بشكل صحيح');
     if(freq==='monthly' && end && end<start)return toast('تاريخ النهاية لا يمكن أن يكون قبل البداية');
-    c.freq=freq;c.title=title;c.type=document.getElementById('eComType').value;c.amount=amount;
+    c.freq=freq;c.title=title;c.type=catType;c.amount=amount;
     c.start=start;c.end=end;c.day=Number(document.getElementById('eComDay').value)||1;
     c.note=document.getElementById('eComNote').value.trim();
     persist();closeActionDialog();renderModules();toast('تم التعديل بنجاح');
@@ -1859,24 +1858,24 @@ function renderModules(){
     return `<div class="listitem"><div class="info"><b>${esc(o.title)} — ${esc(c?.name||'بطاقة')}</b><small>${sub} · ${o.date}</small><small>الأصل ${fmt(o.amount)} · المتبقي ${fmt(remaining)}</small></div><span class="tag">${o.type==='swipe'?'مسحوبات':'تقسيط'}</span></div>`;
   }).join(''):'<div class="empty">لا توجد عمليات.</div>';
 
-  // Render Monthly Commitments (tap to reveal actions)
+  // Render Monthly Commitments (ultra-clean by default, details & actions appear on tap)
   const comStats=monthCommitmentsStats(m);
   e=document.getElementById('comMonthLabel');if(e)e.textContent=formatYMArabic(m);
   e=document.getElementById('commitmentsList');
   if(e)e.innerHTML=comStats.list.length?comStats.list.map(c=>{
     let paid=state.commitmentPayments.filter(p=>p.commitmentId===c.id&&p.month===m).reduce((s,p)=>s+(Number(p.amount)||0),0),
         left=Math.max(0,(Number(c.amount)||0)-paid);
-    return `<div class="listitem" onclick="toggleItemActions(this,event)"><div class="info"><b>${esc(c.title)} <span class="tag" style="margin-right:4px">${esc(c.type||'التزام')}</span></b><small>مدفوع ${egp(paid)} · متبقي ${egp(left)}</small><div class="tap-actions"><button class="smallbtn" onclick="markCommitmentPaid('${c.id}')">${left?'تسجيل دفع':'مدفوع ✓'}</button><button class="smallbtn" onclick="showCommitmentDetails('${c.id}')">تفاصيل</button><button class="smallbtn" onclick="editCommitment('${c.id}')">تعديل</button><button class="smallbtn danger" onclick="deleteCommitment('${c.id}')">حذف</button></div></div><strong class="${left?'orange':'mint'}">${egp(left)}</strong></div>`;
+    return `<div class="listitem" onclick="toggleItemActions(this,event)"><div class="info"><b>${esc(c.title)} <span class="tag" style="margin-right:4px">${esc(c.type||'التزام')}</span></b><small class="tap-details">مدفوع ${egp(paid)} · متبقي ${egp(left)}</small><div class="tap-actions"><button class="smallbtn" onclick="markCommitmentPaid('${c.id}')">${left?'تسجيل دفع':'مدفوع ✓'}</button><button class="smallbtn" onclick="showCommitmentDetails('${c.id}')">تفاصيل</button><button class="smallbtn" onclick="editCommitment('${c.id}')">تعديل</button><button class="smallbtn danger" onclick="deleteCommitment('${c.id}')">حذف</button></div></div><strong class="${left?'orange':'mint'}">${egp(left)}</strong></div>`;
   }).join(''):'<div class="empty">لا توجد التزامات شهرية في هذا الشهر.</div>';
 
-  // Render One-Time Debts (tap to reveal actions)
+  // Render السلف (ultra-clean by default, details & actions appear on tap)
   const debtStats=oneTimeDebtsStats();
   const dListEl=document.getElementById('oneTimeDebtsList');
   if(dListEl) dListEl.innerHTML=debtStats.list.length?debtStats.list.map(c=>{
     let paid=state.commitmentPayments.filter(p=>p.commitmentId===c.id).reduce((s,p)=>s+(Number(p.amount)||0),0),
         left=Math.max(0,(Number(c.amount)||0)-paid);
-    return `<div class="listitem" onclick="toggleItemActions(this,event)"><div class="info"><b>${esc(c.title)} <span class="tag" style="margin-right:4px">${esc(c.type||'دين')}</span></b><small>مدفوع ${egp(paid)} · متبقي ${egp(left)}</small><div class="tap-actions"><button class="smallbtn" onclick="markCommitmentPaid('${c.id}')">${left?'تسجيل سداد':'مسدد ✓'}</button><button class="smallbtn" onclick="showCommitmentDetails('${c.id}')">تفاصيل</button><button class="smallbtn" onclick="editCommitment('${c.id}')">تعديل</button><button class="smallbtn danger" onclick="deleteCommitment('${c.id}')">حذف</button></div></div><strong class="${left?'red':'mint'}">${egp(left)}</strong></div>`;
-  }).join(''):'<div class="empty">لا توجد ديون مسجلة.</div>';
+    return `<div class="listitem" onclick="toggleItemActions(this,event)"><div class="info"><b>${esc(c.title)} <span class="tag" style="margin-right:4px">${esc(c.type||'سلفة')}</span></b><small class="tap-details">مدفوع ${egp(paid)} · متبقي ${egp(left)}</small><div class="tap-actions"><button class="smallbtn" onclick="markCommitmentPaid('${c.id}')">${left?'تسجيل سداد':'مسدد ✓'}</button><button class="smallbtn" onclick="showCommitmentDetails('${c.id}')">تفاصيل</button><button class="smallbtn" onclick="editCommitment('${c.id}')">تعديل</button><button class="smallbtn danger" onclick="deleteCommitment('${c.id}')">حذف</button></div></div><strong class="${left?'red':'mint'}">${egp(left)}</strong></div>`;
+  }).join(''):'<div class="empty">لا توجد سلف مسجلة.</div>';
 }
 
 function toggleInstallmentFields(){
@@ -2147,7 +2146,7 @@ function undoLastMmbak(){
   persist();renderAccounts();document.getElementById('mmbakPreview').textContent='تم التراجع عن آخر عملية استيراد.';toast('تم التراجع عن الاستيراد');
 }
 
-/* Unified In-App Action Dialogs (supports centered confirm/picker vs top-aligned input) */
+/* Unified In-App Action Dialogs */
 function ensureActionDialog(centered){
   let d=document.getElementById('actionDialog');
   if(!d){
@@ -2171,7 +2170,7 @@ function markCommitmentPaid(id){
     ? state.commitmentPayments.filter(p=>p.commitmentId===id).reduce((s,p)=>s+(Number(p.amount)||0),0)
     : state.commitmentPayments.filter(p=>p.commitmentId===id&&p.month===m).reduce((s,p)=>s+(Number(p.amount)||0),0);
   let remain=Math.max(0,(Number(c.amount)||0)-already);
-  if(!remain)return toast(isOnce?'الدين مسدد بالكامل':'الالتزام مدفوع بالكامل هذا الشهر');
+  if(!remain)return toast(isOnce?'السلفة مسددة بالكامل':'الالتزام مدفوع بالكامل هذا الشهر');
   pendingCommitmentId=id;
   ensureActionDialog(false);
   document.getElementById('actionTitle').textContent='تسجيل سداد: '+c.title;
