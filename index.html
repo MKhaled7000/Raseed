@@ -206,12 +206,12 @@ details.subfold .subfold-body{padding:10px 12px}
       <label data-i18n="totalAvail">إجمالي الأموال المتاحة (رصيد حساباتك)</label>
       <button type="button" class="eye-btn" onclick="togglePrivacyMode()" id="privacyToggleBtn">👁</button>
     </div>
-    <div class="amount" id="homeAvailableTotal">0 ج.م</div>
+    <div class="amount" id="homeAvailableTotal">0 EGP</div>
     <div class="sub" data-i18n="totalAvailSub">إجمالي السيولة الفعلية في الكاش والبنوك والمحافظ</div>
     <div class="hero-foot">
-      <div class="hero-pill"><span data-i18n="netMonth">صافي الشهر</span><b id="remaining">0 ج.م</b></div>
-      <div class="hero-pill"><span data-i18n="incMonth">دخل الشهر</span><b id="incomeHero">0 ج.م</b></div>
-      <div class="hero-pill"><span data-i18n="expMonth">مصروف الشهر</span><b id="expenseHero">0 ج.م</b></div>
+      <div class="hero-pill"><span data-i18n="netMonth">صافي الشهر</span><b id="remaining">0 EGP</b></div>
+      <div class="hero-pill"><span data-i18n="incMonth">دخل الشهر</span><b id="incomeHero">0 EGP</b></div>
+      <div class="hero-pill"><span data-i18n="expMonth">مصروف الشهر</span><b id="expenseHero">0 EGP</b></div>
     </div>
   </div>
 
@@ -240,31 +240,31 @@ details.subfold .subfold-body{padding:10px 12px}
   </div>
 
   <div class="grid">
-    <div class="metric"><div class="metric-top"><span class="ico mint" style="background:#173b3b">↙</span><small data-i18n="totalIncome">إجمالي الدخل</small></div><strong id="incomeCard">0</strong><em data-i18n="currencyFull">جنيه مصري</em></div>
-    <div class="metric"><div class="metric-top"><span class="ico red" style="background:#3d222b">↗</span><small data-i18n="totalExpense">إجمالي المصروفات</small></div><strong id="expenseCard">0</strong><em data-i18n="currencyFull">جنيه مصري</em></div>
+    <div class="metric"><div class="metric-top"><span class="ico mint" style="background:#173b3b">↙</span><small data-i18n="totalIncome">إجمالي الدخل</small></div><strong id="incomeCard">0</strong><em data-i18n="currencyFull">EGP</em></div>
+    <div class="metric"><div class="metric-top"><span class="ico red" style="background:#3d222b">↗</span><small data-i18n="totalExpense">إجمالي المصروفات</small></div><strong id="expenseCard">0</strong><em data-i18n="currencyFull">EGP</em></div>
     <div class="metric"><div class="metric-top"><span class="ico orange" style="background:#3d3021">▤</span><small data-i18n="cardsDebt">مديونية البطاقات</small></div><strong id="debtCard">0</strong><em data-i18n="usedFromLimit">المستخدم من الليمت</em></div>
-    <div class="metric"><div class="metric-top"><span class="ico purple" style="background:#30294a">◈</span><small data-i18n="cumSavings">الادخار التراكمي</small></div><strong id="savingCard">0</strong><em data-i18n="currencyFull">جنيه مصري</em></div>
+    <div class="metric"><div class="metric-top"><span class="ico purple" style="background:#30294a">◈</span><small data-i18n="cumSavings">الادخار التراكمي</small></div><strong id="savingCard">0</strong><em data-i18n="currencyFull">EGP</em></div>
   </div>
 
   <!-- Separate Section 1: السلف (Tap card to reveal Paid/Remaining) -->
   <div class="section-head"><h2 data-i18n="loansTitle">السلف</h2><span style="cursor:pointer;color:var(--mint)" onclick="go('commitments')" data-i18n="detailsLink">التفاصيل ←</span></div>
   <div class="panel home-fold-panel" onclick="this.classList.toggle('expanded')">
-    <div class="rowline"><span data-i18n="totalLoans">إجمالي السلف</span><b id="homeDebtsTotal">0 ج.م</b></div>
+    <div class="rowline"><span data-i18n="totalLoans">إجمالي السلف</span><b id="homeDebtsTotal">0 EGP</b></div>
     <div class="home-fold-extra">
       <div class="progress"><i id="homeDebtsProgress" style="width:0%"></i></div>
-      <div class="rowline"><span data-i18n="paidActual">المسدد فعليًا</span><b class="mint" id="homeDebtsPaid">0 ج.م</b></div>
-      <div class="rowline"><span data-i18n="remainPay">المتبقي للسداد</span><b class="red" id="homeDebtsRemain">0 ج.م</b></div>
+      <div class="rowline"><span data-i18n="paidActual">المسدد فعليًا</span><b class="mint" id="homeDebtsPaid">0 EGP</b></div>
+      <div class="rowline"><span data-i18n="remainPay">المتبقي للسداد</span><b class="red" id="homeDebtsRemain">0 EGP</b></div>
     </div>
   </div>
 
   <!-- Separate Section 2: الالتزامات الشهرية (Tap card to reveal Paid/Remaining) -->
   <div class="section-head"><h2 data-i18n="monthlyCommitments">الالتزامات الشهرية</h2><span style="cursor:pointer;color:var(--mint)" onclick="go('commitments')" data-i18n="detailsLink">التفاصيل ←</span></div>
   <div class="panel home-fold-panel" onclick="this.classList.toggle('expanded')">
-    <div class="rowline"><span data-i18n="dueThisMonth">مستحق هذا الشهر</span><b class="orange" id="homeCommitmentsDue">0 ج.م</b></div>
+    <div class="rowline"><span data-i18n="dueThisMonth">مستحق هذا الشهر</span><b class="orange" id="homeCommitmentsDue">0 EGP</b></div>
     <div class="home-fold-extra">
       <div class="progress"><i id="homeCommitmentsProgress" style="width:0%"></i></div>
-      <div class="rowline"><span data-i18n="paidThisMonth">المسدد هذا الشهر</span><b class="mint" id="homeCommitmentsPaid">0 ج.م</b></div>
-      <div class="rowline"><span data-i18n="remainThisMonth">المتبقي هذا الشهر</span><b class="red" id="homeCommitmentsRemain">0 ج.م</b></div>
+      <div class="rowline"><span data-i18n="paidThisMonth">المسدد هذا الشهر</span><b class="mint" id="homeCommitmentsPaid">0 EGP</b></div>
+      <div class="rowline"><span data-i18n="remainThisMonth">المتبقي هذا الشهر</span><b class="red" id="homeCommitmentsRemain">0 EGP</b></div>
     </div>
   </div>
 
@@ -278,7 +278,7 @@ details.subfold .subfold-body{padding:10px 12px}
   <h1 data-i18n="navAccounts">الحسابات</h1>
   <div class="hero">
     <label>إجمالي الأموال المتاحة</label>
-    <div class="amount" id="accountsTotal">0.00 ج.م</div>
+    <div class="amount" id="accountsTotal">0.00 EGP</div>
   </div>
 
   <details class="fold">
@@ -305,8 +305,8 @@ details.subfold .subfold-body{padding:10px 12px}
   <div class="greeting">إدارة البطاقات الائتمانية ودورات السداد</div>
   <h1 data-i18n="navCards">البطاقات</h1>
   <div class="grid">
-    <div class="metric"><small>إجمالي المديونية (المستخدم)</small><strong id="cardDebtTotal">0.00</strong><em>جنيه مصري</em></div>
-    <div class="metric"><small>مستحق هذا الشهر</small><strong id="cardDueTotal">0.00</strong><em>جنيه مصري</em></div>
+    <div class="metric"><small>إجمالي المديونية (المستخدم)</small><strong id="cardDebtTotal">0.00</strong><em>EGP</em></div>
+    <div class="metric"><small>مستحق هذا الشهر</small><strong id="cardDueTotal">0.00</strong><em>EGP</em></div>
   </div>
 
   <!-- Horizontal 3-Button Bar -->
@@ -334,7 +334,7 @@ details.subfold .subfold-body{padding:10px 12px}
       <div class="field"><label>الرصيد المتاح حاليًا</label><input id="cardAvailable" type="number" step="0.01" inputmode="decimal" placeholder="مثال: 28657.70" oninput="previewNewCardDebt()"></div>
       <div class="field full"><label>يوم السداد الشهري</label><input id="cardPayDay" type="number" min="1" max="28" value="3"></div>
     </div>
-    <div class="calc-pill" id="newCardDebtPreview"><span>المديونية الافتتاحية المحسوبة:</span><b>0.00 ج.م</b></div>
+    <div class="calc-pill" id="newCardDebtPreview"><span>المديونية الافتتاحية المحسوبة:</span><b>0.00 EGP</b></div>
 
     <details class="subfold">
       <summary>
@@ -439,7 +439,7 @@ details.subfold .subfold-body{padding:10px 12px}
   <div class="section-head"><h2>الادخار</h2><span>الرصيد الحالي</span></div>
   <div class="hero">
     <label>رصيد الادخار الحالي</label>
-    <div class="amount" id="savingBig">0.00 ج.م</div>
+    <div class="amount" id="savingBig">0.00 EGP</div>
     <div class="sub">يتغير بناءً على الحركات التي تسجلها</div>
   </div>
 </section>
@@ -541,9 +541,9 @@ details.subfold .subfold-body{padding:10px 12px}
   <div class="greeting">قراءة أعمق لأموالك</div>
   <h1>التقارير</h1>
   <div class="panel">
-    <div class="rowline"><span>دخل الشهر المحدد</span><b id="reportIncome">0.00 ج.م</b></div>
-    <div class="rowline"><span>مصروفات الشهر المحدد</span><b id="reportExpense">0.00 ج.م</b></div>
-    <div class="rowline"><span>صافي الشهر</span><b id="reportNet">0.00 ج.م</b></div>
+    <div class="rowline"><span>دخل الشهر المحدد</span><b id="reportIncome">0.00 EGP</b></div>
+    <div class="rowline"><span>مصروفات الشهر المحدد</span><b id="reportExpense">0.00 EGP</b></div>
+    <div class="rowline"><span>صافي الشهر</span><b id="reportNet">0.00 EGP</b></div>
   </div>
   <div class="section-head"><h2>أكبر مصادر الإنفاق (الشهر)</h2></div>
   <div class="panel" id="topSpend"></div>
@@ -716,14 +716,27 @@ details.subfold .subfold-body{padding:10px 12px}
       <span class="chev">▼</span>
     </summary>
     <div class="fold-body">
+      <div class="set-card" id="installAppCard">
+        <div class="set-head">
+          <div class="set-ico">📲</div>
+          <div class="set-title">
+            <b>تثبيت التطبيق على الشاشة الرئيسية</b>
+            <small id="installAppStatus">ثبّت التطبيق ليفتح في نافذة مستقلة بدون شريط المتصفح.</small>
+          </div>
+        </div>
+        <div class="set-actions">
+          <button class="primary" id="installAppBtn" onclick="installPWA()">تثبيت التطبيق الآن</button>
+        </div>
+      </div>
+
       <div class="set-card">
         <div class="set-head">
           <div class="set-ico">ℹ</div>
           <div class="set-title">
             <b>المحفظة (Wallet) — حول التطبيق</b>
-            <small id="appVersionDetail">V9.1 · 2026-11-12</small>
+            <small id="appVersionDetail">V9.2 · 2026-11-12</small>
           </div>
-          <span class="tag" id="appVersionTag">V9.1</span>
+          <span class="tag" id="appVersionTag">V9.2</span>
         </div>
         <div class="hint" id="updateStatus">بياناتك المالية تبقى على الجهاز. التحديث يخص ملفات التطبيق فقط.</div>
         <div class="set-actions">
@@ -783,7 +796,7 @@ details.subfold .subfold-body{padding:10px 12px}
       <div class="field"><label>التصنيف</label><select id="category"></select></div>
       <div class="field full"><label>أو أضف تصنيفًا جديدًا</label><div style="display:flex;gap:8px"><input id="newCategory" placeholder="اسم التصنيف الجديد" style="flex:1"><button type="button" class="secondary" style="flex:0;padding:10px 14px" onclick="addCustomCategory()">إضافة</button></div></div>
       <div class="field"><label>البيان (اختياري — يأخذ اسم التصنيف لو فارغ)</label><input id="title" placeholder="اتركه فارغًا أو اكتب تفصيل"></div>
-      <div class="field"><label>المبلغ بالجنيه</label><input id="amount" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="0"></div>
+      <div class="field"><label>المبلغ (EGP)</label><input id="amount" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="0"></div>
       <div class="field"><label>التاريخ</label><input id="date" type="date"></div>
       <div class="field full"><label>حساب الدفع / الاستلام</label><select id="transactionAccount"></select></div>
     </div>
@@ -815,7 +828,7 @@ details.subfold .subfold-body{padding:10px 12px}
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
 <script>
-const APP_VERSION='9.1';
+const APP_VERSION='9.2';
 const APP_BUILD='2026-11-12';
 const KEY='raseed_mobile_v2';
 let pendingWorkbookTransactions=null;
@@ -847,8 +860,8 @@ const getMonthNames = () => (state.prefs?.lang === 'en' ? monthNamesEn : monthNa
 const fmt=n=>(Math.round((Number(n)||0)*100)/100).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
 const fmtInt=n=>Math.round(Number(n)||0).toLocaleString('en-US');
 const fmtHomeNum=n=>(state.prefs?.homeDecimals ? fmt(n) : fmtInt(n));
-const egp=n=>fmt(n)+' ج.م';
-const egpHome=n=>fmtHomeNum(n)+' ج.م';
+const egp=n=>fmt(n)+' EGP';
+const egpHome=n=>fmtHomeNum(n)+' EGP';
 const maskable=(str)=>state.prefs?.privacy ? '••••' : str;
 const today=()=>new Date().toISOString().slice(0,10);
 const monthKey=d=>String(d||'').slice(0,7);
@@ -883,7 +896,7 @@ const I18N = {
     netMonth:'صافي الشهر', incMonth:'دخل الشهر', expMonth:'مصروف الشهر',
     btnSalary:'حساب المرتب', btnActivity:'سجل الحركات', btnReports:'التقارير',
     monthlySummary:'الملخص المالي', totalIncome:'إجمالي الدخل', totalExpense:'إجمالي المصروفات',
-    cardsDebt:'مديونية البطاقات', usedFromLimit:'المستخدم من الليمت', cumSavings:'الادخار التراكمي', currencyFull:'جنيه مصري',
+    cardsDebt:'مديونية البطاقات', usedFromLimit:'المستخدم من الليمت', cumSavings:'الادخار التراكمي', currencyFull:'EGP',
     loansTitle:'السلف', totalLoans:'إجمالي السلف', paidActual:'المسدد فعليًا', remainPay:'المتبقي للسداد',
     monthlyCommitments:'الالتزامات الشهرية', dueThisMonth:'مستحق هذا الشهر',
     paidThisMonth:'المسدد هذا الشهر', remainThisMonth:'المتبقي هذا الشهر',
@@ -1439,7 +1452,7 @@ function itemHTML(t){
       amountText=t.type==='transfer'?'⇄ '+fmt(t.amount):((t.type==='expense'||t.type==='credit_payment'||(t.type==='adjust'&&Number(t.amount)<0))?'−':'+')+fmt(Math.abs(Number(t.amount)||0));
   const canEdit=t.id&&!String(t.id).startsWith('mm-xfer')&&t.type!=='transfer'&&t.type!=='adjust';
   const actions=canEdit?`<div class="tap-actions"><button class="smallbtn" onclick="editTransaction('${String(t.id).replace(/'/g,"\\'")}')">تعديل</button><button class="smallbtn danger" onclick="deleteTransaction('${String(t.id).replace(/'/g,"\\'")}')">حذف</button></div>`:'';
-  return `<div class="activity" onclick="toggleItemActions(this,event)"><div class="actico">${sym}</div><div class="acttxt"><b>${esc(t.title)}</b><small>${esc(t.category)} · ${t.date}${t.accountId?(' · '+(state.accounts.find(a=>a.id===t.accountId)?.name||'')):''}</small>${actions}</div><div class="actamt ${color}">${amountText} ج</div></div>`;
+  return `<div class="activity" onclick="toggleItemActions(this,event)"><div class="actico">${sym}</div><div class="acttxt"><b>${esc(t.title)}</b><small>${esc(t.category)} · ${t.date}${t.accountId?(' · '+(state.accounts.find(a=>a.id===t.accountId)?.name||'')):''}</small>${actions}</div><div class="actamt ${color}">${amountText} EGP</div></div>`;
 }
 
 function deleteTransaction(id){
@@ -1902,7 +1915,7 @@ function showCreditQuote(){
   let el=document.getElementById('creditQuote');if(!el)return;
   let q=creditQuote();
   el.innerHTML=q
-    ? `<div class="rowline"><span>إجمالي الفائدة</span><b>${fmt(q.interest)} ج</b></div><div class="rowline"><span>الرسوم الإدارية (مرة واحدة)</span><b>${fmt(q.fee)} ج</b></div><div class="rowline"><span>القسط الشهري</span><b>${fmt(q.base)} ج</b></div><div class="rowline"><span>الرسوم الإدارية في شهر مستقل</span><b>${fmt(q.fee)} ج</b></div><div class="rowline"><span>القسط الشهري ابتداءً من الشهر التالي</span><b>${fmt(q.base)} ج</b></div><div class="rowline"><span>إجمالي المبلغ</span><b>${fmt(q.total)} ج</b></div>`
+    ? `<div class="rowline"><span>إجمالي الفائدة</span><b>${fmt(q.interest)} EGP</b></div><div class="rowline"><span>الرسوم الإدارية (مرة واحدة)</span><b>${fmt(q.fee)} EGP</b></div><div class="rowline"><span>القسط الشهري</span><b>${fmt(q.base)} EGP</b></div><div class="rowline"><span>الرسوم الإدارية في شهر مستقل</span><b>${fmt(q.fee)} EGP</b></div><div class="rowline"><span>القسط الشهري ابتداءً من الشهر التالي</span><b>${fmt(q.base)} EGP</b></div><div class="rowline"><span>إجمالي المبلغ</span><b>${fmt(q.total)} EGP</b></div>`
     : '<div class="empty">اختر البطاقة والمبلغ والمدة لعرض القسط والفائدة والرسوم.</div>';
 }
 function addCardOperation(){
@@ -2430,7 +2443,7 @@ function markCommitmentPaid(id){
   pendingCommitmentId=id;
   ensureActionDialog(false);
   document.getElementById('actionTitle').textContent='تسجيل سداد: '+c.title;
-  document.getElementById('actionBody').innerHTML=`<div class="field"><label>المبلغ المدفوع (المتبقي ${fmt(remain)} جنيه)</label><input id="commitPaidAmount" type="number" step="0.01" value="${remain}" inputmode="decimal"></div><div class="field"><label>تاريخ الدفع</label><input id="commitPaidDate" type="date" value="${today()}"></div><div class="field"><label>حساب السداد</label><select id="commitPaidAccount">${state.accounts.map(a=>`<option value="${a.id}">${esc(a.name)}</option>`).join('')||'<option value="">—</option>'}</select></div>`;
+  document.getElementById('actionBody').innerHTML=`<div class="field"><label>المبلغ المدفوع (المتبقي ${fmt(remain)} EGP)</label><input id="commitPaidAmount" type="number" step="0.01" value="${remain}" inputmode="decimal"></div><div class="field"><label>تاريخ الدفع</label><input id="commitPaidDate" type="date" value="${today()}"></div><div class="field"><label>حساب السداد</label><select id="commitPaidAccount">${state.accounts.map(a=>`<option value="${a.id}">${esc(a.name)}</option>`).join('')||'<option value="">—</option>'}</select></div>`;
   const okBtn=document.getElementById('actionOk');
   okBtn.textContent='تأكيد السداد';okBtn.className='primary';
   okBtn.onclick=saveCommitmentPayment;
@@ -2458,6 +2471,66 @@ function resetApp(){
   });
 }
 
+
+/* PWA Install Prompt & Standalone Detection */
+let deferredInstallPrompt = null;
+function updateInstallUI(){
+  const statusEl = document.getElementById('installAppStatus');
+  const btnEl = document.getElementById('installAppBtn');
+  if(!statusEl || !btnEl) return;
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  if(isStandalone){
+    statusEl.textContent = 'التطبيق مثبّت ويعمل حاليًا في وضع التطبيق المستقل ✓';
+    btnEl.textContent = 'مثبّت بالفعل ✓';
+    btnEl.disabled = true;
+    btnEl.style.opacity = '0.6';
+  } else if(deferredInstallPrompt){
+    statusEl.textContent = 'جاهز للتثبيت كتطبيق مستقل على جهازك.';
+    btnEl.textContent = 'تثبيت التطبيق الآن';
+    btnEl.disabled = false;
+    btnEl.style.opacity = '1';
+  } else {
+    statusEl.textContent = 'اضغط للتثبيت أو اتبع خطوات المتصفح لفتحه بدون شريط العنوان.';
+  }
+}
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  updateInstallUI();
+});
+window.addEventListener('appinstalled', () => {
+  deferredInstallPrompt = null;
+  updateInstallUI();
+  toast('تم تثبيت التطبيق بنجاح على الشاشة الرئيسية');
+});
+async function installPWA(){
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  if(isStandalone) return toast('التطبيق مثبّت بالفعل');
+  if(deferredInstallPrompt){
+    deferredInstallPrompt.prompt();
+    const choice = await deferredInstallPrompt.userChoice;
+    if(choice && choice.outcome === 'accepted'){
+      deferredInstallPrompt = null;
+      updateInstallUI();
+    }
+    return;
+  }
+  ensureActionDialog(true);
+  document.getElementById('actionTitle').textContent = 'تثبيت التطبيق كتطبيق مستقل';
+  document.getElementById('actionBody').innerHTML = `
+    <p class="hint" style="color:#dce8f8;font-size:13px">لفتح التطبيق في شاشة كاملة بدون شريط المتصفح:</p>
+    <div class="rowline"><span>1. افتح الموقع في <b>Google Chrome</b></span></div>
+    <div class="rowline"><span>2. اضغط على القائمة <b>⋮</b> أعلى المتصفح</span></div>
+    <div class="rowline"><span>3. اختر <b>«تثبيت التطبيق» (Install app)</b> وليس «إضافة اختصار»</span></div>
+    <p class="hint" style="margin-top:8px">ملاحظة: متصفح شاومي الافتراضي يضيف اختصار متصفح فقط، بينما Chrome يثبّته كتطبيق مستقل (PWA).</p>
+  `;
+  const okBtn = document.getElementById('actionOk');
+  okBtn.textContent = 'فهمت';
+  okBtn.className = 'primary';
+  okBtn.onclick = closeActionDialog;
+  document.getElementById('actionDialog').classList.add('show');
+}
+
 /* Initial Boot */
 try{
   migrateLegacyDebtsToCommitments();
@@ -2466,6 +2539,7 @@ try{
   toggleInstallmentFields();
   init();
   initModules();
+  updateInstallUI();
 }catch(e){
   document.body.insertAdjacentHTML('afterbegin','<div style="padding:24px;color:white;background:#7f1d1d;text-align:center;font:16px system-ui">حصل خطأ أثناء تشغيل التطبيق. حدّث الصفحة أو افتحها في متصفح آخر.</div>');
   console.error(e);
