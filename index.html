@@ -186,7 +186,7 @@ details.subfold .subfold-body{padding:10px 12px}
 .ym-stepper{display:inline-flex;align-items:center;background:#17263a;border:1px solid var(--line);border-radius:13px;overflow:hidden}
 .ym-stepper button.step-arrow{background:transparent;border:0;color:var(--mint);padding:7px 11px;font-size:.95rem;font-weight:900;line-height:1}
 .ym-stepper button.step-arrow:active{background:#ffffff12}
-.ym-stepper button.step-label{background:transparent;border:0;border-right:1px solid var(--line);border-left:1px solid var(--line);color:var(--text);padding:7px 11px;font-size:.75rem;font-weight:800;white-space:nowrap}
+.ym-stepper button.step-label{background:transparent;border:0;border-right:1px solid var(--line);border-left:1px solid var(--line);color:var(--text);padding:7px 6px;font-size:.75rem;font-weight:800;white-space:nowrap;min-width:112px;text-align:center;display:inline-block}
 
 /* Yearly Breakdown Table in Reports */
 .yr-table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-top:6px}
@@ -397,12 +397,17 @@ window.addEventListener('beforeinstallprompt', function(e) {
       <div class="field"><label>نوع العملية</label><select id="opType" onchange="toggleInstallmentFields()"><option value="swipe">مسحوبات فيزا</option><option value="installment">شراء بالتقسيط</option></select></div>
       <div class="field full"><label>وصف العملية</label><input id="opTitle" placeholder="مثال: موبايل"></div>
       <div class="field"><label>قيمة العملية</label><input id="opAmount" type="number" min="1"></div>
-      <div class="field"><label>تاريخ العملية</label><input id="opDate" type="date"></div>
+      <div class="field"><label>تاريخ العملية</label><input id="opDate" type="date" onchange="syncCardOpMonthsFromDate()"></div>
       <div class="field installment-only"><label>مدة التقسيط</label><select id="opMonths" onchange="showCreditQuote()"><option>3</option><option>6</option><option>9</option><option selected>12</option><option>15</option><option>18</option><option>24</option><option>36</option></select></div>
       <div class="field installment-only">
-        <label>شهر بداية القسط</label>
-        <button type="button" class="picker-trigger" onclick="openCompactYMPicker('opStart')"><b id="opStartLabel">نوفمبر 2026</b><span>تغيير</span></button>
-        <input type="hidden" id="opStartVal">
+        <label>شهر الشراء (كشف الحساب)</label>
+        <button type="button" class="picker-trigger" onclick="openCardOpPurchasePicker()"><b id="opPurchaseLabel">نوفمبر 2026</b><span>تغيير</span></button>
+        <input type="hidden" id="opPurchaseVal">
+      </div>
+      <div class="field installment-only full">
+        <label>شهر المصاريف الإدارية (أول قسط يبدأ الشهر التالي له مباشرة)</label>
+        <button type="button" class="picker-trigger" onclick="openCompactYMPicker('opFeeMonth')"><b id="opFeeMonthLabel">ديسمبر 2026</b><span>تغيير</span></button>
+        <input type="hidden" id="opFeeMonthVal">
       </div>
     </div>
     <div id="creditQuote" class="panel" style="margin-top:10px;background:#0e1929"><div class="empty">اختر البطاقة والمبلغ والمدة لعرض القسط والفائدة والرسوم.</div></div>
@@ -465,7 +470,8 @@ window.addEventListener('beforeinstallprompt', function(e) {
           <button type="button" class="picker-trigger" onclick="openCompactYMPicker('comEnd',true)"><b id="comEndLabel">مفتوح</b><span>تغيير</span></button>
           <input type="hidden" id="comEndVal" value="">
         </div>
-        <div class="field full"><label>ملاحظة (اختياري)</label><input id="comNote" placeholder="تفاصيل إضافية"></div>
+        <div class="field"><label>الميعاد المقترح للسداد (اختياري)</label><input id="comDueDate" type="date"></div>
+        <div class="field"><label>ملاحظة (اختياري)</label><input id="comNote" placeholder="تفاصيل إضافية"></div>
       </div>
       <button class="primary" style="margin-top:10px" onclick="addCommitment()">حفظ</button>
     </div>
@@ -596,6 +602,21 @@ window.addEventListener('beforeinstallprompt', function(e) {
     </div>
   </div>
 
+  <details class="fold">
+    <summary>
+      <div class="fold-left"><span class="fold-ico">✎</span><span>الراتب والأرباح الافتراضية للتقرير</span></div>
+      <span class="chev">▼</span>
+    </summary>
+    <div class="fold-body">
+      <div class="wideform">
+        <div class="field"><label>المرتب الافتراضي الشهري</label><input id="repDefSalary" type="number" step="0.01" inputmode="decimal" placeholder="0"></div>
+        <div class="field"><label>الأرباح الافتراضية الشهرية</label><input id="repDefProfit" type="number" step="0.01" inputmode="decimal" placeholder="0"></div>
+      </div>
+      <p class="hint">يُطبق على الشهور التي لم يُسجل فيها مرتب أو أرباح فعلية لحساب الفائض والعجز السنوي.</p>
+      <button class="primary" style="margin-top:6px" onclick="saveReportDefaults()">حفظ القيم الافتراضية</button>
+    </div>
+  </details>
+
   <div class="section-head" style="margin-top:8px"><h2>جدول الدخل والالتزامات الشهري</h2><span id="repTableYearLabel">2026</span></div>
   <div class="panel" style="padding:12px">
     <div class="yr-table-wrap">
@@ -607,6 +628,7 @@ window.addEventListener('beforeinstallprompt', function(e) {
             <th class="num">الأرباح</th>
             <th class="num">إجمالي الدخل</th>
             <th class="num">الالتزامات</th>
+            <th class="num">الفائض / العجز</th>
           </tr>
         </thead>
         <tbody id="yearlyBreakdownBody"></tbody>
@@ -823,9 +845,9 @@ window.addEventListener('beforeinstallprompt', function(e) {
           <div class="set-ico">ℹ</div>
           <div class="set-title">
             <b>المحفظة (Wallet) — حول التطبيق</b>
-            <small id="appVersionDetail">V9.9 · 2026-11-12</small>
+            <small id="appVersionDetail">V10.0 · 2026-11-12</small>
           </div>
-          <span class="tag" id="appVersionTag">V9.9</span>
+          <span class="tag" id="appVersionTag">V10.0</span>
         </div>
         <div class="hint" id="updateStatus">بياناتك المالية تبقى على الجهاز. التحديث يخص ملفات التطبيق فقط.</div>
         <div class="set-actions">
@@ -917,7 +939,7 @@ window.addEventListener('beforeinstallprompt', function(e) {
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
 <script>
-const APP_VERSION='9.9';
+const APP_VERSION='10.0';
 const APP_BUILD='2026-11-12';
 const KEY='raseed_mobile_v2';
 let pendingWorkbookTransactions=null;
@@ -1227,6 +1249,18 @@ function shiftActiveMonth(delta){
   activeYear = y;
   render();
 }
+
+function saveReportDefaults(){
+  const y = String(activeYear);
+  state.reportDefaults = state.reportDefaults || {};
+  state.reportDefaults[y] = {
+    salary: num('repDefSalary'),
+    profit: num('repDefProfit')
+  };
+  persist();
+  toast('تم حفظ المرتب والأرباح الافتراضية لسنة ' + y);
+}
+
 function shiftReportYear(delta){
   activeYear += delta;
   render();
@@ -1389,8 +1423,13 @@ function init(){
   const curYM = selected();
   setv('comStartVal', curYM);
   document.getElementById('comStartLabel').textContent = formatYMArabic(curYM);
-  setv('opStartVal', curYM);
-  document.getElementById('opStartLabel').textContent = formatYMArabic(curYM);
+  setv('opPurchaseVal', curYM);
+  const pLbl = document.getElementById('opPurchaseLabel');
+  if(pLbl) pLbl.textContent = formatYMArabic(curYM);
+  const nextYM = addMonthsYM(curYM, 1);
+  setv('opFeeMonthVal', nextYM);
+  const fLbl = document.getElementById('opFeeMonthLabel');
+  if(fLbl) fLbl.textContent = formatYMArabic(nextYM);
   toggleCommitmentFreqFields();
   showAppVersion();
   applyPreferences();
@@ -1492,33 +1531,61 @@ function render(){
   if(repYrBtn) repYrBtn.textContent=y;
   if(repTblLbl) repTblLbl.textContent=y;
 
+  const defs = (state.reportDefaults||{})[y] || {salary:0, profit:0};
+  const sInp = document.getElementById('repDefSalary');
+  const pInp = document.getElementById('repDefProfit');
+  if(sInp && document.activeElement !== sInp) sInp.value = defs.salary || '';
+  if(pInp && document.activeElement !== pInp) pInp.value = defs.profit || '';
+
   const tbody=document.getElementById('yearlyBreakdownBody');
   if(tbody){
     const mListFull=getMonthNames();
-    let rowsHtml='', sumSal=0, sumProf=0, sumTotInc=0, sumCom=0;
+    let rowsHtml='', sumSal=0, sumProf=0, sumTotInc=0, sumCom=0, sumDiff=0;
     for(let i=1;i<=12;i++){
       const mk=y+'-'+String(i).padStart(2,'0');
       const mTxs=monthTx(mk);
-      const sal=round2(mTxs.filter(x=>x.type==='income' && (x.category==='راتب' || String(x.source||'').startsWith('salary:'))).reduce((s,x)=>s+(Number(x.amount)||0),0));
-      const prof=round2(mTxs.filter(x=>x.type==='income' && x.category==='أرباح').reduce((s,x)=>s+(Number(x.amount)||0),0));
-      const totInc=round2(mTxs.filter(x=>x.type==='income').reduce((s,x)=>s+(Number(x.amount)||0),0));
-      const comDue=monthCommitmentsStats(mk).due;
-      sumSal+=sal; sumProf+=prof; sumTotInc+=totInc; sumCom+=comDue;
+      const actualSal=round2(mTxs.filter(x=>x.type==='income' && (x.category==='راتب' || String(x.source||'').startsWith('salary:'))).reduce((s,x)=>s+(Number(x.amount)||0),0));
+      const actualProf=round2(mTxs.filter(x=>x.type==='income' && x.category==='أرباح').reduce((s,x)=>s+(Number(x.amount)||0),0));
+      const otherInc=round2(mTxs.filter(x=>x.type==='income' && x.category!=='راتب' && !String(x.source||'').startsWith('salary:') && x.category!=='أرباح').reduce((s,x)=>s+(Number(x.amount)||0),0));
+      const sal = actualSal > 0 ? actualSal : (Number(defs.salary)||0);
+      const prof = actualProf > 0 ? actualProf : (Number(defs.profit)||0);
+      const totInc = round2(sal + prof + otherInc);
+
+      // Total commitments for month mk: monthly commitments (including synced card installments) + any card swipe/admin fees due in mk
+      const comDue = monthCommitmentsStats(mk).due;
+      let extraCardDue = 0;
+      (state.cardOps||[]).forEach(o=>{
+        if(o.type==='swipe'){
+          if(o.dueDate && o.dueDate.slice(0,7)===mk) extraCardDue += opOutstanding(o);
+        } else if(o.type==='installment'){
+          if(o.feeMonth===mk) extraCardDue += Math.max(0, Number(o.feeDue)||0);
+        }
+      });
+      const totalObligations = round2(comDue + extraCardDue);
+      const diff = round2(totInc - totalObligations);
+
+      sumSal+=sal; sumProf+=prof; sumTotInc+=totInc; sumCom+=totalObligations; sumDiff+=diff;
       const isCur=(mk===m);
+      const diffClass = diff >= 0 ? 'mint' : 'red';
+      const diffSign = diff > 0 ? '+' : '';
       rowsHtml+=`<tr style="${isCur?'background:#182b42':''}" onclick="activeMonth=${i};render()">
         <td><b>${mListFull[i-1]}</b></td>
         <td class="num">${fmtInt(sal)}</td>
         <td class="num">${fmtInt(prof)}</td>
-        <td class="num mint">${fmtInt(totInc)}</td>
-        <td class="num orange">${fmtInt(comDue)}</td>
+        <td class="num">${fmtInt(totInc)}</td>
+        <td class="num orange">${fmtInt(totalObligations)}</td>
+        <td class="num ${diffClass}"><b>${diffSign}${fmtInt(diff)}</b></td>
       </tr>`;
     }
+    const totDiffClass = sumDiff >= 0 ? 'mint' : 'red';
+    const totDiffSign = sumDiff > 0 ? '+' : '';
     rowsHtml+=`<tr>
       <td>الإجمالي</td>
       <td class="num">${fmtInt(sumSal)}</td>
       <td class="num">${fmtInt(sumProf)}</td>
-      <td class="num mint">${fmtInt(sumTotInc)}</td>
+      <td class="num">${fmtInt(sumTotInc)}</td>
       <td class="num orange">${fmtInt(sumCom)}</td>
+      <td class="num ${totDiffClass}">${totDiffSign}${fmtInt(sumDiff)}</td>
     </tr>`;
     tbody.innerHTML=rowsHtml;
   }
@@ -1739,6 +1806,7 @@ function restore(e){
       state=v;
       state.prefs=state.prefs||{lang:'ar',fontSize:'1',theme:'mint',userName:'',defaultAccount:'',privacy:false,homeDecimals:false};
       migrateLegacyDebtsToCommitments();
+  normalizeExistingInstallmentSchedules();
   syncCardInstallmentsToCommitments();
       applyPreferences();
       persist();renderAccounts();renderModules();toast('تم استرجاع النسخة بنجاح');
@@ -2041,25 +2109,88 @@ function creditQuote(){
 function showCreditQuote(){
   let el=document.getElementById('creditQuote');if(!el)return;
   let q=creditQuote();
+  const feeYM = val('opFeeMonthVal') || addMonthsYM(val('opPurchaseVal')||selected(), 1);
+  const firstInstYM = addMonthsYM(feeYM, 1);
   el.innerHTML=q
-    ? `<div class="rowline"><span>إجمالي الفائدة</span><b>${fmt(q.interest)} EGP</b></div><div class="rowline"><span>الرسوم الإدارية (مرة واحدة)</span><b>${fmt(q.fee)} EGP</b></div><div class="rowline"><span>القسط الشهري</span><b>${fmt(q.base)} EGP</b></div><div class="rowline"><span>الرسوم الإدارية في شهر مستقل</span><b>${fmt(q.fee)} EGP</b></div><div class="rowline"><span>القسط الشهري ابتداءً من الشهر التالي</span><b>${fmt(q.base)} EGP</b></div><div class="rowline"><span>إجمالي المبلغ</span><b>${fmt(q.total)} EGP</b></div>`
+    ? `<div class="rowline"><span>إجمالي الفائدة</span><b>${fmt(q.interest)} EGP</b></div><div class="rowline"><span>المصاريف الإدارية (${formatYMArabic(feeYM)})</span><b>${fmt(q.fee)} EGP</b></div><div class="rowline"><span>القسط الشهري (يبدأ ${formatYMArabic(firstInstYM)})</span><b>${fmt(q.base)} EGP</b></div><div class="rowline"><span>إجمالي المبلغ</span><b>${fmt(q.total)} EGP</b></div>`
     : '<div class="empty">اختر البطاقة والمبلغ والمدة لعرض القسط والفائدة والرسوم.</div>';
 }
+
+function addMonthsYM(ym, add){
+  if(!ym || !ym.includes('-')) return selected();
+  let [y, m] = ym.split('-').map(Number);
+  const dt = new Date(y, (m - 1) + add, 1);
+  return dt.getFullYear() + '-' + String(dt.getMonth() + 1).padStart(2, '0');
+}
+function syncCardOpMonthsFromDate(){
+  const d = val('opDate');
+  if(!d || d.length < 7) return;
+  const pYM = d.slice(0, 7);
+  const fYM = addMonthsYM(pYM, 1);
+  setv('opPurchaseVal', pYM);
+  const pLbl = document.getElementById('opPurchaseLabel');
+  if(pLbl) pLbl.textContent = formatYMArabic(pYM);
+  setv('opFeeMonthVal', fYM);
+  const fLbl = document.getElementById('opFeeMonthLabel');
+  if(fLbl) fLbl.textContent = formatYMArabic(fYM);
+  showCreditQuote();
+}
+function openCardOpPurchasePicker(){
+  let curVal = val('opPurchaseVal') || selected();
+  let [y, m] = curVal.includes('-') ? curVal.split('-').map(Number) : [activeYear, activeMonth];
+  ymPickerState = {
+    year: y,
+    month: m,
+    allowClear: false,
+    onSelect: (chosenYM) => {
+      setv('opPurchaseVal', chosenYM);
+      const pLbl = document.getElementById('opPurchaseLabel');
+      if(pLbl) pLbl.textContent = formatYMArabic(chosenYM);
+      const nextYM = addMonthsYM(chosenYM, 1);
+      setv('opFeeMonthVal', nextYM);
+      const fLbl = document.getElementById('opFeeMonthLabel');
+      if(fLbl) fLbl.textContent = formatYMArabic(nextYM);
+      showCreditQuote();
+    }
+  };
+  renderCompactYMPicker();
+}
+
 function addCardOperation(){
   let card=state.cards.find(c=>c.id===val('opCard')),type=val('opType'),amount=num('opAmount'),date=val('opDate'),title=val('opTitle').trim();
   if(!card||!amount||!date||!title)return toast('أكمل بيانات العملية');
   let op={id:'op-'+Date.now(),cardId:card.id,type,title,amount,date,paid:0,dueDate:dueDateFor(card,date)};
   if(type==='installment'){
     let q=creditQuote();if(!q)return toast('راجع شروط البطاقة');
-    let start=val('opStartVal')||dueDateFor(card,date).slice(0,7);
-    op.months=q.months;op.interest=q.interest;op.adminFee=q.fee;op.installment=q.base;op.total=q.total;op.feeMonth=start;
-    let [sy,sm]=start.split('-').map(Number);op.feeDue=q.fee;op.feePaid=0;
-    op.schedules=Array.from({length:q.months},(_,i)=>{let dt=new Date(sy,sm+1+i,1);return{month:dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0'),amount:q.base,principalAndInterest:q.base,fee:0,paid:0}});
+    let purchaseYM = val('opPurchaseVal') || date.slice(0,7);
+    let feeYM = val('opFeeMonthVal') || addMonthsYM(purchaseYM, 1);
+    op.purchaseMonth = purchaseYM;
+    op.months = q.months;
+    op.interest = q.interest;
+    op.adminFee = q.fee;
+    op.installment = q.base;
+    op.total = q.total;
+    op.feeMonth = feeYM;
+    op.feeDue = q.fee;
+    op.feePaid = 0;
+    // First installment starts in the month IMMEDIATELY AFTER feeMonth (i.e. feeYM + 1 + i)
+    let [fy, fm] = feeYM.split('-').map(Number);
+    op.schedules = Array.from({length:q.months}, (_, i) => {
+      let dt = new Date(fy, (fm - 1) + 1 + i, 1);
+      return {
+        month: dt.getFullYear() + '-' + String(dt.getMonth() + 1).padStart(2, '0'),
+        amount: q.base,
+        principalAndInterest: q.base,
+        fee: 0,
+        paid: 0
+      };
+    });
   }
   state.cardOps.push(op);
   state.transactions.push({id:'card-purchase-'+op.id,type:'expense',title:'شراء بالبطاقة - '+title,category:'مشتريات بطاقة',amount,date,accountId:null,source:'card-purchase:'+op.id});
   if(type==='installment'){
-    syncCardInstallmentsToCommitments();
+    normalizeExistingInstallmentSchedules();
+  syncCardInstallmentsToCommitments();
   }
   persist();setv('opTitle','');setv('opAmount','');renderModules();showCreditQuote();closeCardPanels();toast(type==='installment'?'تم تسجيل التقسيط وإضافة أقساطه إلى الالتزامات الشهرية':'تم تسجيل العملية وخصمها من الرصيد المتاح للبطاقة');
 }
@@ -2130,9 +2261,10 @@ function addCommitment(){
     start,
     end,
     day:freq==='monthly'?(num('comDay')||1):1,
+    dueDate:val('comDueDate')||'',
     note:val('comNote').trim()
   });
-  persist();setv('comTitle','');setv('comAmount','');setv('comNote','');renderModules();toast(freq==='once'?'تمت إضافة السلفة':'تمت إضافة الالتزام الشهري');
+  persist();setv('comTitle','');setv('comAmount','');setv('comDueDate','');setv('comNote','');renderModules();toast(freq==='once'?'تمت إضافة السلفة':'تمت إضافة الالتزام الشهري');
 }
 function commitmentDue(c,month){return month>=c.start&&(!c.end||month<=c.end)}
 
@@ -2172,6 +2304,7 @@ function showCommitmentDetails(id){
   rows+=`
     <div class="rowline"><span>المسدد</span><b class="mint">${egp(paidAmt)}</b></div>
     <div class="rowline"><span>المتبقي</span><b class="${leftAmt?'red':'mint'}">${egp(leftAmt)}</b></div>
+    ${c.dueDate?`<div class="rowline"><span>الميعاد المقترح للسداد</span><b class="orange">${c.dueDate}</b></div>`:''}
     ${c.note?`<div class="rowline"><span>ملاحظات</span><b>${esc(c.note)}</b></div>`:''}
   `;
   document.getElementById('actionBody').innerHTML=rows;
@@ -2199,7 +2332,10 @@ function editCommitment(id){
       <div class="field"><label>تاريخ البداية</label><button type="button" class="picker-trigger" onclick="openCompactYMPicker('eComStart')"><b id="eComStartLabel">${formatYMArabic(c.start)}</b><span>تغيير</span></button><input type="hidden" id="eComStartVal" value="${c.start||''}"></div>
       <div class="field"><label>تاريخ النهاية</label><button type="button" class="picker-trigger" onclick="openCompactYMPicker('eComEnd',true)"><b id="eComEndLabel">${formatYMArabic(c.end)}</b><span>تغيير</span></button><input type="hidden" id="eComEndVal" value="${c.end||''}"></div>
     </div>
-    <div class="field"><label>ملاحظة</label><input id="eComNote" value="${esc(c.note||'')}"></div>
+    <div class="wideform">
+      <div class="field"><label>الميعاد المقترح للسداد</label><input id="eComDueDate" type="date" value="${c.dueDate||''}"></div>
+      <div class="field"><label>ملاحظة</label><input id="eComNote" value="${esc(c.note||'')}"></div>
+    </div>
   `;
   document.getElementById('eComType').value=c.type||'التزام شهري';
   const okBtn=document.getElementById('actionOk');
@@ -2215,6 +2351,7 @@ function editCommitment(id){
     if(freq==='monthly' && end && end<start)return toast('تاريخ النهاية لا يمكن أن يكون قبل البداية');
     c.freq=freq;c.title=title;c.type=catType;c.amount=amount;
     c.start=start;c.end=end;c.day=Number(document.getElementById('eComDay').value)||1;
+    c.dueDate=document.getElementById('eComDueDate').value||'';
     c.note=document.getElementById('eComNote').value.trim();
     persist();closeActionDialog();renderModules();toast('تم التعديل بنجاح');
   };
@@ -2280,7 +2417,8 @@ function renderModules(){
   if(dListEl) dListEl.innerHTML=debtStats.list.length?debtStats.list.map(c=>{
     let paid=state.commitmentPayments.filter(p=>p.commitmentId===c.id).reduce((s,p)=>s+(Number(p.amount)||0),0),
         left=Math.max(0,(Number(c.amount)||0)-paid);
-    return `<div class="listitem" onclick="toggleItemActions(this,event)"><div class="info">${formatCommitmentLabel(c)}<div class="tap-actions"><button class="smallbtn" onclick="markCommitmentPaid('${c.id}')">${left?'تسجيل سداد':'مسدد ✓'}</button><button class="smallbtn" onclick="showCommitmentDetails('${c.id}')">تفاصيل</button><button class="smallbtn" onclick="editCommitment('${c.id}')">تعديل</button><button class="smallbtn danger" onclick="deleteCommitment('${c.id}')">حذف</button></div></div><strong class="${left?'red':'mint'}">${egp(left)}</strong></div>`;
+    const dueBadge = c.dueDate ? `<small style="color:var(--orange);font-size:.66rem">الميعاد المقترح: ${c.dueDate}</small>` : '';
+    return `<div class="listitem" onclick="toggleItemActions(this,event)"><div class="info">${formatCommitmentLabel(c)}${dueBadge}<div class="tap-actions"><button class="smallbtn" onclick="markCommitmentPaid('${c.id}')">${left?'تسجيل سداد':'مسدد ✓'}</button><button class="smallbtn" onclick="showCommitmentDetails('${c.id}')">تفاصيل</button><button class="smallbtn" onclick="editCommitment('${c.id}')">تعديل</button><button class="smallbtn danger" onclick="deleteCommitment('${c.id}')">حذف</button></div></div><strong class="${left?'red':'mint'}">${egp(left)}</strong></div>`;
   }).join(''):'<div class="empty">لا توجد سلف مسجلة.</div>';
 }
 
@@ -2630,6 +2768,7 @@ function openPasteRestoreModal(){
       state = v;
       state.prefs = state.prefs || {lang:'ar',fontSize:'1',theme:'mint',userName:'',defaultAccount:'',privacy:false,homeDecimals:false};
       migrateLegacyDebtsToCommitments();
+  normalizeExistingInstallmentSchedules();
   syncCardInstallmentsToCommitments();
       applyPreferences();
       persist(); renderAccounts(); renderModules(); closeActionDialog();
@@ -2888,7 +3027,8 @@ function editCardOp(id){
     }
     const tx = (state.transactions||[]).find(t=>t.source==='card-purchase:'+o.id);
     if(tx){ tx.title = 'شراء بالبطاقة - ' + newTitle; tx.amount = newAmt; tx.date = newDate; }
-    syncCardInstallmentsToCommitments();
+    normalizeExistingInstallmentSchedules();
+  syncCardInstallmentsToCommitments();
     persist(); closeActionDialog(); renderModules(); toast('تم تعديل العملية وتحديث الأرصدة والأقساط');
   };
   const dlg = document.getElementById('actionDialog');
@@ -2906,9 +3046,29 @@ function deleteCardOp(id){
   });
 }
 
+
+function normalizeExistingInstallmentSchedules(){
+  let changed = false;
+  for(const op of (state.cardOps||[])){
+    if(op.type !== 'installment' || !op.feeMonth || !Array.isArray(op.schedules) || !op.schedules.length) continue;
+    const expectedFirst = addMonthsYM(op.feeMonth, 1);
+    if(op.schedules[0].month !== expectedFirst && !op._scheduleFixed){
+      let [fy, fm] = op.feeMonth.split('-').map(Number);
+      op.schedules.forEach((sc, i) => {
+        let dt = new Date(fy, (fm - 1) + 1 + i, 1);
+        sc.month = dt.getFullYear() + '-' + String(dt.getMonth() + 1).padStart(2, '0');
+      });
+      op._scheduleFixed = true;
+      changed = true;
+    }
+  }
+  if(changed) try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}
+}
+
 /* Initial Boot */
 try{
   migrateLegacyDebtsToCommitments();
+  normalizeExistingInstallmentSchedules();
   syncCardInstallmentsToCommitments();
   migrateCreditAccounting();
   renderAccounts();
