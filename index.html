@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,interactive-widget=resizes-content"><meta name="theme-color" content="#101827"><meta name="description" content="مديرك المالي الشخصي">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,interactive-widget=resizes-content"><meta name="theme-color" content="#101827"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="description" content="مديرك المالي الشخصي">
 <title>المحفظة | Wallet</title>
 <link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png">
 <style>
@@ -734,9 +734,9 @@ details.subfold .subfold-body{padding:10px 12px}
           <div class="set-ico">ℹ</div>
           <div class="set-title">
             <b>المحفظة (Wallet) — حول التطبيق</b>
-            <small id="appVersionDetail">V9.2 · 2026-11-12</small>
+            <small id="appVersionDetail">V9.3 · 2026-11-12</small>
           </div>
-          <span class="tag" id="appVersionTag">V9.2</span>
+          <span class="tag" id="appVersionTag">V9.3</span>
         </div>
         <div class="hint" id="updateStatus">بياناتك المالية تبقى على الجهاز. التحديث يخص ملفات التطبيق فقط.</div>
         <div class="set-actions">
@@ -828,7 +828,7 @@ details.subfold .subfold-body{padding:10px 12px}
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
 <script>
-const APP_VERSION='9.2';
+const APP_VERSION='9.3';
 const APP_BUILD='2026-11-12';
 const KEY='raseed_mobile_v2';
 let pendingWorkbookTransactions=null;
@@ -1178,41 +1178,17 @@ function clearCompactYM(){
   if(ymPickerState.onSelect) ymPickerState.onSelect('');
 }
 
-/* Navigation + Back Button Exit Confirmation */
+/* Clean Screen Navigation (No history trap on startup) */
 let currentScreen='home';
-function go(id,btn,fromPop){
+function go(id,btn){
   document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));
   const target=document.getElementById(id);
   if(target) target.classList.add('active');
   document.querySelectorAll('.nav').forEach(x=>x.classList.toggle('active',x.dataset.page===id));
   if(btn)btn.classList.add('active');
   currentScreen=id;
-  if(!fromPop){
-    try{history.pushState({screen:id},'','#'+id)}catch(e){}
-  }
   window.scrollTo(0,0);
 }
-
-try{
-  history.replaceState({screen:'home'},'','#home');
-  window.addEventListener('popstate',e=>{
-    if(document.querySelector('.modal.show')){
-      closeModal();closeActionDialog();closeImport();
-      try{history.pushState({screen:currentScreen},'','#'+currentScreen)}catch(_){}
-      return;
-    }
-    if(currentScreen!=='home'){
-      go('home',null,true);
-      try{history.pushState({screen:'home'},'','#home')}catch(_){}
-      return;
-    }
-    try{history.pushState({screen:'home'},'','#home')}catch(_){}
-    appConfirm('الخروج من التطبيق','هل تريد الخروج من تطبيق المحفظة؟','نعم، خروج',()=>{
-      window.close();
-      toast('يمكنك إغلاق التطبيق الآن');
-    });
-  });
-}catch(e){}
 
 document.addEventListener('focusin',e=>{
   if(e.target.closest('.modal.show:not(.center-modal)')){
@@ -1676,7 +1652,7 @@ function showAppVersion(){
   if(d) d.textContent='V'+APP_VERSION+' · '+APP_BUILD;
 }
 
-try{if('serviceWorker'in navigator&&location.protocol==='https:')window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}))}catch(e){}
+try{if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'}).then(r=>r.update()).catch(()=>{}))}catch(e){}
 
 /* Salary Module */
 function initModules(){
@@ -2505,7 +2481,7 @@ window.addEventListener('appinstalled', () => {
 });
 async function installPWA(){
   const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-  if(isStandalone) return toast('التطبيق مثبّت بالفعل');
+  if(isStandalone) return toast('التطبيق مثبّت ويعمل كبرنامج مستقل بالفعل ✓');
   if(deferredInstallPrompt){
     deferredInstallPrompt.prompt();
     const choice = await deferredInstallPrompt.userChoice;
@@ -2516,16 +2492,21 @@ async function installPWA(){
     return;
   }
   ensureActionDialog(true);
-  document.getElementById('actionTitle').textContent = 'تثبيت التطبيق كتطبيق مستقل';
+  document.getElementById('actionTitle').textContent = 'تثبيت التطبيق بدون شريط المتصفح';
   document.getElementById('actionBody').innerHTML = `
-    <p class="hint" style="color:#dce8f8;font-size:13px">لفتح التطبيق في شاشة كاملة بدون شريط المتصفح:</p>
-    <div class="rowline"><span>1. افتح الموقع في <b>Google Chrome</b></span></div>
-    <div class="rowline"><span>2. اضغط على القائمة <b>⋮</b> أعلى المتصفح</span></div>
-    <div class="rowline"><span>3. اختر <b>«تثبيت التطبيق» (Install app)</b> وليس «إضافة اختصار»</span></div>
-    <p class="hint" style="margin-top:8px">ملاحظة: متصفح شاومي الافتراضي يضيف اختصار متصفح فقط، بينما Chrome يثبّته كتطبيق مستقل (PWA).</p>
+    <p class="hint" style="color:#dce8f8;font-size:12px">لو الزرار مظهرش نافذة التثبيت التلقائية، نفّذ الخطوة دي حسب متصفحك:</p>
+    <div class="set-card" style="margin-top:8px">
+      <b style="color:var(--mint);font-size:12px">1. في متصفح Edge أو Chrome (الأضمن):</b>
+      <small style="display:block;color:#cbd8ea;font-size:11px;margin-top:4px">افتح الرابط فيه ← اضغط القائمة (⋮ أو ≡) ← اختر <b>«تثبيت التطبيق» (Install app)</b>.</small>
+    </div>
+    <div class="set-card">
+      <b style="color:var(--orange);font-size:12px">2. في متصفح شاومي الافتراضي:</b>
+      <small style="display:block;color:#cbd8ea;font-size:11px;margin-top:4px">اعمل تحديث للصفحة 3 مرات واضغط جوه الشاشة، هتظهرلك رسالة الصيني للتثبيت (安装) دوس موافق.</small>
+    </div>
+    <p class="hint" style="margin-top:6px">تأكد من تفعيل إذن <b>«اختصارات الشاشة الرئيسية»</b> للمتصفح من إعدادات الجهاز.</p>
   `;
   const okBtn = document.getElementById('actionOk');
-  okBtn.textContent = 'فهمت';
+  okBtn.textContent = 'تمام';
   okBtn.className = 'primary';
   okBtn.onclick = closeActionDialog;
   document.getElementById('actionDialog').classList.add('show');
