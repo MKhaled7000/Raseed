@@ -1,4 +1,4 @@
-const CACHE='wallet-v97-20261112';
+const CACHE='wallet-v98-20261112';
 const CORE=['./','./index.html','./manifest.webmanifest','./icon-192.png','./icon-512.png','./version.json'];
 self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(CORE)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>(k.startsWith('raseed-')||k.startsWith('wallet-'))&&k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));

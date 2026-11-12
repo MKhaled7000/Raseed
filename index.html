@@ -764,9 +764,9 @@ window.addEventListener('beforeinstallprompt', function(e) {
           <div class="set-ico">ℹ</div>
           <div class="set-title">
             <b>المحفظة (Wallet) — حول التطبيق</b>
-            <small id="appVersionDetail">V9.7 · 2026-11-12</small>
+            <small id="appVersionDetail">V9.8 · 2026-11-12</small>
           </div>
-          <span class="tag" id="appVersionTag">V9.7</span>
+          <span class="tag" id="appVersionTag">V9.8</span>
         </div>
         <div class="hint" id="updateStatus">بياناتك المالية تبقى على الجهاز. التحديث يخص ملفات التطبيق فقط.</div>
         <div class="set-actions">
@@ -858,7 +858,7 @@ window.addEventListener('beforeinstallprompt', function(e) {
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
 <script>
-const APP_VERSION='9.7';
+const APP_VERSION='9.8';
 const APP_BUILD='2026-11-12';
 const KEY='raseed_mobile_v2';
 let pendingWorkbookTransactions=null;
@@ -1629,6 +1629,7 @@ function restore(e){
       state=v;
       state.prefs=state.prefs||{lang:'ar',fontSize:'1',theme:'mint',userName:'',defaultAccount:'',privacy:false,homeDecimals:false};
       migrateLegacyDebtsToCommitments();
+  syncCardInstallmentsToCommitments();
       applyPreferences();
       persist();renderAccounts();renderModules();toast('تم استرجاع النسخة بنجاح');
     }catch{toast('ملف النسخة غير صالح')}
@@ -1947,7 +1948,10 @@ function addCardOperation(){
   }
   state.cardOps.push(op);
   state.transactions.push({id:'card-purchase-'+op.id,type:'expense',title:'شراء بالبطاقة - '+title,category:'مشتريات بطاقة',amount,date,accountId:null,source:'card-purchase:'+op.id});
-  persist();setv('opTitle','');setv('opAmount','');renderModules();showCreditQuote();closeCardPanels();toast('تم تسجيل العملية وخصمها من الرصيد المتاح للبطاقة');
+  if(type==='installment'){
+    syncCardInstallmentsToCommitments();
+  }
+  persist();setv('opTitle','');setv('opAmount','');renderModules();showCreditQuote();closeCardPanels();toast(type==='installment'?'تم تسجيل التقسيط وإضافة أقساطه إلى الالتزامات الشهرية':'تم تسجيل العملية وخصمها من الرصيد المتاح للبطاقة');
 }
 function opOutstanding(op){
   return op.type==='installment'
@@ -2133,14 +2137,15 @@ function renderModules(){
     const avail=cardCurrentAvailable(c);
     const lim=Number(c.limit)||0;
     const availText=lim>0 ? `المتاح: ${egp(avail)}` : 'اضغط للتعديل وضبط الليمت';
-    return `<div class="listitem" onclick="toggleItemActions(this,event)"><div class="info"><b>${esc(c.name)}</b><small>${availText}</small><div class="tap-actions"><button class="smallbtn" onclick="editCard('${c.id}')">تعديل</button><button class="smallbtn danger" onclick="deleteCard('${c.id}')">حذف</button></div></div><div style="text-align:left"><strong class="${totalCardDebt>0?'orange':'mint'}">${egp(totalCardDebt)}</strong><small style="font-size:10px;color:var(--muted)">مديونية</small></div></div>`;
+    return `<div class="listitem" onclick="toggleItemActions(this,event)"><div class="info"><b>${esc(c.name)}</b><small>${availText}</small><div class="tap-actions"><button class="smallbtn" onclick="showCardStatement('${c.id}')">كشف حساب</button><button class="smallbtn" onclick="editCard('${c.id}')">تعديل</button><button class="smallbtn danger" onclick="deleteCard('${c.id}')">حذف</button></div></div><div style="text-align:left"><strong class="${totalCardDebt>0?'orange':'mint'}">${egp(totalCardDebt)}</strong><small style="font-size:10px;color:var(--muted)">مديونية</small></div></div>`;
   }).join(''):'<div class="empty">لا توجد بطاقات مسجلة.</div>';
 
   e=document.getElementById('cardOpsList');
   if(e)e.innerHTML=state.cardOps.length?state.cardOps.map(o=>{
-    let c=state.cards.find(x=>x.id===o.cardId),remaining=opOutstanding(o),
-        sub=o.type==='swipe'?`مسحوبات · تستحق ${o.dueDate}`:`تقسيط ${o.months} شهر · ${fmt(o.installment)} شهريًا · رسوم ${fmt(o.adminFee||0)} في ${o.feeMonth||'الشهر الأول'}`;
-    return `<div class="listitem"><div class="info"><b>${esc(o.title)} — ${esc(c?.name||'بطاقة')}</b><small>${sub} · ${o.date}</small><small>الأصل ${fmt(o.amount)} · المتبقي ${fmt(remaining)}</small></div><span class="tag">${o.type==='swipe'?'مسحوبات':'تقسيط'}</span></div>`;
+    const c=state.cards.find(x=>x.id===o.cardId);
+    const remaining=opOutstanding(o);
+    const typeLabel=o.type==='installment'?`تقسيط ${o.months}ش`:'مسحوبات';
+    return `<div class="listitem" onclick="toggleItemActions(this,event)"><div class="info"><b>${esc(o.title)} <span class="tag" style="margin-right:4px">${esc(c?.name||'بطاقة')} · ${typeLabel}</span></b><div class="tap-actions"><button class="smallbtn" onclick="showCardOpDetails('${o.id}')">تفاصيل</button><button class="smallbtn" onclick="editCardOp('${o.id}')">تعديل</button><button class="smallbtn danger" onclick="deleteCardOp('${o.id}')">حذف</button></div></div><strong class="${remaining>0?'orange':'mint'}">${egp(remaining)}</strong></div>`;
   }).join(''):'<div class="empty">لا توجد عمليات.</div>';
 
   // Render Monthly Commitments
@@ -2509,6 +2514,7 @@ function openPasteRestoreModal(){
       state = v;
       state.prefs = state.prefs || {lang:'ar',fontSize:'1',theme:'mint',userName:'',defaultAccount:'',privacy:false,homeDecimals:false};
       migrateLegacyDebtsToCommitments();
+  syncCardInstallmentsToCommitments();
       applyPreferences();
       persist(); renderAccounts(); renderModules(); closeActionDialog();
       toast('تم استرجاع النسخة بنجاح');
@@ -2598,9 +2604,196 @@ document.addEventListener('toggle', e => {
   }
 }, true);
 
+
+/* Sync Credit Card Installments into Monthly Commitments automatically */
+function syncCardInstallmentsToCommitments(){
+  let changed = false;
+  const validOpIds = new Set((state.cardOps||[]).filter(o=>o.type==='installment').map(o=>o.id));
+  // Remove orphaned auto-generated commitments if an installment op was deleted
+  const beforeLen = (state.commitments||[]).length;
+  state.commitments = (state.commitments||[]).filter(c => !c.cardOpId || validOpIds.has(c.cardOpId));
+  if(state.commitments.length !== beforeLen) changed = true;
+
+  for(const op of (state.cardOps||[])){
+    if(op.type !== 'installment') continue;
+    const card = (state.cards||[]).find(c=>c.id===op.cardId);
+    const cardName = card ? card.name : 'بطاقة';
+    const comId = 'com-cardop-' + op.id;
+    const firstMonth = (op.schedules && op.schedules.length) ? op.schedules[0].month : (op.feeMonth || op.date.slice(0,7));
+    const lastMonth = (op.schedules && op.schedules.length) ? op.schedules[op.schedules.length-1].month : firstMonth;
+    const instAmt = round2(Number(op.installment)||0);
+    const existing = state.commitments.find(c=>c.id===comId);
+    const noteText = `قسط بطاقة ${cardName} (${op.months} شهر · إجمالي ${fmt(op.total)} EGP)`;
+    if(!existing){
+      state.commitments.push({
+        id: comId,
+        cardOpId: op.id,
+        title: `${op.title} (${cardName})`,
+        type: 'قسط بطاقة',
+        freq: 'monthly',
+        amount: instAmt,
+        start: firstMonth,
+        end: lastMonth,
+        day: card?.payDay || 3,
+        note: noteText
+      });
+      changed = true;
+    } else {
+      if(existing.amount !== instAmt || existing.start !== firstMonth || existing.end !== lastMonth || existing.title !== `${op.title} (${cardName})`){
+        existing.title = `${op.title} (${cardName})`;
+        existing.amount = instAmt;
+        existing.start = firstMonth;
+        existing.end = lastMonth;
+        existing.day = card?.payDay || 3;
+        existing.note = noteText;
+        changed = true;
+      }
+    }
+  }
+  if(changed) try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}
+}
+
+/* Card Statement Modal (mirrors Account Statement) */
+function showCardStatement(cardId){
+  const c = (state.cards||[]).find(x=>x.id===cardId);
+  if(!c) return;
+  const ops = (state.cardOps||[]).filter(o=>o.cardId===cardId).map(o=>({
+    id: o.id,
+    type: 'expense',
+    title: o.title,
+    category: o.type==='installment' ? `تقسيط ${o.months} شهر` : 'مسحوبات فيزا',
+    amount: Number(o.total || o.amount) || 0,
+    date: o.date,
+    isCardOp: true
+  }));
+  const pays = (state.cardPayments||[]).filter(p=>p.cardId===cardId).map(p=>({
+    id: p.id,
+    type: 'income',
+    title: 'سداد بطاقة',
+    category: p.accountId ? ('من ' + (state.accounts.find(a=>a.id===p.accountId)?.name || 'حساب')) : 'سداد',
+    amount: Number(p.amount) || 0,
+    date: p.date,
+    isCardPay: true
+  }));
+  const items = [...ops, ...pays].sort((a,b)=>String(b.date).localeCompare(String(a.date)));
+  const lim = Number(c.limit) || 0;
+  const debt = cardTotalOutstanding(c);
+  const avail = cardCurrentAvailable(c);
+
+  ensureActionDialog(true);
+  document.getElementById('actionTitle').textContent = 'كشف حساب بطاقة: ' + c.name;
+  document.getElementById('actionBody').innerHTML = `
+    <div class="rowline"><span>الحد الائتماني (الليميت)</span><b>${lim > 0 ? egp(lim) : 'غير محدد'}</b></div>
+    <div class="rowline"><span>إجمالي المديونية</span><b class="orange">${egp(debt)}</b></div>
+    <div class="rowline"><span>الرصيد المتاح حاليًا</span><b class="mint">${avail !== null ? egp(avail) : '—'}</b></div>
+    <div style="max-height:48vh;overflow:auto;margin-top:10px;border-top:1px solid #25354b;padding-top:6px">
+      ${items.length ? items.map(it => {
+        const isPay = it.type === 'income';
+        return `<div class="activity" style="cursor:default">
+          <div class="actico">${isPay ? '+' : '−'}</div>
+          <div class="acttxt"><b>${esc(it.title)}</b><small>${esc(it.category)} · ${it.date}</small></div>
+          <div class="actamt ${isPay ? 'mint' : 'red'}">${isPay ? '+' : '−'}${fmt(it.amount)} EGP</div>
+        </div>`;
+      }).join('') : '<div class="empty">لا توجد عمليات أو سدادات مسجلة على هذه البطاقة</div>'}
+    </div>
+  `;
+  const okBtn = document.getElementById('actionOk');
+  okBtn.textContent = 'إغلاق';
+  okBtn.className = 'primary';
+  okBtn.onclick = closeActionDialog;
+  document.getElementById('actionDialog').classList.add('show');
+}
+
+/* Card Operation Details, Edit, Delete */
+function showCardOpDetails(id){
+  const o = (state.cardOps||[]).find(x=>x.id===id);
+  if(!o) return;
+  const c = (state.cards||[]).find(x=>x.id===o.cardId);
+  const rem = opOutstanding(o);
+  ensureActionDialog(true);
+  document.getElementById('actionTitle').textContent = 'تفاصيل عملية البطاقة';
+  let rows = `
+    <div class="rowline"><span>البيان</span><b>${esc(o.title)}</b></div>
+    <div class="rowline"><span>البطاقة</span><b>${esc(c?.name || 'بطاقة')}</b></div>
+    <div class="rowline"><span>النوع</span><b>${o.type==='installment' ? 'شراء بالتقسيط' : 'مسحوبات فيزا'}</b></div>
+    <div class="rowline"><span>التاريخ</span><b>${o.date}</b></div>
+    <div class="rowline"><span>أصل العملية</span><b>${egp(o.amount)}</b></div>
+  `;
+  if(o.type === 'installment'){
+    const firstM = o.schedules?.[0]?.month || o.feeMonth || '';
+    const lastM = o.schedules?.[o.schedules.length-1]?.month || firstM;
+    rows += `
+      <div class="rowline"><span>مدة التقسيط</span><b>${o.months} شهر</b></div>
+      <div class="rowline"><span>القسط الشهري</span><b>${egp(o.installment)}</b></div>
+      <div class="rowline"><span>إجمالي الفائدة</span><b>${egp(o.interest || 0)}</b></div>
+      <div class="rowline"><span>الرسوم الإدارية (${formatYMArabic(o.feeMonth)})</span><b>${egp(o.adminFee || 0)}</b></div>
+      <div class="rowline"><span>فترة الأقساط</span><b>${formatYMArabic(firstM)} ← ${formatYMArabic(lastM)}</b></div>
+      <div class="rowline"><span>الإجمالي بالفوائد والرسوم</span><b>${egp(o.total)}</b></div>
+    `;
+  } else {
+    rows += `<div class="rowline"><span>تاريخ الاستحقاق</span><b>${o.dueDate || '—'}</b></div>`;
+  }
+  rows += `<div class="rowline"><span>المتبقي للسداد</span><b class="${rem>0?'orange':'mint'}">${egp(rem)}</b></div>`;
+  document.getElementById('actionBody').innerHTML = rows;
+  const okBtn = document.getElementById('actionOk');
+  okBtn.textContent = 'إغلاق';
+  okBtn.className = 'primary';
+  okBtn.onclick = closeActionDialog;
+  document.getElementById('actionDialog').classList.add('show');
+}
+
+function editCardOp(id){
+  const o = (state.cardOps||[]).find(x=>x.id===id);
+  if(!o) return;
+  ensureActionDialog(false);
+  document.getElementById('actionTitle').textContent = 'تعديل عملية البطاقة';
+  document.getElementById('actionBody').innerHTML = `
+    <div class="field"><label>وصف العملية</label><input id="eOpTitle" value="${esc(o.title)}"></div>
+    <div class="field"><label>تاريخ العملية</label><input id="eOpDate" type="date" value="${o.date}"></div>
+    <div class="field"><label>قيمة العملية (الأصل)</label><input id="eOpAmount" type="number" step="0.01" value="${o.amount}"></div>
+    ${o.type==='installment' ? `<div class="field"><label>القسط الشهري</label><input id="eOpInst" type="number" step="0.01" value="${o.installment}"></div>` : ''}
+  `;
+  const okBtn = document.getElementById('actionOk');
+  okBtn.textContent = 'حفظ التعديلات';
+  okBtn.className = 'primary';
+  okBtn.onclick = () => {
+    const newTitle = document.getElementById('eOpTitle').value.trim();
+    const newDate = document.getElementById('eOpDate').value;
+    const newAmt = Number(document.getElementById('eOpAmount').value) || 0;
+    if(!newTitle || !newDate || newAmt <= 0) return toast('أكمل البيانات بشكل صحيح');
+    o.title = newTitle;
+    o.date = newDate;
+    o.amount = newAmt;
+    if(o.type === 'installment'){
+      const newInst = Number(document.getElementById('eOpInst').value) || o.installment;
+      o.installment = newInst;
+      (o.schedules||[]).forEach(sc => { sc.amount = newInst; sc.principalAndInterest = newInst; });
+      o.total = round2(newInst * (o.months || 1) + (Number(o.adminFee)||0));
+    }
+    const tx = (state.transactions||[]).find(t=>t.source==='card-purchase:'+o.id);
+    if(tx){ tx.title = 'شراء بالبطاقة - ' + newTitle; tx.amount = newAmt; tx.date = newDate; }
+    syncCardInstallmentsToCommitments();
+    persist(); closeActionDialog(); renderModules(); toast('تم تعديل العملية وتحديث الأرصدة والأقساط');
+  };
+  const dlg = document.getElementById('actionDialog');
+  dlg.classList.add('show'); dlg.scrollTop = 0;
+}
+
+function deleteCardOp(id){
+  const o = (state.cardOps||[]).find(x=>x.id===id);
+  if(!o) return;
+  appConfirm('حذف العملية', 'هل تريد حذف عملية «' + o.title + '»؟ سيتم إعادة الرصيد المتاح للبطاقة وحذف أقساطها.', 'نعم، احذف', () => {
+    state.cardOps = (state.cardOps||[]).filter(x=>x.id!==id);
+    state.transactions = (state.transactions||[]).filter(t=>t.source!=='card-purchase:'+id);
+    state.commitments = (state.commitments||[]).filter(c=>c.cardOpId!==id);
+    persist(); renderModules(); toast('تم حذف العملية وتحديث البطاقة والالتزامات');
+  });
+}
+
 /* Initial Boot */
 try{
   migrateLegacyDebtsToCommitments();
+  syncCardInstallmentsToCommitments();
   migrateCreditAccounting();
   renderAccounts();
   toggleInstallmentFields();
