@@ -1689,3 +1689,100 @@ input, textarea, [contenteditable="true"] {
   object-fit: contain;
   border-radius: 14px;
 }
+
+
+/* =========================================================
+   X-Wallet V13.3 Refinements
+   ========================================================= */
+
+/* 3 & 4: Ensure #quickModal (z-index: 65) opens ABOVE #catDetailModal & #statementFullModal (z-index: 45) */
+#catDetailModal,
+#statementFullModal {
+  z-index: 45 !important;
+}
+#quickModal {
+  z-index: 65 !important;
+}
+#accountModal,
+#appDialogModal,
+#updateAvailableModal {
+  z-index: 80 !important;
+}
+#ymModal,
+#customSelectModal,
+#exitConfirmModal {
+  z-index: 110 !important;
+}
+
+/* 1: Larger, More Comfortable Bottom Dock in Quick Entry (#qmBottomDock) */
+#qmBottomDock.qm-bottom-dock {
+  height: 44dvh !important;
+  min-height: 295px !important;
+  max-height: 365px !important;
+  flex-shrink: 0 !important;
+}
+.qm-bottom-dock .mm-cat-item {
+  padding: 13px 12px !important;
+  font-size: .82rem !important;
+}
+.qm-bottom-dock .qg-item {
+  padding: 12px 6px !important;
+  font-size: .78rem !important;
+}
+
+/* 9: More Compact Registered Accounts & Registered Cards Lists */
+#accountsList,
+#cardsList {
+  padding: 4px 10px !important;
+}
+#accountsList .listitem,
+#cardsList .listitem {
+  padding: 8px 4px !important;
+  gap: 6px !important;
+}
+#accountsList .listitem b,
+#cardsList .listitem b {
+  font-size: .78rem !important;
+}
+#accountsList .listitem small,
+#cardsList .listitem small {
+  font-size: .64rem !important;
+}
+#accountsList .listitem strong,
+#cardsList .listitem strong {
+  font-size: .8rem !important;
+}
+#accountsList .listitem .tap-actions,
+#cardsList .listitem .tap-actions,
+#cardsList .listitem .card-detail-strip {
+  margin-top: 6px !important;
+  padding: 6px 6px !important;
+}
+#accountsList .listitem .tap-actions .smallbtn,
+#cardsList .listitem .tap-actions .smallbtn {
+  height: 31px !important;
+  font-size: .72rem !important;
+}
+
+/* 6: Organized Backup Sections */
+.backup-subbox {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  padding: 10px 11px;
+  margin-bottom: 10px;
+}
+.backup-subbox:last-child {
+  margin-bottom: 0;
+}
+.backup-subbox-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: .76rem;
+  font-weight: 700;
+  color: var(--mint);
+  margin-bottom: 8px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid var(--line);
+}

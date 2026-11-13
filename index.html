@@ -302,23 +302,32 @@
       </div>
     </details>
 
-    <div class="sec-title-card">
-      <h2>مستحقات الشهر</h2>
-      <div class="ym-stepper" dir="ltr">
-        <button type="button" class="step-arrow" onclick="shiftActiveMonth(-1)">‹</button>
-        <button type="button" class="step-label" onclick="openHomePeriodPicker()" id="comMonthLabel">نوفمبر 2026</button>
-        <button type="button" class="step-arrow" onclick="shiftActiveMonth(1)">›</button>
-      </div>
-    </div>
-    <div class="panel" style="padding:0;overflow:hidden" id="commitmentsList"></div>
+    <!-- 8. قائمة مستحقات الشهر قابلة للطي ومغلقة افتراضياً -->
+    <details class="fold" id="monthlyDuesFold">
+      <summary>
+        <span class="ic-txt"><i>📅</i><span>مستحقات الشهر</span></span>
+        <div style="display:flex;align-items:center;gap:8px" onclick="event.stopPropagation()">
+          <div class="ym-stepper" dir="ltr">
+            <button type="button" class="step-arrow" onclick="shiftActiveMonth(-1);document.getElementById('monthlyDuesFold').open=true">‹</button>
+            <button type="button" class="step-label" onclick="openHomePeriodPicker()" id="comMonthLabel">نوفمبر 2026</button>
+            <button type="button" class="step-arrow" onclick="shiftActiveMonth(1);document.getElementById('monthlyDuesFold').open=true">›</button>
+          </div>
+          <span style="color:var(--mint);cursor:pointer" onclick="const d=document.getElementById('monthlyDuesFold');d.open=!d.open">▼</span>
+        </div>
+      </summary>
+      <div class="fold-body" style="padding:0;overflow:hidden" id="commitmentsList"></div>
+    </details>
 
-    <!-- 6.1 & 6.2 جميع المستحقات (مع عمود المبلغ ومسمى شهري) -->
-    <div class="sec-title-card">
-      <h2>جميع المستحقات</h2>
-    </div>
-    <div class="panel" style="padding:0;overflow:hidden">
-      <div class="com-table-wrap" id="allCommitmentsTableWrap"></div>
-    </div>
+    <!-- 8. قائمة جميع المستحقات قابلة للطي ومغلقة افتراضياً -->
+    <details class="fold" id="allDuesFold">
+      <summary>
+        <span class="ic-txt"><i>📋</i><span>جميع المستحقات</span></span>
+        <span>▼</span>
+      </summary>
+      <div class="fold-body" style="padding:0;overflow:hidden">
+        <div class="com-table-wrap" id="allCommitmentsTableWrap"></div>
+      </div>
+    </details>
   </div>
 
   <!-- 7. التقرير المالي السنوي (إضافة بند + قائمة منسدلة لتعديل البنود المضافة) -->
@@ -391,10 +400,10 @@
         <small>تطوير: م/ محمد خالد</small>
       </div>
     </div>
-    <span class="tag" id="devCardVerBadge" style="border-color:var(--mint);color:var(--mint);padding:4px 10px;font-size:.74rem">V13.2</span>
+    <span class="tag" id="devCardVerBadge" style="border-color:var(--mint);color:var(--mint);padding:4px 10px;font-size:.74rem">V13.3</span>
   </div>
 
-  <!-- 1. إعدادات عامة (10 ألوان: 5 فوق و 5 تحت) -->
+  <!-- 1. إعدادات عامة (تشمل إخفاء الأرقام والكسور + 10 ألوان) -->
   <details class="fold">
     <summary><span class="ic-txt"><i>⚙</i><span data-i18n="set_general">إعدادات عامة</span></span><span>▼</span></summary>
     <div class="fold-body">
@@ -402,6 +411,13 @@
         <div class="c-row"><label data-i18n="lbl_lang">اللغة / Language</label><select id="prefLang"><option value="ar">العربية</option><option value="en">English</option></select></div>
         <div class="c-row"><label data-i18n="lbl_fontsize">حجم الخط</label><select id="prefFontSize"><option value="0.86">صغير جدًا</option><option value="0.93">صغير</option><option value="1">متوسط</option><option value="1.08">كبير</option><option value="1.15">كبير جدًا</option></select></div>
         <div class="c-row"><label data-i18n="lbl_def_acc">الحساب الافتراضي</label><select id="prefDefaultAcc"></select></div>
+        <div class="c-row">
+          <label>إخفاء الأرقام والكسور</label>
+          <div class="c-row-btns">
+            <button type="button" class="icon-pill dec-toggle-btn" onclick="toggleDecimalsMode()">.00 الكسور</button>
+            <button type="button" class="icon-pill privacy-toggle-btn" onclick="togglePrivacyMode()">👁 الإخفاء</button>
+          </div>
+        </div>
         <div class="c-row">
           <label>وضع الخلفية</label>
           <select id="prefBgMode" onchange="previewBgMode(this.value)">
@@ -437,13 +453,6 @@
     <summary><span class="ic-txt"><i>🔒</i><span>الخصوصية والأمان</span></span><span>▼</span></summary>
     <div class="fold-body">
       <div class="c-list">
-        <div class="c-row">
-          <label>إخفاء الأرقام والكسور</label>
-          <div class="c-row-btns">
-            <button type="button" class="icon-pill dec-toggle-btn" onclick="toggleDecimalsMode()">.00 الكسور</button>
-            <button type="button" class="icon-pill privacy-toggle-btn" onclick="togglePrivacyMode()">👁 الإخفاء</button>
-          </div>
-        </div>
         <div class="c-row">
           <label>كلمة المرور (PIN)</label>
           <input id="secPinInput" type="password" inputmode="numeric" maxlength="8" placeholder="اختياري (احتياطي للبصمة)">
@@ -540,54 +549,64 @@
     </div>
   </details>
 
-  <!-- 5. النسخ الاحتياطي ومزامنة حساب جوجل درايف (8.3) -->
+  <!-- 5 & 6. النسخ الاحتياطي المنظم ومزامنة Google Drive التلقائية البسيطة -->
   <details class="fold">
     <summary><span class="ic-txt"><i>💾</i><span data-i18n="set_backup">النسخ الاحتياطي</span></span><span>▼</span></summary>
     <div class="fold-body">
-      <div class="c-list">
-        <div class="c-row"><span class="c-lbl">حالة التخزين الآمن</span><span class="tag" id="storageSafetyBadge" style="color:var(--mint);border-color:var(--mint)">IndexedDB + محلي نشط ✓</span></div>
-        <div class="c-row">
-          <label>حساب الجيميل (Drive)</label>
-          <div class="c-row-btns" style="width:62%">
-            <input id="prefDriveEmail" type="email" placeholder="example@gmail.com" style="flex:1;height:32px" onchange="saveDriveAccountConfig()">
+
+      <!-- القسم 1: مزامنة Google Drive والنسخ التلقائي البسيط -->
+      <div class="backup-subbox">
+        <div class="backup-subbox-title">
+          <span>☁ مزامنة Google Drive والنسخ التلقائي</span>
+          <span class="tag" id="driveSyncStatusBadge" style="color:var(--mint);border-color:var(--mint)">تخزين آمن نشط ✓</span>
+        </div>
+        <div class="c-list">
+          <div class="c-row">
+            <label>الجدول التلقائي</label>
+            <select id="prefAutoDriveFreq" onchange="saveAutoDriveBackupFreq(this.value)">
+              <option value="off">معطل</option>
+              <option value="daily">يومي</option>
+              <option value="weekly">أسبوعي</option>
+              <option value="monthly">شهري</option>
+            </select>
+          </div>
+          <div class="c-row">
+            <label>حفظ في Google Drive</label>
+            <button type="button" class="primary" style="width:62%;padding:8px 10px;font-size:.76rem;background:var(--blue);color:#fff" onclick="quickShareBackupToDrive()">☁ حفظ في Google Drive بضغطة واحدة</button>
           </div>
         </div>
-        <div class="c-row">
-          <label>نسخ تلقائي لجوجل درايف</label>
-          <select id="prefAutoDriveFreq" onchange="saveAutoDriveBackupFreq(this.value)">
-            <option value="off">معطل</option>
-            <option value="daily">يومي</option>
-            <option value="weekly">أسبوعي</option>
-            <option value="monthly">شهري</option>
-          </select>
-        </div>
-        <div class="c-row">
-          <span class="c-lbl">مزامنة Google Drive</span>
-          <div class="c-row-btns">
-            <button type="button" class="smallbtn" onclick="openDriveCloudSetupModal()">ربط سحابي ⚙</button>
-            <button type="button" class="smallbtn" style="border-color:var(--blue);color:var(--blue)" onclick="exportBackupToGoogleDrive(false)">رفع إلى Drive الآن ☁</button>
-          </div>
-        </div>
-        <div class="c-row"><span class="c-lbl">تصدير نسخة (JSON)</span><div class="c-row-btns"><small id="lastBackupLabel" style="color:var(--muted);font-size:.66rem;align-self:center"></small><button type="button" class="smallbtn" style="border-color:var(--mint);color:var(--mint)" onclick="backup()">تصدير</button></div></div>
-        <div class="c-row">
-          <span class="c-lbl">استعادة نسخة</span>
-          <div class="c-row-btns">
-            <input id="restore" class="file-hidden" type="file" onchange="restore(event)">
-            <button type="button" class="smallbtn" onclick="openFilePicker('restore')">ملف</button>
-            <button type="button" class="smallbtn" onclick="openPasteRestoreModal()">لصق نص</button>
-          </div>
-        </div>
-        <div class="c-row">
-          <span class="c-lbl">Money Manager</span>
-          <div class="c-row-btns">
-            <input id="mmbakFile" class="file-hidden" type="file" accept=".mmbak,.db,.sqlite" onchange="readMmbak(event)">
-            <button type="button" class="smallbtn" style="border-color:var(--blue);color:var(--blue)" onclick="openFilePicker('mmbakFile')">استيراد .mmbak</button>
-          </div>
-        </div>
-        <div class="c-row"><label>فلتر MM من</label><input id="mmFrom" type="date" value="2021-01-01"></div>
-        <div class="c-row"><label>فلتر MM إلى</label><input id="mmTo" type="date" value=""></div>
+        <div id="autoSnapshotsBox" style="margin-top:8px"></div>
       </div>
-      <div id="mmbakPreview" style="margin-top:8px"></div>
+
+      <!-- القسم 2: تصدير واستعادة ملف النسخة الاحتياطية (JSON) -->
+      <div class="backup-subbox">
+        <div class="backup-subbox-title">
+          <span>📁 النسخ اليدوي والاستعادة (JSON)</span>
+          <small id="lastBackupLabel" style="color:var(--muted);font-weight:400;font-size:.66rem"></small>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+          <button type="button" class="smallbtn" style="height:36px;border-color:var(--mint);color:var(--mint)" onclick="backup()">⬇ تصدير ملف</button>
+          <button type="button" class="smallbtn" style="height:36px" onclick="openFilePicker('restore')">⬆ استعادة ملف</button>
+          <button type="button" class="smallbtn" style="height:36px" onclick="openPasteRestoreModal()">📋 لصق نص</button>
+        </div>
+        <input id="restore" class="file-hidden" type="file" onchange="restore(event)">
+      </div>
+
+      <!-- القسم 3: استيراد قاعدة بيانات Money Manager (.mmbak) -->
+      <div class="backup-subbox">
+        <div class="backup-subbox-title">
+          <span>🔄 استيراد بيانات Money Manager</span>
+          <span class="tag">EGP / USD / CNY</span>
+        </div>
+        <div class="c-list">
+          <div class="c-row"><label>من تاريخ</label><input id="mmFrom" type="date" value="2021-01-01"></div>
+          <div class="c-row"><label>إلى تاريخ</label><input id="mmTo" type="date" value=""></div>
+        </div>
+        <input id="mmbakFile" class="file-hidden" type="file" accept=".mmbak,.db,.sqlite" onchange="readMmbak(event)">
+        <button type="button" class="secondary" style="width:100%;margin-top:8px;border-color:var(--blue);color:var(--blue);padding:9px" onclick="openFilePicker('mmbakFile')">📂 اختيار ملف .mmbak للاستيراد</button>
+        <div id="mmbakPreview" style="margin-top:8px"></div>
+      </div>
+
     </div>
   </details>
 
@@ -596,7 +615,7 @@
     <summary><span class="ic-txt"><i>⟳</i><span data-i18n="set_updates">التحديثات</span></span><span>▼</span></summary>
     <div class="fold-body">
       <div class="c-list">
-        <div class="c-row"><span class="c-lbl">الإصدار الحالي</span><span class="tag" id="appVersionTag">V13.2</span></div>
+        <div class="c-row"><span class="c-lbl">الإصدار الحالي</span><span class="tag" id="appVersionTag">V13.3</span></div>
         <div class="c-row">
           <span class="c-lbl">التحديثات</span>
           <div class="c-row-btns">

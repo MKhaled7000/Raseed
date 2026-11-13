@@ -1,4 +1,4 @@
-const APP_VERSION='13.2';
+const APP_VERSION='13.3';
 const APP_BUILD='2026-11-13';
 const KEY='raseed_mobile_v2';
 
@@ -1609,7 +1609,7 @@ function renderCategoryDrillDownContent(){
     const isSel = (subFilter === sub);
     return `
       <tr class="${isSel?'selected-sub':''}" onclick="selectSubcategoryInDrillDown(${JSON.stringify(sub).replace(/"/g,'&quot;')})">
-        <td><b>${esc(sub)}</b> ${isSel?'<span class="tag" style="margin-left:4px;color:var(--mint)">محدد</span>':''}</td>
+        <td><b>${esc(sub)}</b></td>
         <td>${pct}%</td>
         <td class="num ${isInc?'blue':'red'}"><b>${maskable(fmtNum(amt))}</b></td>
       </tr>
@@ -4080,17 +4080,131 @@ function clearYMCell(){
 /* =========================================================
    #8.3 GOOGLE DRIVE CLOUD SYNC (Gmail Account + Direct Cloud Upload via Google Script / OAuth2 / Android Share)
    ========================================================= */
-function saveDriveAccountConfig(){
-  state.prefs = state.prefs || {};
-  state.prefs.driveEmail = val('prefDriveEmail').trim();
-  persist();
-}
-
 function saveAutoDriveBackupFreq(freq){
   state.prefs = state.prefs || {};
   state.prefs.autoDriveFreq = freq || 'off';
+  if(freq !== 'off'){
+    createAutomaticLocalSnapshot();
+  }
   persist();
-  toast(freq === 'off' ? 'تم إيقاف النسخ التلقائي لجوجل درايف' : 'تم تفعيل جدول النسخ التلقائي لجوجل درايف ✓');
+  renderAutoSnapshotsList();
+  toast(freq === 'off' ? 'تم إيقاف النسخ التلقائي' : 'تم تفعيل النسخ التلقائي وحفظ نسخة فورية ✓');
+}
+
+function createAutomaticLocalSnapshot(){
+  state.autoSnapshots = Array.isArray(state.autoSnapshots) ? state.autoSnapshots : [];
+  const dStr = today();
+  const snapCopy = JSON.parse(JSON.stringify(state));
+  delete snapCopy.autoSnapshots;
+  const existingIdx = state.autoSnapshots.findIndex(s => s.date === dStr);
+  const entry = {
+    id: 'snap-' + Date.now(),
+    date: dStr,
+    txCount: (state.transactions||[]).length,
+    payload: JSON.stringify(snapCopy)
+  };
+  if(existingIdx !== -1) state.autoSnapshots[existingIdx] = entry;
+  else state.autoSnapshots.unshift(entry);
+  state.autoSnapshots = state.autoSnapshots.slice(0, 5);
+  state.prefs.lastDriveBackup = dStr;
+}
+
+function renderAutoSnapshotsList(){
+  const box = document.getElementById('autoSnapshotsBox');
+  if(!box) return;
+  const snaps = state.autoSnapshots || [];
+  if(!snaps.length){
+    box.innerHTML = '<div class="hint" style="margin:4px 0 0;font-size:.68rem">عند تفعيل الجدول التلقائي، يحفظ التطبيق نسخاً دورية تلقائياً هنا ويمكنك رفعها إلى Google Drive بضغطة واحدة.</div>';
+    return;
+  }
+  box.innerHTML = `<div style="font-size:.68rem;color:var(--muted);margin:6px 0 4px">النسخ التلقائية المحفوظة (${snaps.length}):</div>` +
+    snaps.map((s, idx)=>`
+      <div style="display:flex;align-items:center;justify-content:space-between;background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:6px 9px;margin-top:4px;font-size:.72rem">
+        <span>📅 نسخة ${esc(s.date)} (${s.txCount||0} معاملة)</span>
+        <div style="display:flex;gap:6px">
+          <button type="button" class="smallbtn" style="padding:3px 8px;border-color:var(--blue);color:var(--blue)" onclick="shareSnapshotToDrive(${idx})">☁ Drive</button>
+          <button type="button" class="smallbtn" style="padding:3px 8px;border-color:var(--mint);color:var(--mint)" onclick="restoreFromAutoSnapshot(${idx})">استعادة</button>
+        </div>
+      </div>
+    `).join('');
+}
+
+function restoreFromAutoSnapshot(idx){
+  const s = (state.autoSnapshots||[])[idx];
+  if(!s || !s.payload) return;
+  showAppConfirm('استعادة نسخة تلقائية', `هل تريد استعادة النسخة المحفوظة بتاريخ ${s.date}؟`, ()=>{
+    try{
+      const prevSnaps = state.autoSnapshots;
+      const parsed = JSON.parse(s.payload);
+      state = parsed;
+      state.autoSnapshots = prevSnaps;
+      syncCategoryTrees();
+      applyPreferences();
+      persist();
+      toast('تمت استعادة النسخة التلقائية بنجاح ✓');
+    }catch(_){ toast('تعذر استعادة النسخة'); }
+  }, false);
+}
+
+async function shareSnapshotToDrive(idx){
+  const s = (state.autoSnapshots||[])[idx];
+  if(!s || !s.payload) return;
+  await triggerEasyDriveSave(s.payload, `X-Wallet-Backup-${s.date}.json`);
+}
+
+async function quickShareBackupToDrive(){
+  createAutomaticLocalSnapshot();
+  const snapCopy = JSON.parse(JSON.stringify(state));
+  delete snapCopy.autoSnapshots;
+  const jsonStr = JSON.stringify(snapCopy, null, 2);
+  state.prefs.lastBackupDate = today();
+  state.prefs.lastDriveBackup = today();
+  persist();
+  renderAutoSnapshotsList();
+  await triggerEasyDriveSave(jsonStr, `X-Wallet-Backup-${today()}.json`);
+}
+
+async function triggerEasyDriveSave(jsonStr, fileName){
+  const blob = new Blob([jsonStr], {type: 'application/json'});
+  // 1. Mobile Native Share Sheet (On Android/iOS opens "Save to Drive / حفظ في Drive" directly with 1 tap!)
+  if(navigator.canShare && navigator.share){
+    try{
+      const fileObj = new File([blob], fileName, {type: 'application/json'});
+      if(navigator.canShare({files: [fileObj]})){
+        await navigator.share({
+          title: fileName,
+          text: 'اختر «Google Drive» لحفظ النسخة الاحتياطية في حسابك السحابي',
+          files: [fileObj]
+        });
+        toast('تم إرسال النسخة إلى Google Drive ✓');
+        return;
+      }
+    }catch(err){
+      if(err && err.name === 'AbortError') return;
+    }
+  }
+  // 2. Desktop / Chrome File System Save Picker (Lets user pick Google Drive folder or local folder)
+  if(window.showSaveFilePicker){
+    try{
+      const handle = await window.showSaveFilePicker({
+        suggestedName: fileName,
+        types: [{ description: 'JSON Backup', accept: {'application/json': ['.json']} }]
+      });
+      const writable = await handle.createWritable();
+      await writable.write(blob);
+      await writable.close();
+      toast('تم حفظ النسخة بنجاح ✓');
+      return;
+    }catch(err){
+      if(err && err.name === 'AbortError') return;
+    }
+  }
+  // 3. Fallback direct download
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = fileName;
+  a.click();
+  toast('تم حفظ ملف النسخة الاحتياطية ✓');
 }
 
 function openDriveCloudSetupModal(){
@@ -4218,6 +4332,7 @@ async function exportBackupToGoogleDrive(silentAuto){
 }
 
 function checkScheduledDriveBackupOnBoot(){
+  renderAutoSnapshotsList();
   const freq = state.prefs?.autoDriveFreq || 'off';
   if(freq === 'off') return;
   const last = state.prefs?.lastDriveBackup || '';
@@ -4233,9 +4348,14 @@ function checkScheduledDriveBackupOnBoot(){
     else if(freq === 'monthly' && diffDays >= 30) due = true;
   }
   if(due && (state.transactions?.length || state.accounts?.length)){
-    if(state.prefs?.driveWebhookUrl || state.prefs?.driveAccessToken){
-      exportBackupToGoogleDrive(true);
-    }
+    createAutomaticLocalSnapshot();
+    persist();
+    renderAutoSnapshotsList();
+    setTimeout(()=>{
+      showAppConfirm('تم حفظ النسخة الدورية التلقائية ✓', 'تم أخذ نسخة احتياطية تلقائية اليوم داخل التطبيق. هل تود رفع نسخة منها إلى Google Drive الآن بضغطة واحدة؟', ()=>{
+        quickShareBackupToDrive();
+      }, false);
+    }, 900);
   }
 }
 
