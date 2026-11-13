@@ -82,14 +82,13 @@ button{cursor:pointer}
 
 .tx-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 13px;border-bottom:1px solid var(--line);cursor:pointer}
 .tx-row:last-child{border-bottom:0}
-.tx-amt-right{font-size:.86rem;font-weight:900;direction:ltr;white-space:nowrap;text-align:right;flex-shrink:0;min-width:88px}
-.tx-left-info{flex:1;min-width:0;display:flex;align-items:center;justify-content:space-between;gap:8px}
-.tx-cat-box{min-width:74px;max-width:120px}
-.tx-cat-box b{display:block;font-size:.76rem;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.tx-cat-box small{display:block;font-size:.63rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.tx-memo-box{flex:1;min-width:0;text-align:left}
-.tx-memo-box span{display:block;font-size:.75rem;color:var(--text-sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.tx-memo-box small{display:block;font-size:.63rem;color:var(--muted)}
+.tx-amt-right{font-size:.86rem;font-weight:900;direction:ltr;white-space:nowrap;text-align:right;flex-shrink:0;min-width:86px}
+.tx-mid-acc{flex:1;min-width:0;text-align:center}
+.tx-mid-acc span{display:block;font-size:.74rem;color:var(--text-sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tx-mid-acc small{display:block;font-size:.66rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tx-cat-left{min-width:95px;max-width:145px;text-align:left;flex-shrink:0}
+.tx-cat-left b{display:block;font-size:.78rem;font-weight:800;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tx-cat-left small{display:block;font-size:.67rem;font-weight:400;color:var(--muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
 .tap-actions{display:none;padding:8px 13px;background:var(--surface);border-bottom:1px solid var(--line);gap:6px;flex-wrap:wrap}
 .tx-wrap.expanded .tap-actions,.listitem.expanded .tap-actions{display:flex}
@@ -159,7 +158,7 @@ button{cursor:pointer}
 .modal{display:none;position:fixed;inset:0;background:var(--modal-bg);z-index:40;align-items:flex-end;justify-content:center;padding:0}
 .modal.show{display:flex}
 .modal.center-modal{align-items:center;padding:16px}
-.sheet{width:100%;max-width:520px;background:var(--panel);border-top:1px solid var(--line2);border-radius:24px 24px 0 0;padding:14px 14px calc(14px + env(safe-area-inset-bottom));box-shadow:0 -12px 40px #000a;max-height:94vh;display:flex;flex-direction:column}
+.sheet{width:100%;max-width:520px;background:var(--panel);border-top:1px solid var(--line2);border-radius:24px 24px 0 0;padding:14px 14px calc(14px + env(safe-area-inset-bottom));box-shadow:0 -12px 40px #000a;max-height:92vh;overflow-y:auto;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column}
 .modal.center-modal .sheet{max-width:420px;border-radius:22px;border:1px solid var(--line2);padding:16px}
 .sheet h3{margin:0 0 10px;font-size:.96rem;display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
 
@@ -174,15 +173,15 @@ button{cursor:pointer}
 .mm-tab.active.trn{border-color:var(--mint);color:var(--mint);background:#43d6b218}
 
 /* Lower-Half Thumb-Zone Picker Container (Fills bottom half down to action bar) */
-.qm-bottom-dock{margin-top:8px;background:var(--surface);border:1px solid var(--line2);border-radius:16px;padding:8px;min-height:230px;max-height:42vh;display:flex;flex-direction:column;overflow:hidden}
+.qm-bottom-dock{margin-top:8px;background:var(--surface);border:1px solid var(--line2);border-radius:16px;padding:8px;height:245px;flex-shrink:0;display:flex;flex-direction:column;overflow:hidden}
 .quick-grid-head{display:flex;justify-content:space-between;align-items:center;font-size:.7rem;color:var(--muted);margin-bottom:6px;padding:0 4px;flex-shrink:0}
-.quick-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;overflow-y:auto;padding:2px}
+.quick-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;overflow-y:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y;padding:2px;flex:1;min-height:0}
 .qg-item{background:var(--surface2);border:1px solid var(--line);color:var(--text-sub);border-radius:10px;padding:11px 5px;font-size:.74rem;font-weight:700;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .qg-item.selected{border-color:var(--mint);background:#43d6b222;color:var(--mint)}
 
 /* Money Manager 2-Column Side-by-Side Category & Subcategory Picker in Lower Half */
-.mm-cat-split{display:grid;grid-template-columns:1fr 1fr;gap:8px;flex:1;min-height:0;overflow:hidden}
-.mm-cat-col{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:5px;overflow-y:auto;display:flex;flex-direction:column;gap:4px;-webkit-overflow-scrolling:touch}
+.mm-cat-split{display:grid;grid-template-columns:1fr 1fr;gap:8px;flex:1;min-height:0;height:100%}
+.mm-cat-col{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:5px;overflow-y:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y;overscroll-behavior:contain;display:flex;flex-direction:column;gap:4px;height:100%}
 .mm-cat-col-title{font-size:.65rem;color:var(--muted);text-align:center;padding:3px 0 5px;border-bottom:1px solid var(--line);font-weight:800;position:sticky;top:0;background:var(--panel2);z-index:1}
 .mm-cat-item{background:transparent;border:1px solid transparent;color:var(--text-sub);border-radius:9px;padding:9px 8px;font-size:.76rem;font-weight:700;text-align:right;width:100%;display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
 .mm-cat-item.active{background:#43d6b222;border-color:var(--mint);color:var(--mint)}
@@ -310,47 +309,80 @@ details.fold .fold-body{padding:12px 14px}
   <div id="dailyTransactionsFeed"></div>
 </section>
 
-<!-- 2. شاشة التقارير (جدول ملخص السنة مع شريط اختيار السنة ‹ 2026 ›) -->
+<!-- 2. شاشة التقارير (3 وظائف: توزيع مصاريف الشهر + توزيع دخل الشهر + التقرير السنوي) -->
 <section id="reports" class="screen">
-  <div class="hero">
-    <label>توقعات الشهور القادمة (الدخل − الالتزامات والأقساط)</label>
-    <div class="amount" id="fcNextMonthNet">0 EGP</div>
-    <div class="sub" id="fcNextMonthSub">صافي الشهر القادم المتوقع</div>
-    <div class="hero-foot">
-      <div class="hero-pill"><span>المرتب المتوقع</span><b id="fcExpectedSal">0</b></div>
-      <div class="hero-pill"><span>التزامات الشهر الجاي</span><b id="fcNextDue">0</b></div>
-      <div class="hero-pill"><span>متبقي السلف</span><b id="fcLoansRemain">0</b></div>
-    </div>
+  <!-- 3 Report Mode Sub-tabs -->
+  <div class="mm-type-tabs" style="margin-bottom:12px">
+    <button type="button" class="mm-tab active exp" id="repTabExp" onclick="switchReportTab('exp')">مصاريف الشهر</button>
+    <button type="button" class="mm-tab inc" id="repTabInc" onclick="switchReportTab('inc')">دخل الشهر</button>
+    <button type="button" class="mm-tab trn" id="repTabYr" onclick="switchReportTab('yr')">التقرير السنوي</button>
   </div>
 
-  <!-- Quick Default Income Settings -->
-  <details class="fold">
-    <summary><span>✎ ضبط المرتب والأرباح المتوقعة للشهور الجاية</span><span>▼</span></summary>
-    <div class="fold-body">
-      <div class="c-list">
-        <div class="c-row"><label>المرتب الشهري المتوقع :</label><input id="repDefSalary" type="number" step="0.01" inputmode="decimal" placeholder="0"></div>
-        <div class="c-row"><label>الأرباح الشهرية المتوقعة :</label><input id="repDefProfit" type="number" step="0.01" inputmode="decimal" placeholder="0"></div>
+  <!-- Sub-view 1 & 2: Monthly Category Breakdown (Expense or Income for selected top month) -->
+  <div id="repViewMonthly">
+    <div class="mm-header-card">
+      <div class="mm-nav-row" style="margin-bottom:0">
+        <div class="ym-stepper">
+          <button type="button" class="step-arrow" onclick="shiftActiveMonth(-1)">‹</button>
+          <button type="button" class="step-label" onclick="openHomePeriodPicker()" id="repPeriodLabel">نوفمبر 2026</button>
+          <button type="button" class="step-arrow" onclick="shiftActiveMonth(1)">›</button>
+        </div>
+        <div style="text-align:left">
+          <small style="display:block;font-size:.66rem;color:var(--muted)" id="repMonthlyTotalLabel">إجمالي المصاريف</small>
+          <b style="font-size:1rem;direction:ltr" class="red" id="repMonthlyTotalVal">0 EGP</b>
+        </div>
       </div>
-      <p class="hint">يُستخدم تلقائيًا في أي شهر قادم لم يُحسب مرتبه الفعلي بعد.</p>
-      <button type="button" class="primary" style="margin-top:6px" onclick="saveReportDefaults()">حفظ التوقعات</button>
     </div>
-  </details>
 
-  <!-- Year Selector Strip (‹ 2026 ›) + Yearly Summary Table -->
-  <div class="section-head">
-    <h2>جدول ملخص السنة</h2>
-    <div class="ym-stepper">
-      <button type="button" class="step-arrow" onclick="shiftForecastYear(-1)">‹</button>
-      <button type="button" class="step-label" style="min-width:74px;cursor:default" id="forecastYearLabel">2026</button>
-      <button type="button" class="step-arrow" onclick="shiftForecastYear(1)">›</button>
+    <!-- Visual Donut + Category Breakdown List -->
+    <div class="panel" id="repChartPanel" style="display:flex;flex-direction:column;align-items:center;padding:16px 12px">
+      <div id="repDonutWrap" style="position:relative;width:170px;height:170px;display:grid;place-items:center;margin-bottom:10px"></div>
+      <div id="repLegendChips" style="display:flex;flex-wrap:wrap;justify-content:center;gap:6px;width:100%"></div>
     </div>
+
+    <div class="panel" id="repCatBreakdownList" style="padding:8px 12px"></div>
   </div>
-  <div class="panel" style="padding:10px">
-    <div class="yr-table-wrap">
-      <table class="yr-table">
-        <thead><tr><th>الشهر</th><th class="num">الدخل</th><th class="num">الالتزامات</th><th class="num">الفائض/العجز</th></tr></thead>
-        <tbody id="yearlyBreakdownBody"></tbody>
-      </table>
+
+  <!-- Sub-view 3: Yearly Report & Forecast -->
+  <div id="repViewYearly" style="display:none">
+    <div class="hero">
+      <label>توقعات الشهور القادمة (الدخل − الالتزامات والأقساط)</label>
+      <div class="amount" id="fcNextMonthNet">0 EGP</div>
+      <div class="sub" id="fcNextMonthSub">صافي الشهر القادم المتوقع</div>
+      <div class="hero-foot">
+        <div class="hero-pill"><span>المرتب المتوقع</span><b id="fcExpectedSal">0</b></div>
+        <div class="hero-pill"><span>التزامات الشهر الجاي</span><b id="fcNextDue">0</b></div>
+        <div class="hero-pill"><span>متبقي السلف</span><b id="fcLoansRemain">0</b></div>
+      </div>
+    </div>
+
+    <details class="fold">
+      <summary><span>✎ ضبط المرتب والأرباح المتوقعة للشهور الجاية</span><span>▼</span></summary>
+      <div class="fold-body">
+        <div class="c-list">
+          <div class="c-row"><label>المرتب الشهري المتوقع :</label><input id="repDefSalary" type="number" step="0.01" inputmode="decimal" placeholder="0"></div>
+          <div class="c-row"><label>الأرباح الشهرية المتوقعة :</label><input id="repDefProfit" type="number" step="0.01" inputmode="decimal" placeholder="0"></div>
+        </div>
+        <p class="hint">يُستخدم تلقائيًا في أي شهر قادم لم يُحسب مرتبه الفعلي بعد.</p>
+        <button type="button" class="primary" style="margin-top:6px" onclick="saveReportDefaults()">حفظ التوقعات</button>
+      </div>
+    </details>
+
+    <div class="section-head">
+      <h2>التقرير السنوي</h2>
+      <div class="ym-stepper">
+        <button type="button" class="step-arrow" onclick="shiftForecastYear(-1)">‹</button>
+        <button type="button" class="step-label" style="min-width:74px;cursor:default" id="forecastYearLabel">2026</button>
+        <button type="button" class="step-arrow" onclick="shiftForecastYear(1)">›</button>
+      </div>
+    </div>
+    <div class="panel" style="padding:10px">
+      <div class="yr-table-wrap">
+        <table class="yr-table">
+          <thead><tr><th>الشهر</th><th class="num">الدخل</th><th class="num">الالتزامات</th><th class="num">الفائض/العجز</th></tr></thead>
+          <tbody id="yearlyBreakdownBody"></tbody>
+        </table>
+      </div>
     </div>
   </div>
 </section>
@@ -584,6 +616,7 @@ details.fold .fold-body{padding:12px 14px}
     <div class="fold-body">
       <div class="c-list">
         <div class="c-row"><label>مالك الحساب :</label><input id="prefUserName" placeholder="محمد خالد"></div>
+        <div class="c-row"><label>اللغة / Language :</label><select id="prefLang"><option value="ar">العربية</option><option value="en">English</option></select></div>
         <div class="c-row"><label>حجم الخط :</label><select id="prefFontSize"><option value="0.86">صغير جدًا</option><option value="0.93">صغير</option><option value="1">متوسط</option><option value="1.08">كبير</option><option value="1.15">كبير جدًا</option></select></div>
         <div class="c-row"><label>الحساب الافتراضي :</label><select id="prefDefaultAcc"></select></div>
         <div class="c-row">
@@ -662,7 +695,7 @@ details.fold .fold-body{padding:12px 14px}
     <summary><span>⟳ التحديثات</span><span>▼</span></summary>
     <div class="fold-body">
       <div class="c-list">
-        <div class="c-row"><span class="c-lbl">الإصدار الحالي :</span><span class="tag" id="appVersionTag">V11.7</span></div>
+        <div class="c-row"><span class="c-lbl">الإصدار الحالي :</span><span class="tag" id="appVersionTag">V11.8</span></div>
         <div class="c-row">
           <span class="c-lbl">التحديثات :</span>
           <div class="c-row-btns">
@@ -770,19 +803,19 @@ details.fold .fold-body{padding:12px 14px}
     <!-- Lower-Half Thumb-Zone Dock (Automatically shows Accounts first -> auto-advances to 2-Column Categories!) -->
     <div id="qmBottomDock" class="qm-bottom-dock">
       <!-- Dock 1: Accounts + Credit Cards -->
-      <div id="qmDockAcc" style="display:flex;flex-direction:column;height:100%">
+      <div id="qmDockAcc" style="display:flex;flex-direction:column;height:100%;min-height:0">
         <div class="quick-grid-head"><span>1. اختر الحساب أو البطاقة</span><span style="color:var(--mint)">ينتقل للأقسام تلقائيًا</span></div>
         <div class="quick-grid" id="qmAccGrid"></div>
       </div>
 
       <!-- Dock 2: Destination Account (for Transfers) -->
-      <div id="qmDockToAcc" style="display:none;flex-direction:column;height:100%">
+      <div id="qmDockToAcc" style="display:none;flex-direction:column;height:100%;min-height:0">
         <div class="quick-grid-head"><span>2. اختر الحساب المحوّل إليه</span><span style="color:var(--mint)">ينتقل للمبلغ تلقائيًا</span></div>
         <div class="quick-grid" id="qmToAccGrid"></div>
       </div>
 
       <!-- Dock 3: Money Manager 2-Column Side-by-Side Category & Subcategory -->
-      <div id="qmDockCat" style="display:none;flex-direction:column;height:100%">
+      <div id="qmDockCat" style="display:none;flex-direction:column;height:100%;min-height:0">
         <div class="quick-grid-head">
           <span>2. القسم الرئيسي / الفرعي</span>
           <div style="display:flex;gap:10px">
@@ -852,7 +885,7 @@ details.fold .fold-body{padding:12px 14px}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
 <script>
-const APP_VERSION='11.7';
+const APP_VERSION='11.8';
 const APP_BUILD='2026-11-13';
 const KEY='raseed_mobile_v2';
 
@@ -1052,6 +1085,10 @@ function applyPreferences(){
   if(av) av.textContent = uName ? uName.slice(0, 12) : 'م';
   const uInp = document.getElementById('prefUserName');
   if(uInp && document.activeElement !== uInp) uInp.value = uName;
+  const lang = p.lang || 'ar';
+  setv('prefLang', lang);
+  document.documentElement.lang = lang;
+  document.documentElement.dir = lang === 'en' ? 'ltr' : 'rtl';
   setv('prefFontSize', p.fontSize || '1');
 
   document.querySelectorAll('.dec-toggle-btn').forEach(b=>b.classList.toggle('active', !!p.homeDecimals));
@@ -1066,6 +1103,7 @@ function applyPreferences(){
 function saveGeneralSettings(){
   state.prefs = state.prefs || {};
   state.prefs.userName = (document.getElementById('prefUserName')?.value || '').trim();
+  state.prefs.lang = document.getElementById('prefLang')?.value || 'ar';
   state.prefs.fontSize = document.getElementById('prefFontSize')?.value || '1';
   state.prefs.defaultAccount = document.getElementById('prefDefaultAcc')?.value || '';
   state.prefs.bgMode = _pendingBgMode || document.getElementById('prefBgMode')?.value || 'dark';
@@ -1313,14 +1351,13 @@ function renderTransactionsScreen(){
         <div class="tx-wrap" onclick="toggleItemActions(this, event)">
           <div class="tx-row">
             <div class="tx-amt-right ${amtClass}">${maskable(amtPrefix + fmt(Math.abs(Number(it.amount)||0)))} EGP</div>
-            <div class="tx-left-info">
-              <div class="tx-cat-box" style="max-width:55%">
-                <b>${esc(it.category||'أخرى')}${it.subCategory ? ` <span style="color:var(--mint);font-weight:700">/ ${esc(it.subCategory)}</span>` : ''}</b>
-                <small>${esc(accName)}</small>
-              </div>
-              <div class="tx-memo-box">
-                ${memoLine ? `<span>${esc(memoLine)}</span>` : ''}
-              </div>
+            <div class="tx-mid-acc">
+              ${memoLine ? `<span>${esc(memoLine)}</span>` : ''}
+              <small>${esc(accName)}</small>
+            </div>
+            <div class="tx-cat-left">
+              <b>${esc(it.category||'أخرى')}</b>
+              ${it.subCategory ? `<small>${esc(it.subCategory)}</small>` : ''}
             </div>
           </div>
           ${actions}
@@ -1360,8 +1397,94 @@ function duplicateTxToday(id){
   toast('تم تكرار الحركة بتاريخ اليوم ✓');
 }
 
-/* 2. Render Reports Screen (Fixed Yearly Commitments & Cards Calculation) */
+/* 2. Render Reports Screen (3 Functions: Monthly Expense by Main Cat, Monthly Income by Main Cat, Yearly Report) */
+let activeReportTab = 'exp';
+const CHART_COLORS = ['#ff6b6b','#ff9f43','#feca57','#1dd1a1','#48dbfb','#54a0ff','#5f27cd','#ff9ff3','#00d2d3','#c8d6e5','#ee5253','#10ac84'];
+
+function switchReportTab(tab){
+  activeReportTab = tab;
+  document.getElementById('repTabExp').classList.toggle('active', tab==='exp');
+  document.getElementById('repTabInc').classList.toggle('active', tab==='inc');
+  document.getElementById('repTabYr').classList.toggle('active', tab==='yr');
+  document.getElementById('repViewMonthly').style.display = tab==='yr' ? 'none' : 'block';
+  document.getElementById('repViewYearly').style.display = tab==='yr' ? 'block' : 'none';
+  renderReportsScreen();
+}
+
+function renderMonthlyCategoryReport(curYM, mode){
+  document.getElementById('repPeriodLabel').textContent = formatYMArabic(curYM);
+  const isInc = (mode === 'inc');
+  const mTxs = monthTx(curYM).filter(t => isInc ? t.type==='income' : ((t.type==='expense' || t.type==='credit_payment') && !isCardPurchaseTx(t)));
+
+  const byMain = {};
+  let grandTotal = 0;
+  for(const t of mTxs){
+    const amt = Number(t.amount)||0;
+    if(amt <= 0) continue;
+    const cat = String(t.category||'أخرى').trim() || 'أخرى';
+    byMain[cat] = round2((byMain[cat]||0) + amt);
+    grandTotal = round2(grandTotal + amt);
+  }
+
+  const lblEl = document.getElementById('repMonthlyTotalLabel');
+  const valEl = document.getElementById('repMonthlyTotalVal');
+  lblEl.textContent = isInc ? 'إجمالي الدخل' : 'إجمالي المصاريف';
+  valEl.textContent = maskable(egp(grandTotal));
+  valEl.className = isInc ? 'blue' : 'red';
+
+  const entries = Object.entries(byMain).sort((a,b)=>b[1]-a[1]);
+  const donutWrap = document.getElementById('repDonutWrap');
+  const chipsWrap = document.getElementById('repLegendChips');
+  const listEl = document.getElementById('repCatBreakdownList');
+
+  if(!entries.length || grandTotal <= 0){
+    donutWrap.innerHTML = '<div class="empty">لا توجد بيانات</div>';
+    chipsWrap.innerHTML = '';
+    listEl.innerHTML = `<div class="empty">لا توجد ${isInc?'إيرادات':'مصاريف'} مسجلة في ${formatYMArabic(curYM)}.</div>`;
+    return;
+  }
+
+  // Conic-gradient Donut Chart
+  let accPct = 0;
+  const stops = [];
+  entries.forEach(([cat, amt], idx)=>{
+    const color = CHART_COLORS[idx % CHART_COLORS.length];
+    const pct = (amt / grandTotal) * 100;
+    stops.push(`${color} ${accPct.toFixed(2)}% ${(accPct + pct).toFixed(2)}%`);
+    accPct += pct;
+  });
+  donutWrap.innerHTML = `
+    <div style="width:164px;height:164px;border-radius:50%;background:conic-gradient(${stops.join(',')});display:grid;place-items:center;box-shadow:0 6px 20px #0004">
+      <div style="width:96px;height:96px;border-radius:50%;background:var(--panel);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:4px">
+        <small style="font-size:.6rem;color:var(--muted)">${isInc?'الدخل':'المصاريف'}</small>
+        <b style="font-size:.76rem;direction:ltr">${maskable(fmtInt(grandTotal))}</b>
+      </div>
+    </div>
+  `;
+
+  chipsWrap.innerHTML = entries.slice(0, 6).map(([cat, amt], idx)=>{
+    const color = CHART_COLORS[idx % CHART_COLORS.length];
+    const pct = Math.round((amt / grandTotal) * 100);
+    return `<span class="tag" style="display:inline-flex;align-items:center;gap:5px"><i style="width:8px;height:8px;border-radius:50%;background:${color};display:inline-block"></i>${esc(cat)} ${pct}%</span>`;
+  }).join('');
+
+  listEl.innerHTML = entries.map(([cat, amt], idx)=>{
+    const color = CHART_COLORS[idx % CHART_COLORS.length];
+    const pct = Math.max(1, Math.round((amt / grandTotal) * 100));
+    return `
+      <div class="listitem" style="cursor:default;align-items:center;padding:10px 2px">
+        <span style="background:${color};color:#08121e;font-weight:900;font-size:.7rem;padding:3px 7px;border-radius:8px;min-width:42px;text-align:center">${pct}%</span>
+        <div class="info" style="padding:0 6px">
+          <b>${esc(cat)}</b>
+        </div>
+        <strong style="direction:ltr;font-size:.86rem">${maskable(egp(amt))}</strong>
+      </div>
+    `;
+  }).join('');
+}
+
 function renderReportsScreen(){
+  renderMonthlyCategoryReport(selected(), activeReportTab === 'inc' ? 'inc' : 'exp');
   const curYM = selected();
   const y = String(forecastYear);
   const defs = (state.reportDefaults||{})[y] || {salary:0, profit:0};
