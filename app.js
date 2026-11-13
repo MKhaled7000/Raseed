@@ -1,4 +1,4 @@
-const APP_VERSION='13.1';
+const APP_VERSION='13.2';
 const APP_BUILD='2026-11-13';
 const KEY='raseed_mobile_v2';
 
@@ -25,7 +25,12 @@ state.annualPlanItems=Array.isArray(state.annualPlanItems)?state.annualPlanItems
 state.categories=Array.isArray(state.categories)?state.categories:[];
 state.incomeCategories=Array.isArray(state.incomeCategories)?state.incomeCategories:[];
 state.categoryTree=state.categoryTree||{expense:{}, income:{}};
-state.prefs=state.prefs||{lang:'ar',fontSize:'1',theme:'mint',bgMode:'dark',userName:'',defaultAccount:'',privacy:false,homeDecimals:false,secPin:'',bioEnabled:false,bioCredentialId:'',bioOnPrivacy:true,autoDriveFreq:'off',lastDriveBackup:''};
+state.prefs=state.prefs||{
+  lang:'ar',fontSize:'1',theme:'mint',bgMode:'dark',userName:'',defaultAccount:'',
+  privacy:false,homeDecimals:false,secPin:'',bioEnabled:false,bioCredentialId:'',
+  appLockOnStart:true,bioOnPrivacy:true,autoDriveFreq:'off',lastDriveBackup:'',
+  driveEmail:'',driveWebhookUrl:'',driveClientId:'',driveAccessToken:''
+};
 
 function syncCategoryTrees(){
   state.categoryTree = state.categoryTree || {expense:{}, income:{}};
@@ -61,9 +66,8 @@ syncCategoryTrees();
 let activeYear = new Date().getFullYear();
 let activeMonth = new Date().getMonth() + 1;
 let forecastYear = activeYear;
-let activeInlineAccountId = null;
-let activeInlineCardId = null;
-let activeCatDrillState = null; // { catName, txType }
+let activeCatDrillState = null; // { catName, txType, subFilter }
+let activeStatementState = null; // { kind: 'account'|'card', id, year, month, allMonths }
 
 const fmt=n=>(Math.round((Number(n)||0)*100)/100).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
 const fmtInt=n=>Math.round(Number(n)||0).toLocaleString('en-US');
@@ -150,12 +154,9 @@ function updateBackupStatusUI(){
     const last = state.prefs?.lastBackupDate;
     lbl.textContent = last ? ('آخر نسخة: ' + last) : 'لم يتم التصدير بعد';
   }
-  const drvLbl = document.getElementById('driveSyncStatusLbl');
-  if(drvLbl){
-    const freq = state.prefs?.autoDriveFreq || 'off';
-    const lastD = state.prefs?.lastDriveBackup || '';
-    const mapFreq = {off:'معطل', daily:'يومي', weekly:'أسبوعي', monthly:'شهري'};
-    drvLbl.textContent = freq === 'off' ? 'التلقائي: معطل' : `التلقائي: ${mapFreq[freq]||freq}${lastD?' ('+lastD+')':''}`;
+  const drvEmail = document.getElementById('prefDriveEmail');
+  if(drvEmail && document.activeElement !== drvEmail){
+    drvEmail.value = state.prefs?.driveEmail || '';
   }
 }
 
@@ -257,7 +258,7 @@ function submitAppDialog(){
   }
 }
 
-/* 2.2 Back-Button Handling: Deactivate Search Bar first before exiting app! */
+/* Back-Button Handling */
 let _allowExit = false;
 function armBackGuard(){
   try{
@@ -284,20 +285,21 @@ document.addEventListener('pointerdown', function _onceArm(){
 }, {passive:true});
 window.addEventListener('popstate', function(){
   if(_allowExit) return;
+  const ym = document.getElementById('ymModal');
+  if(ym && ym.classList.contains('show')){ ym.classList.remove('show'); try{history.pushState({xwGuard:2},'');}catch(_){} return; }
   const cs = document.getElementById('customSelectModal');
   if(cs && cs.classList.contains('show')){ closeCustomSelectModal(); try{history.pushState({xwGuard:2},'');}catch(_){} return; }
   const ad = document.getElementById('appDialogModal');
   if(ad && ad.classList.contains('show')){ closeAppDialog(); try{history.pushState({xwGuard:2},'');}catch(_){} return; }
-  const cd = document.getElementById('catDetailModal');
-  if(cd && cd.classList.contains('show')){ closeCatDetailModal(); try{history.pushState({xwGuard:2},'');}catch(_){} return; }
-  const qm = document.getElementById('quickModal');
-  if(qm && qm.classList.contains('show')){ closeQuickModal(); try{history.pushState({xwGuard:2},'');}catch(_){} return; }
   const am = document.getElementById('accountModal');
   if(am && am.classList.contains('show')){ closeAccountModal(); try{history.pushState({xwGuard:2},'');}catch(_){} return; }
-  const ym = document.getElementById('ymModal');
-  if(ym && ym.classList.contains('show')){ ym.classList.remove('show'); try{history.pushState({xwGuard:2},'');}catch(_){} return; }
+  const qm = document.getElementById('quickModal');
+  if(qm && qm.classList.contains('show')){ closeQuickModal(); try{history.pushState({xwGuard:2},'');}catch(_){} return; }
+  const sm = document.getElementById('statementFullModal');
+  if(sm && sm.classList.contains('show')){ closeFullStatementModal(); try{history.pushState({xwGuard:2},'');}catch(_){} return; }
+  const cd = document.getElementById('catDetailModal');
+  if(cd && cd.classList.contains('show')){ closeCatDetailModal(); try{history.pushState({xwGuard:2},'');}catch(_){} return; }
 
-  // 2.2 If Search Bar is active/visible, Back button deactivates search instead of exiting!
   const searchBox = document.getElementById('mmSearchBox');
   const searchInp = document.getElementById('actSearch');
   if((searchBox && searchBox.style.display !== 'none') || (searchInp && searchInp.value)){
@@ -305,18 +307,6 @@ window.addEventListener('popstate', function(){
     document.getElementById('btnToggleSearch')?.classList.remove('active');
     clearTransactionsSearch();
     toast('تم إلغاء البحث');
-    try{history.pushState({xwGuard:2},'');}catch(_){}
-    return;
-  }
-
-  // If inline account or card statement is open, close it first
-  if(activeInlineAccountId){
-    closeInlineAccountStatement();
-    try{history.pushState({xwGuard:2},'');}catch(_){}
-    return;
-  }
-  if(activeInlineCardId){
-    closeInlineCardStatement();
     try{history.pushState({xwGuard:2},'');}catch(_){}
     return;
   }
@@ -346,7 +336,7 @@ document.addEventListener('toggle', function(e){
   }
 }, true);
 
-/* 2.1 Context-Aware Floating + Button (.fab) Across All Pages & Sub-Tabs */
+/* Context-Aware Floating + Button (.fab) */
 function handleFabClick(){
   const activePage = document.querySelector('.screen.active')?.id || 'trans';
   if(activePage === 'trans' || activePage === 'reports'){
@@ -389,16 +379,18 @@ function handleFabClick(){
   }
 }
 
-/* 8 Theme Colors + 4 Background Modes */
+/* 8.2 10 Theme Colors (5 Top + 5 Bottom) + 4 Background Modes */
 const THEMES = {
-  mint:   {mint:'#43d6b2', mint2:'#1a9c94', h1:'#1b8f83', h2:'#145e68', h3:'#174b63'},
-  blue:   {mint:'#569aff', mint2:'#2d68c4', h1:'#2563eb', h2:'#1e40af', h3:'#1e3a8a'},
-  gold:   {mint:'#f5b041', mint2:'#b9770e', h1:'#b7791f', h2:'#744210', h3:'#5f370e'},
-  purple: {mint:'#a582ff', mint2:'#6b46c1', h1:'#6b46c1', h2:'#44337a', h3:'#322659'},
-  rose:   {mint:'#fb7185', mint2:'#be123c', h1:'#e11d48', h2:'#9f1239', h3:'#881337'},
-  cyan:   {mint:'#22d3ee', mint2:'#0891b2', h1:'#06b6d4', h2:'#0e7490', h3:'#155e75'},
-  orange: {mint:'#fb923c', mint2:'#c2410c', h1:'#ea580c', h2:'#9a3412', h3:'#7c2d12'},
-  lime:   {mint:'#a3e635', mint2:'#4d7c0f', h1:'#65a30d', h2:'#3f6212', h3:'#365314'}
+  mint:    {mint:'#43d6b2', mint2:'#1a9c94', h1:'#1b8f83', h2:'#145e68', h3:'#174b63'},
+  blue:    {mint:'#569aff', mint2:'#2d68c4', h1:'#2563eb', h2:'#1e40af', h3:'#1e3a8a'},
+  gold:    {mint:'#f5b041', mint2:'#b9770e', h1:'#b7791f', h2:'#744210', h3:'#5f370e'},
+  purple:  {mint:'#a582ff', mint2:'#6b46c1', h1:'#6b46c1', h2:'#44337a', h3:'#322659'},
+  rose:    {mint:'#fb7185', mint2:'#be123c', h1:'#e11d48', h2:'#9f1239', h3:'#881337'},
+  cyan:    {mint:'#22d3ee', mint2:'#0891b2', h1:'#06b6d4', h2:'#0e7490', h3:'#155e75'},
+  orange:  {mint:'#fb923c', mint2:'#c2410c', h1:'#ea580c', h2:'#9a3412', h3:'#7c2d12'},
+  lime:    {mint:'#a3e635', mint2:'#4d7c0f', h1:'#65a30d', h2:'#3f6212', h3:'#365314'},
+  indigo:  {mint:'#6366f1', mint2:'#4338ca', h1:'#4f46e5', h2:'#3730a3', h3:'#312e81'},
+  emerald: {mint:'#10b981', mint2:'#047857', h1:'#059669', h2:'#065f46', h3:'#064e3b'}
 };
 
 let _pendingTheme = null;
@@ -439,7 +431,9 @@ function applyPreferences(){
   document.documentElement.dir = 'ltr';
   setv('prefFontSize', p.fontSize || '1');
   setv('prefAutoDriveFreq', p.autoDriveFreq || 'off');
+  setv('prefDriveEmail', p.driveEmail || '');
   setv('secPinInput', p.secPin || '');
+  setv('secAppLockOnStart', p.appLockOnStart === false ? '0' : '1');
   setv('secBioOnPrivacy', p.bioOnPrivacy === false ? '0' : '1');
 
   const bioBadge = document.getElementById('bioStatusBadge');
@@ -486,10 +480,15 @@ function toggleDecimalsMode(){
   persist();
 }
 
-/* 8.2 Security: Biometric Fingerprint (WebAuthn) + PIN & Biometric Unhiding for Privacy Mode */
+/* =========================================================
+   8.4 APP LOCK ON STARTUP WITH BIOMETRICS & PIN + PRIVACY LOCK
+   ========================================================= */
+let _appUnlockedThisSession = false;
+
 function saveSecuritySettings(){
   state.prefs = state.prefs || {};
   state.prefs.secPin = val('secPinInput').trim();
+  state.prefs.appLockOnStart = val('secAppLockOnStart') !== '0';
   state.prefs.bioOnPrivacy = val('secBioOnPrivacy') !== '0';
   applyPreferences();
   persist();
@@ -520,12 +519,80 @@ async function registerBiometricLock(){
       const b64 = btoa(String.fromCharCode(...new Uint8Array(cred.rawId)));
       state.prefs.bioEnabled = true;
       state.prefs.bioCredentialId = b64;
+      state.prefs.appLockOnStart = true;
+      _appUnlockedThisSession = true;
       applyPreferences();
       persist();
-      toast('تم تفعيل البصمة بنجاح 🫆✓');
+      toast('تم تفعيل البصمة لفتح التطبيق والأرقام 🫆✓');
     }
   }catch(err){
     toast('تعذر تسجيل البصمة أو تم الإلغاء');
+  }
+}
+
+function checkAppLockOnBoot(){
+  const p = state.prefs || {};
+  const shouldLock = p.appLockOnStart !== false && (p.bioEnabled || p.secPin);
+  const lockScreen = document.getElementById('appLockScreen');
+  if(!shouldLock || _appUnlockedThisSession || !lockScreen) return;
+
+  lockScreen.classList.add('show');
+  const pinWrap = document.getElementById('lockPinWrap');
+  if(pinWrap) pinWrap.style.display = p.secPin ? 'flex' : 'none';
+
+  if(p.bioEnabled){
+    setTimeout(()=>unlockAppWithBiometrics(), 250);
+  }
+}
+
+async function unlockAppWithBiometrics(){
+  const p = state.prefs || {};
+  if(p.bioEnabled && window.PublicKeyCredential && navigator.credentials){
+    try{
+      const challenge = new Uint8Array(32);
+      crypto.getRandomValues(challenge);
+      const opts = {
+        publicKey: {
+          challenge,
+          userVerification: 'required',
+          timeout: 60000
+        }
+      };
+      if(p.bioCredentialId){
+        const bin = atob(p.bioCredentialId);
+        const raw = new Uint8Array(bin.length);
+        for(let i=0;i<bin.length;i++) raw[i] = bin.charCodeAt(i);
+        opts.publicKey.allowCredentials = [{ type: 'public-key', id: raw }];
+      }
+      const assertion = await navigator.credentials.get(opts);
+      if(assertion){
+        _appUnlockedThisSession = true;
+        document.getElementById('appLockScreen')?.classList.remove('show');
+        toast('مرحباً بك في X-Wallet ✓');
+        return;
+      }
+    }catch(_){
+      toast('اضغط فتح بالبصمة مرة أخرى أو أدخل الرمز');
+    }
+  } else if(p.secPin){
+    document.getElementById('lockPinWrap').style.display = 'flex';
+    document.getElementById('lockPinInput')?.focus();
+  } else {
+    _appUnlockedThisSession = true;
+    document.getElementById('appLockScreen')?.classList.remove('show');
+  }
+}
+
+function unlockAppWithPin(){
+  const p = state.prefs || {};
+  const entered = val('lockPinInput').trim();
+  if(entered && entered === String(p.secPin).trim()){
+    _appUnlockedThisSession = true;
+    setv('lockPinInput', '');
+    document.getElementById('appLockScreen')?.classList.remove('show');
+    toast('تم فتح التطبيق ✓');
+  } else {
+    toast('رمز المرور غير صحيح');
   }
 }
 
@@ -579,7 +646,6 @@ async function verifyBiometricOrPin(onSuccess){
 }
 
 function togglePrivacyMode(){
-  // If currently hidden (privacy = true), require Biometric/PIN to unhide!
   if(state.prefs?.privacy){
     verifyBiometricOrPin(()=>{
       state.prefs.privacy = false;
@@ -674,7 +740,10 @@ function toggleSearchBar(){
   box.style.display = open ? 'block' : 'none';
   btn.classList.toggle('active', open);
   if(open){
-    document.getElementById('actSearch').focus();
+    if(activeTransSubTab === 'monthly'){
+      switchTransSubTab('daily');
+    }
+    setTimeout(()=>document.getElementById('actSearch')?.focus(), 50);
   } else {
     clearTransactionsSearch();
   }
@@ -682,6 +751,9 @@ function toggleSearchBar(){
 function onTransactionsSearchInput(){
   const inp = document.getElementById('actSearch');
   const qVal = (inp?.value || '').trim();
+  if(qVal && activeTransSubTab === 'monthly'){
+    activeTransSubTab = 'daily';
+  }
   if(activeReportCategoryFilter && qVal !== activeReportCategoryFilter.category){
     activeReportCategoryFilter = null;
   }
@@ -789,8 +861,8 @@ function buildInstallmentSchedulesForCard(card, purchaseYM, months, baseInstallm
 }
 
 /* =========================================================
-   REUSABLE DAILY GROUPED TRANSACTIONS BUILDER
-   (Used in Daily Transactions, Category Analysis 3.3.5, Account Statement 4.4, and Card Statement 5.4)
+   #2.2 DIRECT-TAP DAILY TRANSACTIONS BUILDER
+   (Tapping any transaction opens it directly in Edit Mode, where Copy & Delete live inside!)
    ========================================================= */
 let activeTransSubTab = 'daily';
 
@@ -882,7 +954,6 @@ function buildDailyGroupedFeedHtml(itemsList, emptyMsg){
       let amtClass = it.type==='income' ? 'blue' : (it.type==='transfer' ? 'mint' : (isCardPurchaseTx(it) ? 'orange' : 'red'));
       let amtPrefix = it.type==='income' ? '+' : (it.type==='transfer' ? '⇄ ' : '−');
 
-      // 1.4 Note (title) shows in daily list; Description (it.description) stays hidden from the daily row!
       let rawTitle = String(it.title || it.note || '').trim();
       rawTitle = rawTitle.replace(/^شراء بالبطاقة\s*-\s*/,'');
       const catClean = String(it.category||'').trim();
@@ -892,17 +963,11 @@ function buildDailyGroupedFeedHtml(itemsList, emptyMsg){
                          rawTitle.toLowerCase() === subClean.toLowerCase() ||
                          rawTitle.toLowerCase() === accName.toLowerCase();
       const memoLine = isDupTitle ? '' : rawTitle;
-
       const itemKind = it._kind || 'tx';
-      const actions = `
-        <div class="tap-actions">
-          <button type="button" class="smallbtn" style="border-color:var(--mint);color:var(--mint)" onclick="duplicateItemToday('${esc(it.id)}','${itemKind}')">${isEn?'Copy':'نسخ'}</button>
-          <button type="button" class="smallbtn" style="border-color:var(--blue);color:var(--blue)" onclick="openEditAnyItem('${esc(it.id)}','${itemKind}')">${isEn?'Edit':'تعديل'}</button>
-          <button type="button" class="smallbtn danger" onclick="deleteAnyItem('${esc(it.id)}','${itemKind}')">${isEn?'Delete':'حذف'}</button>
-        </div>`;
 
+      // 2.2 Direct tap on row opens openEditAnyItem directly!
       return `
-        <div class="tx-wrap" onclick="toggleItemActions(this, event)">
+        <div class="tx-wrap" onclick="openEditAnyItem('${esc(it.id)}','${itemKind}')">
           <div class="tx-row">
             <div class="tx-cat-col">
               <b>${esc(it.category||'أخرى')}</b>
@@ -914,7 +979,6 @@ function buildDailyGroupedFeedHtml(itemsList, emptyMsg){
             </div>
             <div class="tx-amt-col ${amtClass}">${maskable(amtPrefix + fmt(Math.abs(Number(it.amount)||0)))} EGP</div>
           </div>
-          ${actions}
         </div>
       `;
     }).join('');
@@ -950,6 +1014,7 @@ function renderTransactionsScreen(){
     const cur = af.value;
     af.innerHTML = `<option value="">${isEn ? 'All Accounts' : 'كل الحسابات'}</option>` + state.accounts.map(a=>`<option value="${a.id}">${esc(a.name)}</option>`).join('');
     if([...af.options].some(o=>o.value===cur)) af.value = cur;
+    syncCustomSelectTriggers();
   }
 
   const searchInputEl = document.getElementById('actSearch');
@@ -1011,11 +1076,6 @@ function renderTransactionsScreen(){
   // === DAILY TRANSACTIONS TAB ===
   const t = totals(m);
   document.getElementById('homePeriodLabel').textContent = isEn ? `${monthNamesEn[activeMonth-1]} ${activeYear}` : formatYMArabic(m);
-  document.getElementById('incomeHero').textContent = maskable(fmtNum(t.inc));
-  document.getElementById('expenseHero').textContent = maskable(fmtNum(t.exp));
-  const remEl = document.getElementById('remaining');
-  remEl.textContent = maskable(fmtNum(t.net));
-  remEl.className = t.net >= 0 ? 'mint' : 'red';
 
   const txList = monthTx(m).map((x, idx)=>({...x, _kind:'tx', _order: getItemTimestampOrder(x, idx)}));
   const ledList = (state.ledger||[]).filter(l=>monthKey(l.date)===m).map((l, idx)=>{
@@ -1041,7 +1101,6 @@ function renderTransactionsScreen(){
     };
   });
 
-  // 2.3 Search includes description (الوصف), notes, title, category, subCategory, account, and amount
   let combined = [...txList, ...ledList].filter(it=>{
     if(accFilter && it.accountId !== accFilter && it.toAccountId !== accFilter) return false;
     if(q){
@@ -1064,11 +1123,42 @@ function renderTransactionsScreen(){
     return (b._order || 0) - (a._order || 0);
   });
 
-  const emptyMsg = isEn ? 'No transactions in this period.<br>Tap <b>＋</b> to add one.' : `لا توجد معاملات مسجلة في ${formatYMArabic(m)}.<br>اضغط على زر <b>＋</b> لإضافة معاملة جديدة.`;
+  // Update summary boxes dynamically when search/filter is active
+  if(q || accFilter){
+    const fInc = round2(combined.filter(x=>x.type==='income').reduce((s,x)=>s+(Number(x.amount)||0),0));
+    const fExp = round2(combined.filter(x=>isActualExpenseTx(x)).reduce((s,x)=>s+(Number(x.amount)||0),0));
+    const fNet = round2(fInc - fExp);
+    document.getElementById('incomeHero').textContent = maskable(fmtNum(fInc));
+    document.getElementById('expenseHero').textContent = maskable(fmtNum(fExp));
+    const remEl = document.getElementById('remaining');
+    remEl.textContent = maskable(fmtNum(fNet));
+    remEl.className = fNet >= 0 ? 'mint' : 'red';
+  } else {
+    document.getElementById('incomeHero').textContent = maskable(fmtNum(t.inc));
+    document.getElementById('expenseHero').textContent = maskable(fmtNum(t.exp));
+    const remEl = document.getElementById('remaining');
+    remEl.textContent = maskable(fmtNum(t.net));
+    remEl.className = t.net >= 0 ? 'mint' : 'red';
+  }
+
+  const emptyMsg = isEn ? 'No transactions in this period.<br>Tap <b>＋</b> to add one.' : `لا توجد معاملات مطابقة في ${formatYMArabic(m)}.`;
   feed.innerHTML = buildDailyGroupedFeedHtml(combined, emptyMsg);
 }
 
-/* Copy / Edit / Delete for ALL Transactions (with Reversible Commitment/Card Payment Deletion!) */
+/* 2.2 Copy & Delete Actions Directly Inside Quick Edit Modal */
+function copyCurrentQuickModalItem(){
+  if(!qmState.editId) return;
+  duplicateItemToday(qmState.editId, qmState.editKind || 'tx');
+  closeQuickModal();
+}
+function deleteCurrentQuickModalItem(){
+  if(!qmState.editId) return;
+  const id = qmState.editId;
+  const kind = qmState.editKind || 'tx';
+  closeQuickModal();
+  deleteAnyItem(id, kind);
+}
+
 function duplicateItemToday(id, kind){
   const nowTs = Date.now();
   if(kind === 'ledger'){
@@ -1160,18 +1250,14 @@ function openEditAnyItem(id, kind){
   openEditQuickTx(t.id);
 }
 
-/* 6.2 Reversible Payment Logic: If a payment transaction is deleted from transactions, revert its paid status in Commitments / Card Dues! */
 function revertLinkedPaymentOnTxDelete(txObj){
   if(!txObj) return;
-  // 1) Commitment Payment link
   if(txObj.linkedCommitmentPaymentId){
     state.commitmentPayments = (state.commitmentPayments||[]).filter(p=>p.id !== txObj.linkedCommitmentPaymentId);
   } else if(txObj.source === 'commitment-payment'){
-    // Fallback match by amount & date
     const idx = (state.commitmentPayments||[]).findIndex(p=>p.date===txObj.date && Math.abs((Number(p.amount)||0)-(Number(txObj.amount)||0))<0.01);
     if(idx !== -1) state.commitmentPayments.splice(idx, 1);
   }
-  // 2) Card Due Payment link
   if(txObj.linkedCardOpId){
     const op = (state.cardOps||[]).find(o=>o.id === txObj.linkedCardOpId);
     const amt = Number(txObj.amount)||0;
@@ -1225,55 +1311,19 @@ function deleteTransaction(id){
 }
 
 function refreshSecondaryFeeds(){
-  if(activeInlineAccountId) openAccountStatement(activeInlineAccountId);
-  if(activeInlineCardId) openCardStatement(activeInlineCardId);
+  if(activeStatementState && document.getElementById('statementFullModal')?.classList.contains('show')){
+    renderFullStatementModalContent();
+  }
   if(activeCatDrillState && document.getElementById('catDetailModal')?.classList.contains('show')){
-    openCategoryDrillDown(activeCatDrillState.catName, activeCatDrillState.txType);
+    renderCategoryDrillDownContent();
   }
-}
-
-function openEditLedgerModal(l){
-  qmState = {
-    type: 'transfer',
-    accountId: l.from || '',
-    toAccountId: l.to || '',
-    category: '',
-    subCategory: '',
-    isCard: false,
-    cardMode: 'swipe',
-    editId: l.id,
-    editKind: 'ledger',
-    dock: 'none'
-  };
-  document.getElementById('qmHeaderTitle').textContent = 'تعديل تحويل';
-  setv('qmDate', l.date || today());
-  setv('qmAmount', l.amount || '');
-  setv('qmFee', l.fee || '');
-  setv('qmNote', l.note || '');
-  setv('qmDesc', l.description || '');
-  setQuickTxType('transfer');
-  const feeRow = document.getElementById('qmFeeRow');
-  const feeBtn = document.getElementById('qmFeeToggleBtn');
-  if((Number(l.fee)||0) > 0){
-    if(feeRow) feeRow.style.display = 'flex';
-    if(feeBtn) feeBtn.classList.add('active');
-  }
-  renderQuickPickers();
-  setQmDockMode('none');
-  document.getElementById('quickModal').classList.add('show');
 }
 
 
 /* =========================================================
    #3. REPORTS PAGE ("تحليل المعاملات")
-   - 3.1 Dual Total Boxes (إجمالي الدخل under الدخل, إجمالي المصروفات under المصروفات)
-   - 3.2 Custom App Select Modal for Period Mode
-   - 3.3 Category Drill-Down Page:
-     1) No green card
-     2) Unnumbered section titles in framed cards (.sec-title-card)
-     3) 3-column table: الصنف | النسبة | المبلغ (starting with الإجمالي | 100% | XXX)
-     4) SVG Line Chart with Vertical Y-Axis
-     5) Interactive Daily Transactions Feed with Copy / Edit / Delete
+   - 3.1 Keep Month/Period Filter at Top inside Category Drill-Down (#catDetailModal)
+   - 3.2 Clicking a Subcategory in Table 1 Filters the Line Chart & Daily Report below!
    ========================================================= */
 let activeReportTab = 'exp';
 let reportPeriodMode = 'monthly';
@@ -1362,7 +1412,6 @@ function renderReportsScreen(){
   document.getElementById('repCardTotalInc')?.classList.toggle('active-inc', isInc);
   document.getElementById('repCardTotalExp')?.classList.toggle('active-exp', !isInc);
 
-  // 3.1 Compute both Income Total and Expense Total for the active period to show under their respective tabs
   const incData = getReportFilteredTransactions(true);
   const expData = getReportFilteredTransactions(false);
   const totIncPeriod = round2(incData.list.reduce((s,t)=>s+(Number(t.amount)||0), 0));
@@ -1437,7 +1486,6 @@ function renderReportsScreen(){
   }).join('');
 }
 
-/* 3.3 Dedicated Category Drill-Down Analysis Page (#catDetailModal) */
 function buildSvgLineChartWithYAxis(monthTotals, isInc){
   const maxVal = Math.max(...monthTotals, 100);
   const niceMax = Math.ceil(maxVal / 100) * 100;
@@ -1447,7 +1495,6 @@ function buildSvgLineChartWithYAxis(monthTotals, isInc){
   const plotH = h - padT - padB;
   const strokeColor = isInc ? '#73a7ff' : '#43d6b2';
 
-  // 4 Y-axis ticks (0%, 33%, 66%, 100%)
   const ticks = [0, Math.round(niceMax * 0.33), Math.round(niceMax * 0.66), niceMax];
   const gridHtml = ticks.map(tv => {
     const y = padT + plotH - ((tv / niceMax) * plotH);
@@ -1457,7 +1504,6 @@ function buildSvgLineChartWithYAxis(monthTotals, isInc){
     `;
   }).join('');
 
-  // Y-axis vertical line & X-axis horizontal line
   const axesHtml = `
     <line x1="${padL}" y1="${padT}" x2="${padL}" y2="${padT + plotH}" stroke="var(--line2)" stroke-width="1.5"/>
     <line x1="${padL}" y1="${padT + plotH}" x2="${w - padR}" y2="${padT + plotH}" stroke="var(--line2)" stroke-width="1.5"/>
@@ -1496,10 +1542,52 @@ function buildSvgLineChartWithYAxis(monthTotals, isInc){
 }
 
 function openCategoryDrillDown(catName, txType){
-  activeCatDrillState = { catName, txType };
+  activeCatDrillState = { catName, txType, subFilter: '' };
+  renderCategoryDrillDownContent();
+  document.getElementById('catDetailModal').classList.add('show');
+}
+
+function selectSubcategoryInDrillDown(subName){
+  if(!activeCatDrillState) return;
+  activeCatDrillState.subFilter = (activeCatDrillState.subFilter === subName) ? '' : subName;
+  renderCategoryDrillDownContent();
+}
+
+function shiftCatDrillPeriod(delta){
+  shiftReportPeriod(delta);
+  if(activeCatDrillState) renderCategoryDrillDownContent();
+}
+
+function openCatDrillPeriodPicker(){
+  openCompactYMPicker(null, false, (chosenYM)=>{
+    const [y,m] = chosenYM.split('-').map(Number);
+    activeYear = y; activeMonth = m; forecastYear = y;
+    renderAll();
+    if(activeCatDrillState) renderCategoryDrillDownContent();
+  });
+}
+
+function renderCategoryDrillDownContent(){
+  if(!activeCatDrillState) return;
+  const { catName, txType, subFilter } = activeCatDrillState;
   const isInc = (txType === 'income');
   const { periodLabel, yearForChart, list } = getReportFilteredTransactions(isInc);
-  const catTxs = list
+
+  // Update top period stepper inside #catDetailModal (3.1)
+  document.getElementById('catDetailTitle').textContent = subFilter ? `${catName} / ${subFilter}` : catName;
+  const subBadge = document.getElementById('catDetailSubFilterBadge');
+  if(subBadge){
+    subBadge.style.display = subFilter ? 'inline-block' : 'none';
+    subBadge.textContent = `إلغاء فلتر «${subFilter}» ✕`;
+  }
+  const stepBox = document.getElementById('catDetailStepperBox');
+  const stepLbl = document.getElementById('catDetailStepLabel');
+  const pLbl = document.getElementById('catDetailPeriodLabel');
+  if(stepBox) stepBox.style.display = (reportPeriodMode === 'monthly' || reportPeriodMode === 'yearly') ? 'inline-flex' : 'none';
+  if(stepLbl) stepLbl.textContent = (reportPeriodMode === 'yearly') ? String(reportYear) : formatYMArabic(selected());
+  if(pLbl) pLbl.textContent = `الفترة: ${periodLabel}`;
+
+  const allMainCatTxs = list
     .filter(t => (String(t.category||'أخرى').trim() || 'أخرى') === catName)
     .map((x, idx)=>({...x, _kind:'tx', _order: getItemTimestampOrder(x, idx)}))
     .sort((a,b)=>{
@@ -1507,23 +1595,21 @@ function openCategoryDrillDown(catName, txType){
       if(dc !== 0) return dc;
       return (b._order||0) - (a._order||0);
     });
-  const totalCatAmt = round2(catTxs.reduce((s,t)=>s+(Number(t.amount)||0), 0));
+  const totalCatAmt = round2(allMainCatTxs.reduce((s,t)=>s+(Number(t.amount)||0), 0));
 
-  document.getElementById('catDetailTitle').textContent = catName;
-  document.getElementById('catDetailPeriodBadge').textContent = periodLabel;
-
-  // 3.3.3 Subcategory Breakdown Table: الصنف | النسبة | المبلغ (Starts with الإجمالي | 100% | Total)
+  // 1) Subcategory Breakdown Table (Clickable rows to filter Chart & Daily Report! 3.2)
   const bySub = {};
-  for(const t of catTxs){
+  for(const t of allMainCatTxs){
     const sub = String(t.subCategory||'').trim() || catName;
     bySub[sub] = round2((bySub[sub]||0) + (Number(t.amount)||0));
   }
   const subEntries = Object.entries(bySub).sort((a,b)=>b[1]-a[1]);
   const subRowsHtml = subEntries.map(([sub, amt])=>{
     const pct = totalCatAmt > 0 ? Math.round((amt / totalCatAmt) * 100) : 0;
+    const isSel = (subFilter === sub);
     return `
-      <tr>
-        <td><b>${esc(sub)}</b></td>
+      <tr class="${isSel?'selected-sub':''}" onclick="selectSubcategoryInDrillDown(${JSON.stringify(sub).replace(/"/g,'&quot;')})">
+        <td><b>${esc(sub)}</b> ${isSel?'<span class="tag" style="margin-left:4px;color:var(--mint)">محدد</span>':''}</td>
         <td>${pct}%</td>
         <td class="num ${isInc?'blue':'red'}"><b>${maskable(fmtNum(amt))}</b></td>
       </tr>
@@ -1534,13 +1620,13 @@ function openCategoryDrillDown(catName, txType){
     <table class="subcat-table">
       <thead>
         <tr>
-          <th>الصنف</th>
+          <th>الصنف (اضغط للفلترة)</th>
           <th>النسبة</th>
           <th class="num">المبلغ</th>
         </tr>
       </thead>
       <tbody>
-        <tr class="total-row">
+        <tr class="total-row ${!subFilter?'selected-sub':''}" onclick="selectSubcategoryInDrillDown('')">
           <td><b>الإجمالي</b></td>
           <td><b>100%</b></td>
           <td class="num"><b>${maskable(fmtNum(totalCatAmt))}</b></td>
@@ -1550,10 +1636,14 @@ function openCategoryDrillDown(catName, txType){
     </table>
   `;
 
-  // 3.3.4 Line Chart with Vertical Y-Axis across 12 months
+  // 2) Line Chart with Vertical Y-Axis (Filtered by subFilter if a subcategory is selected!)
   const allYearMatching = (state.transactions||[]).filter(t => {
     if(isInc ? t.type!=='income' : !isActualExpenseTx(t)) return false;
     if((String(t.category||'أخرى').trim()||'أخرى') !== catName) return false;
+    if(subFilter){
+      const tSub = String(t.subCategory||'').trim() || catName;
+      if(tSub !== subFilter) return false;
+    }
     return String(t.date||'').startsWith(String(yearForChart));
   });
   const monthTotals = Array(12).fill(0);
@@ -1563,21 +1653,22 @@ function openCategoryDrillDown(catName, txType){
   }
   const lineChartHtml = buildSvgLineChartWithYAxis(monthTotals, isInc);
 
-  // 3.3.5 Interactive Daily Transactions Feed (same as Daily Transactions with Copy / Edit / Delete!)
-  const dailyFeedHtml = buildDailyGroupedFeedHtml(catTxs, 'لا توجد معاملات مسجلة لهذا البند.');
+  // 3) Daily Transactions Report (Filtered by subFilter if a subcategory is selected!)
+  const displayedTxs = subFilter
+    ? allMainCatTxs.filter(t => (String(t.subCategory||'').trim() || catName) === subFilter)
+    : allMainCatTxs;
+  const dailyFeedHtml = buildDailyGroupedFeedHtml(displayedTxs, 'لا توجد معاملات مسجلة لهذا البند في هذه الفترة.');
 
-  // 3.3.1 & 3.3.2 No green card, unnumbered section titles inside framed .sec-title-card
   document.getElementById('catDetailBody').innerHTML = `
     <div class="sec-title-card" style="margin-top:4px"><h2>توزيع البنود الفرعية</h2></div>
     <div class="panel" style="padding:0;overflow:hidden">${subTableHtml}</div>
 
-    <div class="sec-title-card"><h2>الرسم البياني الشهري (${yearForChart})</h2></div>
+    <div class="sec-title-card"><h2>الرسم البياني الشهري (${yearForChart})${subFilter?' – '+esc(subFilter):''}</h2></div>
     <div class="panel" style="padding:12px 10px">${lineChartHtml}</div>
 
-    <div class="sec-title-card"><h2>التقرير اليومي التفصيلي</h2><span class="tag">${catTxs.length} معاملة</span></div>
+    <div class="sec-title-card"><h2>التقرير اليومي التفصيلي${subFilter?' – '+esc(subFilter):''}</h2><span class="tag">${displayedTxs.length} معاملة</span></div>
     <div>${dailyFeedHtml}</div>
   `;
-  document.getElementById('catDetailModal').classList.add('show');
 }
 
 function closeCatDetailModal(){
@@ -1588,8 +1679,10 @@ function closeCatDetailModal(){
 
 /* =========================================================
    #1. QUICK TRANSACTION ENTRY MODAL (#quickModal)
-   - 1.1 No "عام (بدون فرعي)" item in subcategory list; default subCategory is '' automatically!
-   - 1.3 "ملاحظات" + 1.4 multi-line "الوصف" (saved on t.description, hidden from daily row, searchable)
+   - 1.1 Compact upper section
+   - 1.2 Fixed-size lower dock (never collapses or resizes)
+   - 1.3 Clear divider line
+   - 2.2 Direct Edit with Copy & Delete buttons inside modal
    ========================================================= */
 let qmState = { type:'expense', accountId:'', toAccountId:'', category:'', subCategory:'', isCard:false, cardMode:'swipe', editId:null, editKind:'tx', dock:'acc' };
 
@@ -1599,8 +1692,11 @@ function getActiveCatTree(){
 }
 
 function setQmDockMode(mode){
-  qmState.dock = mode;
-  const dockBox = document.getElementById('qmBottomDock');
+  // 1.2 Keep #qmBottomDock always visible at fixed size; only switch which inner panel is shown
+  const effectiveMode = (mode === 'acc' || mode === 'toAcc' || mode === 'cat')
+    ? mode
+    : (qmState.type === 'transfer' ? 'toAcc' : 'cat');
+  qmState.dock = effectiveMode;
   const dAcc = document.getElementById('qmDockAcc');
   const dToAcc = document.getElementById('qmDockToAcc');
   const dCat = document.getElementById('qmDockCat');
@@ -1610,18 +1706,21 @@ function setQmDockMode(mode){
 
   [tAcc, tToAcc, tCat].forEach(el=>{ if(el) el.classList.remove('focused-field'); });
 
-  if(mode === 'none'){
-    dockBox.style.display = 'none';
-    return;
-  }
-  dockBox.style.display = 'flex';
-  dAcc.style.display = mode === 'acc' ? 'flex' : 'none';
-  dToAcc.style.display = mode === 'toAcc' ? 'flex' : 'none';
-  dCat.style.display = mode === 'cat' ? 'flex' : 'none';
+  if(dAcc) dAcc.style.display = effectiveMode === 'acc' ? 'flex' : 'none';
+  if(dToAcc) dToAcc.style.display = effectiveMode === 'toAcc' ? 'flex' : 'none';
+  if(dCat) dCat.style.display = effectiveMode === 'cat' ? 'flex' : 'none';
 
-  if(mode === 'acc' && tAcc) tAcc.classList.add('focused-field');
-  if(mode === 'toAcc' && tToAcc) tToAcc.classList.add('focused-field');
-  if(mode === 'cat' && tCat) tCat.classList.add('focused-field');
+  if(effectiveMode === 'acc' && tAcc) tAcc.classList.add('focused-field');
+  if(effectiveMode === 'toAcc' && tToAcc) tToAcc.classList.add('focused-field');
+  if(effectiveMode === 'cat' && tCat) tCat.classList.add('focused-field');
+}
+
+function updateQmEditActionButtons(){
+  const hasEdit = !!qmState.editId;
+  const btnCopy = document.getElementById('qmBtnCopyExisting');
+  const btnDel = document.getElementById('qmBtnDeleteExisting');
+  if(btnCopy) btnCopy.style.display = hasEdit ? 'inline-block' : 'none';
+  if(btnDel) btnDel.style.display = hasEdit ? 'inline-block' : 'none';
 }
 
 function toggleQuickTransferFeeRow(){
@@ -1667,6 +1766,7 @@ function openQuickAddModal(defaultType){
   setv('qmDesc', '');
   document.getElementById('qmFeeRow').style.display = 'none';
   document.getElementById('qmFeeToggleBtn')?.classList.remove('active');
+  updateQmEditActionButtons();
   setQuickTxType(qmState.type);
   renderQuickPickers();
   setQmDockMode('acc');
@@ -1700,16 +1800,49 @@ function openEditQuickTx(id){
     editKind: 'tx',
     dock: 'cat'
   };
-  document.getElementById('qmHeaderTitle').textContent = 'تعديل حركة';
+  document.getElementById('qmHeaderTitle').textContent = 'تعديل المعاملة';
   setv('qmDate', t.date || today());
   setv('qmAmount', t.amount || '');
   setv('qmFee', '');
   setv('qmNote', String(t.title||'').replace(/^شراء بالبطاقة\s*-\s*/,''));
   setv('qmDesc', t.description || '');
   document.getElementById('qmFeeRow').style.display = 'none';
+  updateQmEditActionButtons();
   setQuickTxType(qmState.type);
   renderQuickPickers();
   setQmDockMode('cat');
+  document.getElementById('quickModal').classList.add('show');
+}
+
+function openEditLedgerModal(l){
+  qmState = {
+    type: 'transfer',
+    accountId: l.from || '',
+    toAccountId: l.to || '',
+    category: '',
+    subCategory: '',
+    isCard: false,
+    cardMode: 'swipe',
+    editId: l.id,
+    editKind: 'ledger',
+    dock: 'toAcc'
+  };
+  document.getElementById('qmHeaderTitle').textContent = 'تعديل التحويل';
+  setv('qmDate', l.date || today());
+  setv('qmAmount', l.amount || '');
+  setv('qmFee', l.fee || '');
+  setv('qmNote', l.note || '');
+  setv('qmDesc', l.description || '');
+  updateQmEditActionButtons();
+  setQuickTxType('transfer');
+  const feeRow = document.getElementById('qmFeeRow');
+  const feeBtn = document.getElementById('qmFeeToggleBtn');
+  if((Number(l.fee)||0) > 0){
+    if(feeRow) feeRow.style.display = 'flex';
+    if(feeBtn) feeBtn.classList.add('active');
+  }
+  renderQuickPickers();
+  setQmDockMode('toAcc');
   document.getElementById('quickModal').classList.add('show');
 }
 
@@ -1747,7 +1880,7 @@ function setQuickTxType(t){
     }
   }
   renderQuickPickers();
-  setQmDockMode('acc');
+  setQmDockMode(qmState.editId ? (isTrn ? 'toAcc' : 'cat') : 'acc');
 }
 
 function setQmCardMode(mode){
@@ -1819,10 +1952,9 @@ function renderQuickPickers(){
         </button>`;
       }).join('');
 
-      // 1.1 No "عام (بدون فرعي)" item; subCategory defaults to '' automatically if user doesn't pick one!
       const subs = tree[qmState.category] || [];
       if(!subs.length){
-        subColEl.innerHTML = '<div class="empty" style="padding:14px 6px;font-size:.68rem">بدون أقسام فرعية (القسم الرئيسي هو الافتراضي)</div>';
+        subColEl.innerHTML = '<div class="empty" style="padding:14px 6px;font-size:.68rem">بدون أقسام فرعية</div>';
       } else {
         subColEl.innerHTML = subs.map(sc=>`
           <button type="button" class="mm-cat-item ${sc===qmState.subCategory?'active':''}" onclick="selectQuickSubCat('${esc(sc)}')"><span>${esc(sc)}</span></button>
@@ -1845,23 +1977,20 @@ function selectQuickAcc(id, isCard){
 function selectQuickToAcc(id){
   qmState.toAccountId = id;
   renderQuickPickers();
-  setQmDockMode('none');
   document.getElementById('qmAmount')?.focus();
 }
 function selectQuickMainCat(mc){
   qmState.category = mc;
-  qmState.subCategory = ''; // Default is general (no subcategory) unless user taps a subcategory
+  qmState.subCategory = '';
   renderQuickPickers();
   const subs = getActiveCatTree()[mc] || [];
   if(!subs.length){
-    setQmDockMode('none');
     document.getElementById('qmAmount')?.focus();
   }
 }
 function selectQuickSubCat(sc){
   qmState.subCategory = (qmState.subCategory === sc) ? '' : sc;
   renderQuickPickers();
-  setQmDockMode('none');
   document.getElementById('qmAmount')?.focus();
 }
 function openAddQuickCatPrompt(isSub){
@@ -2371,10 +2500,8 @@ function commitMmbakDirect(){
 
 
 /* =========================================================
-   #4 & #5: ACCOUNTS TAB & CREDIT CARDS TAB
-   - 4.4 Inline Account Statement inside Accounts Tab (Daily Transactions layout filtered by Account, no green card, with Copy / Edit / Delete!)
-   - 5.3 Registered Cards: Hide system & payday, show Available Balance on the right
-   - 5.4 Inline Card Statement inside Cards Tab (Daily Transactions layout filtered by Card, no green card, with Copy / Edit / Delete!)
+   #4.1 FULL STATEMENT MODAL FOR ACCOUNTS & CARDS
+   (Daily Transactions Style + Month Filter + Income / Expenses / Net Summary Boxes!)
    ========================================================= */
 function addAccount(){
   let name = val('accName').trim(), opening = num('accOpening');
@@ -2387,7 +2514,6 @@ function addAccount(){
 function deleteAccount(id){
   showAppConfirm('حذف الحساب', 'هل تريد حذف هذا الحساب؟', ()=>{
     state.accounts = state.accounts.filter(a=>a.id!==id);
-    if(activeInlineAccountId === id) closeInlineAccountStatement();
     persist(); toast('تم حذف الحساب');
   }, true);
 }
@@ -2395,122 +2521,194 @@ function closeAccountModal(){
   document.getElementById('accountModal').classList.remove('show');
 }
 
-/* 4.4 Inline Account Statement inside Accounts Tab (Same as Daily Transactions with Filter) */
 function openAccountStatement(id){
   const acc = state.accounts.find(a=>a.id===id);
   if(!acc) return;
-  activeInlineAccountId = id;
-  const wrap = document.getElementById('accInlineStatementWrap');
-  const titleEl = document.getElementById('accInlineStatementTitle');
-  const feedEl = document.getElementById('accInlineStatementFeed');
-  if(!wrap || !feedEl) return;
-
-  titleEl.textContent = `كشف حساب: ${acc.name}`;
-  const isEn = (state.prefs?.lang === 'en');
-
-  const txItems = (state.transactions||[]).filter(t=>t.accountId===id).map((x, idx)=>({...x, _kind:'tx', _order:getItemTimestampOrder(x, idx)}));
-  const ledItems = (state.ledger||[]).filter(l=>l.from===id || l.to===id).map((l, idx)=>{
-    const fromA = state.accounts.find(a=>a.id===l.from)?.name || (isEn?'Cash':'كاش');
-    const toA = state.accounts.find(a=>a.id===l.to)?.name || (isEn?'Cash':'كاش');
-    const feeTxt = (Number(l.fee)||0) > 0 ? ` (${isEn?'Fee':'رسوم'}: ${fmt(l.fee)})` : '';
-    return {
-      id: l.id,
-      type: l.type,
-      category: l.type==='transfer' ? (isEn?'Transfer':'تحويل') : (isEn?'Adjustment':'تسوية'),
-      subCategory: '',
-      title: (l.note && l.note !== 'تحويل بين الحسابات') ? (l.note + feeTxt) : feeTxt.trim(),
-      note: l.note || '',
-      accountLabel: l.type==='transfer' ? `${fromA} → ${toA}` : fromA,
-      accountId: l.from,
-      toAccountId: l.to,
-      amount: l.type==='transfer' ? Number(l.amount)||0 : Number(l.delta??l.amount)||0,
-      date: l.date,
-      _kind: 'ledger',
-      _order: getItemTimestampOrder(l, 100000 + idx)
-    };
-  });
-
-  const combined = [...txItems, ...ledItems].sort((a,b)=>{
-    const dc = String(b.date||'').localeCompare(String(a.date||''));
-    if(dc !== 0) return dc;
-    return (b._order||0) - (a._order||0);
-  });
-
-  feedEl.innerHTML = buildDailyGroupedFeedHtml(combined, `لا توجد معاملات مسجلة لحساب «${esc(acc.name)}».`);
-  wrap.style.display = 'block';
-  setTimeout(()=>wrap.scrollIntoView({behavior:'smooth', block:'start'}), 60);
+  activeStatementState = { kind:'account', id, year:activeYear, month:activeMonth, allMonths:false };
+  renderFullStatementModalContent();
+  document.getElementById('statementFullModal').classList.add('show');
 }
 
-function closeInlineAccountStatement(){
-  activeInlineAccountId = null;
-  const wrap = document.getElementById('accInlineStatementWrap');
-  if(wrap) wrap.style.display = 'none';
-}
-
-/* 5.4 Inline Card Statement inside Cards Tab (Same as Daily Transactions with Filter) */
 function openCardStatement(cardId){
   const card = state.cards.find(c=>c.id===cardId);
   if(!card) return;
-  activeInlineCardId = cardId;
-  const wrap = document.getElementById('cardInlineStatementWrap');
-  const titleEl = document.getElementById('cardInlineStatementTitle');
-  const feedEl = document.getElementById('cardInlineStatementFeed');
-  if(!wrap || !feedEl) return;
+  activeStatementState = { kind:'card', id:cardId, year:activeYear, month:activeMonth, allMonths:false };
+  renderFullStatementModalContent();
+  document.getElementById('statementFullModal').classList.add('show');
+}
 
-  titleEl.textContent = `كشف حساب بطاقة: ${card.name}`;
-  const cardOpIds = new Set((state.cardOps||[]).filter(o=>o.cardId===cardId).map(o=>o.id));
-  const cardPayIds = new Set((state.cardPayments||[]).filter(p=>p.cardId===cardId).map(p=>p.id));
+function closeFullStatementModal(){
+  document.getElementById('statementFullModal')?.classList.remove('show');
+  activeStatementState = null;
+}
 
-  // Find all transactions linked to this card (purchases, installments, or payments)
-  const cardTxs = (state.transactions||[]).filter(t=>{
-    if(t.source && String(t.source).startsWith('card-purchase:')){
-      const opId = String(t.source).replace('card-purchase:','');
-      if(cardOpIds.has(opId)) return true;
+function toggleStatementAllMonths(){
+  if(!activeStatementState) return;
+  activeStatementState.allMonths = !activeStatementState.allMonths;
+  renderFullStatementModalContent();
+}
+
+function shiftStatementMonth(delta){
+  if(!activeStatementState) return;
+  activeStatementState.allMonths = false;
+  let m = activeStatementState.month + delta;
+  let y = activeStatementState.year;
+  if(m < 1){ m = 12; y -= 1; }
+  else if(m > 12){ m = 1; y += 1; }
+  activeStatementState.month = m;
+  activeStatementState.year = y;
+  renderFullStatementModalContent();
+}
+
+function openStatementPeriodPicker(){
+  if(!activeStatementState) return;
+  openCompactYMPicker(null, false, (chosenYM)=>{
+    const [y,m] = chosenYM.split('-').map(Number);
+    activeStatementState.year = y;
+    activeStatementState.month = m;
+    activeStatementState.allMonths = false;
+    renderFullStatementModalContent();
+  });
+}
+
+function renderFullStatementModalContent(){
+  if(!activeStatementState) return;
+  const { kind, id, year, month, allMonths } = activeStatementState;
+  const isEn = (state.prefs?.lang === 'en');
+  const ym = String(year) + '-' + String(month).padStart(2,'0');
+
+  const allBtn = document.getElementById('stmtAllMonthsBtn');
+  if(allBtn){
+    allBtn.classList.toggle('active', !!allMonths);
+    allBtn.style.borderColor = allMonths ? 'var(--mint)' : 'var(--line2)';
+    allBtn.style.color = allMonths ? 'var(--mint)' : 'var(--text)';
+    allBtn.textContent = allMonths ? 'عرض بالشهر' : 'كل الشهور';
+  }
+  document.getElementById('stmtPeriodLabel').textContent = allMonths ? 'كل الشهور' : formatYMArabic(ym);
+
+  let combined = [];
+  if(kind === 'account'){
+    const acc = state.accounts.find(a=>a.id===id);
+    document.getElementById('stmtModalTitle').textContent = `كشف حساب: ${acc ? acc.name : ''}`;
+
+    const txItems = (state.transactions||[])
+      .filter(t => t.accountId===id && (allMonths || monthKey(t.date)===ym))
+      .map((x, idx)=>({...x, _kind:'tx', _order:getItemTimestampOrder(x, idx)}));
+
+    const ledItems = (state.ledger||[])
+      .filter(l => (l.from===id || l.to===id) && (allMonths || monthKey(l.date)===ym))
+      .map((l, idx)=>{
+        const fromA = state.accounts.find(a=>a.id===l.from)?.name || (isEn?'Cash':'كاش');
+        const toA = state.accounts.find(a=>a.id===l.to)?.name || (isEn?'Cash':'كاش');
+        const feeTxt = (Number(l.fee)||0) > 0 ? ` (${isEn?'Fee':'رسوم'}: ${fmt(l.fee)})` : '';
+        return {
+          id: l.id,
+          type: l.type,
+          category: l.type==='transfer' ? (isEn?'Transfer':'تحويل') : (isEn?'Adjustment':'تسوية'),
+          subCategory: '',
+          title: (l.note && l.note !== 'تحويل بين الحسابات') ? (l.note + feeTxt) : feeTxt.trim(),
+          note: l.note || '',
+          accountLabel: l.type==='transfer' ? `${fromA} → ${toA}` : fromA,
+          accountId: l.from,
+          toAccountId: l.to,
+          amount: l.type==='transfer' ? Number(l.amount)||0 : Number(l.delta??l.amount)||0,
+          fee: Number(l.fee)||0,
+          date: l.date,
+          _kind: 'ledger',
+          _order: getItemTimestampOrder(l, 100000 + idx)
+        };
+      });
+
+    combined = [...txItems, ...ledItems];
+  } else {
+    const card = state.cards.find(c=>c.id===id);
+    const cName = card ? card.name : 'بطاقة';
+    document.getElementById('stmtModalTitle').textContent = `كشف بطاقة: ${cName}`;
+
+    const cardOpIds = new Set((state.cardOps||[]).filter(o=>o.cardId===id).map(o=>o.id));
+    const cardPayIds = new Set((state.cardPayments||[]).filter(p=>p.cardId===id).map(p=>p.id));
+
+    // Synthesize missing transaction rows for cardOps if needed
+    const existingCardTxs = (state.transactions||[]).filter(t=>t.source && String(t.source).startsWith('card-purchase:'));
+    const coveredOpIds = new Set(existingCardTxs.map(t=>String(t.source).replace('card-purchase:','')));
+    for(const o of (state.cardOps||[]).filter(op=>op.cardId===id)){
+      if(!coveredOpIds.has(o.id)){
+        state.transactions.push({
+          id: 'card-purchase-' + o.id,
+          type: 'card_purchase',
+          title: o.title,
+          category: o.type==='installment' ? `تقسيط ${o.months} شهر` : 'مشتريات بطاقة',
+          subCategory: '',
+          amount: Number(o.amount)||0,
+          date: o.date || (o.purchaseMonth ? o.purchaseMonth+'-01' : today()),
+          accountId: null,
+          accountLabel: cName,
+          source: 'card-purchase:' + o.id,
+          createdAt: o.createdAt || Date.now()
+        });
+      }
     }
-    if(t.linkedCardOpId && cardOpIds.has(t.linkedCardOpId)) return true;
-    if(t.linkedCardPaymentRecordId && cardPayIds.has(t.linkedCardPaymentRecordId)) return true;
-    if(t.source === 'card-payment' && String(t.title||'').includes(card.name)) return true;
-    return false;
-  }).map((x, idx)=>({...x, accountLabel: card.name, _kind:'tx', _order:getItemTimestampOrder(x, idx)}));
 
-  // Also synthesize any cardOp that doesn't have a corresponding transaction row yet
-  const coveredOpIds = new Set(cardTxs.map(t=>String(t.source||'').replace('card-purchase:','')));
-  for(const o of (state.cardOps||[]).filter(op=>op.cardId===cardId)){
-    if(!coveredOpIds.has(o.id)){
-      const synthTxId = 'card-purchase-' + o.id;
-      const newTx = {
-        id: synthTxId,
-        type: 'card_purchase',
-        title: o.title,
-        category: o.type==='installment' ? `تقسيط ${o.months} شهر` : 'مشتريات بطاقة',
-        subCategory: '',
-        amount: Number(o.amount)||0,
-        date: o.date || (o.purchaseMonth ? o.purchaseMonth+'-01' : today()),
-        accountId: null,
-        accountLabel: card.name,
-        source: 'card-purchase:' + o.id,
-        createdAt: o.createdAt || Date.now()
-      };
-      state.transactions.push(newTx);
-      cardTxs.push({...newTx, _kind:'tx', _order: newTx.createdAt});
-    }
+    combined = (state.transactions||[]).filter(t=>{
+      if(!allMonths && monthKey(t.date) !== ym) return false;
+      if(t.source && String(t.source).startsWith('card-purchase:')){
+        const opId = String(t.source).replace('card-purchase:','');
+        if(cardOpIds.has(opId)) return true;
+      }
+      if(t.linkedCardOpId && cardOpIds.has(t.linkedCardOpId)) return true;
+      if(t.linkedCardPaymentRecordId && cardPayIds.has(t.linkedCardPaymentRecordId)) return true;
+      if(t.source === 'card-payment' && String(t.title||'').includes(cName)) return true;
+      return false;
+    }).map((x, idx)=>({
+      ...x,
+      type: x.source === 'card-payment' ? 'income' : 'expense',
+      accountLabel: cName,
+      _kind: 'tx',
+      _order: getItemTimestampOrder(x, idx)
+    }));
   }
 
-  const sorted = cardTxs.sort((a,b)=>{
+  combined.sort((a,b)=>{
     const dc = String(b.date||'').localeCompare(String(a.date||''));
     if(dc !== 0) return dc;
     return (b._order||0) - (a._order||0);
   });
 
-  feedEl.innerHTML = buildDailyGroupedFeedHtml(sorted, `لا توجد معاملات مسجلة لبطاقة «${esc(card.name)}».`);
-  wrap.style.display = 'block';
-  setTimeout(()=>wrap.scrollIntoView({behavior:'smooth', block:'start'}), 60);
-}
+  // Calculate Income, Expenses, and Net for the statement period (4.1)
+  let stmtInc = 0, stmtExp = 0;
+  for(const it of combined){
+    if(kind === 'account'){
+      if(it._kind === 'ledger'){
+        if(it.type === 'transfer'){
+          if(it.toAccountId === id) stmtInc += Number(it.amount)||0;
+          if(it.accountId === id) stmtExp += (Number(it.amount)||0) + (Number(it.fee)||0);
+        } else if(it.type === 'adjust'){
+          const d = Number(it.amount)||0;
+          if(d >= 0) stmtInc += d; else stmtExp += Math.abs(d);
+        }
+      } else {
+        if(it.type === 'income' || it.type === 'fund') stmtInc += Number(it.amount)||0;
+        else stmtExp += Number(it.amount)||0;
+      }
+    } else {
+      if(it.type === 'income') stmtInc += Number(it.amount)||0;
+      else stmtExp += Number(it.amount)||0;
+    }
+  }
+  stmtInc = round2(stmtInc);
+  stmtExp = round2(stmtExp);
+  const stmtNet = round2(stmtInc - stmtExp);
 
-function closeInlineCardStatement(){
-  activeInlineCardId = null;
-  const wrap = document.getElementById('cardInlineStatementWrap');
-  if(wrap) wrap.style.display = 'none';
+  document.getElementById('stmtIncomeHero').textContent = maskable(fmtNum(stmtInc));
+  document.getElementById('stmtExpenseHero').textContent = maskable(fmtNum(stmtExp));
+  const netEl = document.getElementById('stmtNetHero');
+  netEl.textContent = maskable(fmtNum(stmtNet));
+  netEl.className = stmtNet >= 0 ? 'mint' : 'red';
+
+  document.getElementById('stmtTransactionsFeed').innerHTML = buildDailyGroupedFeedHtml(
+    combined,
+    `لا توجد معاملات مسجلة في (${allMonths ? 'كل الشهور' : formatYMArabic(ym)}).`
+  );
 }
 
 function openEditAccountModal(id){
@@ -2584,7 +2782,6 @@ function renderAccountsAndCards(){
     </div>
   `).join('') : '<div class="empty">لا توجد حسابات مسجلة.</div>';
 
-  // 5.1 & 5.3 Credit Cards Tab
   const debt = allCardsOutstanding();
   document.getElementById('cardDebtTotal').textContent = maskable(egpSmart(debt));
 
@@ -2592,7 +2789,6 @@ function renderAccountsAndCards(){
   const opCardEl = document.getElementById('opCard');
   if(opCardEl) opCardEl.innerHTML = cardOpts;
 
-  // 5.3.2 & 5.3.3 Remove system & payday from collapsed row, and replace "اضغط للتفاصيل" with Available Balance (الرصيد المتاح)
   document.getElementById('cardsList').innerHTML = state.cards.length ? state.cards.map(c=>{
     const d = cardTotalOutstanding(c);
     const av = cardCurrentAvailable(c);
@@ -2601,7 +2797,7 @@ function renderAccountsAndCards(){
       <div class="info">
         <b>${esc(c.name)}</b>
       </div>
-      <strong class="mint" style="font-size:.82rem"><small style="color:var(--muted);font-size:.66rem;margin-right:4px">المتاح:</small>${maskable(egpSmart(av))}</strong>
+      <strong class="mint" style="font-size:.82rem"><small style="color:var(--muted);font-size:.66rem;margin-right:4px">الرصيد المتاح:</small>${maskable(egpSmart(av))}</strong>
       <div class="card-detail-strip">
         <div><small>الحد الائتماني</small><b class="blue">${maskable(egp(lim))}</b></div>
         <div><small>المتاح</small><b class="mint">${maskable(egp(av))}</b></div>
@@ -2640,7 +2836,6 @@ function recalculateInstallmentOpWithTerms(op, card, monthlyRateDecimal, adminRa
   }));
 }
 
-/* 5.2 & 6.2 Edit Card (Includes 15 months + Clear Column Headers + Prompt: الجديدة فقط vs الجديدة والحالية) */
 function openEditCardModal(cardId){
   const card = state.cards.find(c=>c.id===cardId);
   if(!card) return;
@@ -2748,14 +2943,12 @@ function deleteCard(cardId){
     state.cards = state.cards.filter(c=>c.id!==cardId);
     state.cardOps = state.cardOps.filter(o=>o.cardId!==cardId);
     state.transactions = state.transactions.filter(t=>!t.source || ![...opIds].some(id=>t.source==='card-purchase:'+id));
-    if(activeInlineCardId === cardId) closeInlineCardStatement();
     syncCardInstallmentsToCommitments();
     persist();
     toast('تم حذف البطاقة ✓');
   }, true);
 }
 
-/* 6.2 Edit Single Card Operation (Applies strictly to THIS operation only, without altering the card's global terms or other operations) */
 function openEditCardOpModal(opId){
   const op = state.cardOps.find(o=>o.id===opId);
   if(!op) return;
@@ -2851,8 +3044,7 @@ function dueDateFor(card,date){
 
 /* =========================================================
    #6: COMMITMENTS PAGE (الالتزامات)
-   - 6.2 Structured Monthly Dues + Payment Dialog (Account & Date selector) + Reversible Payment if Transaction is Deleted
-   - 6.3 New Section: جميع المستحقات (Sorted newest-first descending: المعاملة | النوع | المدة | البدء | الانتهاء)
+   - 6.1 & 6.2 جميع المستحقات: Add Amount column (المبلغ) & change "التزامات شهرية" to "شهري"
    ========================================================= */
 function setCommitmentAddKind(kind){
   setv('comAddKind', kind);
@@ -2969,7 +3161,7 @@ function saveNewCommitmentItem(){
     state.commitments.push({
       id: 'com-' + nowTs,
       title,
-      type: 'التزامات شهرية',
+      type: 'شهري',
       freq: 'monthly',
       durationMonths: dur,
       amount,
@@ -3022,7 +3214,7 @@ function getUnifiedMonthlyDues(m){
     items.push({
       uid: c.id,
       kind: 'commitment',
-      categoryType: 'مستحقات مؤجلة',
+      categoryType: 'مستحقات',
       title: c.title,
       sub: c.dueDate ? `استحقاق: ${c.dueDate}` : 'مرة واحدة',
       amount: amt,
@@ -3040,7 +3232,7 @@ function getUnifiedMonthlyDues(m){
     items.push({
       uid: c.id,
       kind: 'commitment',
-      categoryType: 'التزامات شهرية',
+      categoryType: 'شهري',
       title: c.title,
       sub: `${formatYMArabic(c.start)} ← ${formatYMArabic(c.end)}`,
       amount: amt,
@@ -3115,7 +3307,6 @@ function getUnifiedMonthlyDues(m){
   return { items, totalDue: round2(totalDue) };
 }
 
-/* 6.2 Payment Dialog (Choose Account + Date + Amount instead of immediate irreversible 1-click payment!) */
 function openPayDueDialog(kind, uid, opId, month, defaultAmt, itemTitle){
   if(defaultAmt <= 0){
     toast('مسدد بالكامل ✓ (احذف معاملة السداد من المعاملات اليومية لإلغاء السداد)');
@@ -3132,7 +3323,7 @@ function openPayDueDialog(kind, uid, opId, month, defaultAmt, itemTitle){
       <div class="c-row"><label>تاريخ السداد</label><input id="payDueDateInp" type="date" value="${today()}"></div>
       <div class="c-row"><label>المبلغ المسدد</label><input id="payDueAmtInp" type="number" step="0.01" value="${defaultAmt}"></div>
     </div>
-    <p class="hint">سيتم تسجيل حركة مصروف/سداد من الحساب المختار، وإذا حذفت الحركة من المعاملات اليومية لاحقاً سيعود البند إلى غير مسدد تلقائياً.</p>
+    <p class="hint">سيتم تسجيل حركة سداد من الحساب المختار، وإذا حذفت الحركة من المعاملات اليومية لاحقاً سيعود البند إلى غير مسدد تلقائياً.</p>
   `;
 
   showAppCustomForm('تسجيل سداد مستحق', formHtml, ()=>{
@@ -3269,7 +3460,6 @@ function renderPlanScreen(){
   document.getElementById('comHeroTotal').textContent = maskable(egpSmart(totalDue));
   document.getElementById('comMonthLabel').textContent = formatYMArabic(m);
 
-  // 6.2 Structured Columns for Monthly Dues (المعاملة | النوع | المبلغ المستحق)
   const listEl = document.getElementById('commitmentsList');
   if(!items.length){
     listEl.innerHTML = '<div class="empty">لا توجد مبالغ مستحقة في هذا الشهر.</div>';
@@ -3313,18 +3503,17 @@ function renderPlanScreen(){
     listEl.innerHTML = headHtml + rowsHtml;
   }
 
-  // 6.3 New Section: جميع المستحقات (Sorted descending newest-first: المعاملة | النوع | المدة | البدء | الانتهاء)
   renderAllCommitmentsMasterTable();
   renderYearlyExcelReport();
 }
 
+/* 6.1 & 6.2 جميع المستحقات: Columns = المعاملة | النوع (شهري / مستحقات / بطاقة) | المبلغ | المدة | البدء | الانتهاء */
 function renderAllCommitmentsMasterTable(){
   const wrap = document.getElementById('allCommitmentsTableWrap');
   if(!wrap) return;
   syncCardInstallmentsToCommitments();
 
   const allRows = [];
-  // 1) Non-card commitments (مستحقات مؤجلة & التزامات شهرية)
   (state.commitments||[]).filter(c => !c.cardOpId).forEach((c, idx)=>{
     const isOnce = (c.freq === 'once');
     const startYM = isOnce ? (c.dueDate ? c.dueDate.slice(0,7) : c.start) : c.start;
@@ -3339,7 +3528,8 @@ function renderAllCommitmentsMasterTable(){
       id: c.id,
       isCard: false,
       title: c.title,
-      typeLabel: isOnce ? 'مستحقات' : 'التزامات شهرية',
+      typeLabel: isOnce ? 'مستحقات' : 'شهري',
+      amountVal: Number(c.amount)||0,
       durLabel: isOnce ? 'مرة واحدة' : (durNum ? `${durNum} شهر` : 'شهري'),
       startLabel: formatYMArabic(startYM),
       endLabel: isOnce ? '—' : formatYMArabic(endYM),
@@ -3347,7 +3537,6 @@ function renderAllCommitmentsMasterTable(){
     });
   });
 
-  // 2) Card operations (معاملات البطاقة)
   (state.cardOps||[]).forEach((op, idx)=>{
     const isInst = (op.type === 'installment');
     const firstM = isInst ? (op.schedules?.[0]?.month || op.feeMonth || op.purchaseMonth) : (op.dueDate ? op.dueDate.slice(0,7) : op.purchaseMonth);
@@ -3357,6 +3546,7 @@ function renderAllCommitmentsMasterTable(){
       isCard: true,
       title: op.title,
       typeLabel: 'بطاقة',
+      amountVal: isInst ? (Number(op.installment)||0) : (Number(op.amount)||0),
       durLabel: isInst ? `${op.months} شهور` : 'مرة واحدة',
       startLabel: formatYMArabic(firstM),
       endLabel: isInst ? formatYMArabic(lastM) : '—',
@@ -3377,6 +3567,7 @@ function renderAllCommitmentsMasterTable(){
         <tr>
           <th>المعاملة</th>
           <th>النوع</th>
+          <th style="text-align:right">المبلغ</th>
           <th>المدة</th>
           <th>البدء</th>
           <th>الانتهاء</th>
@@ -3390,6 +3581,7 @@ function renderAllCommitmentsMasterTable(){
             <tr style="cursor:pointer" onclick="${editCall}" title="اضغط للتعديل">
               <td><b>${esc(r.title)}</b></td>
               <td><span class="tag">${esc(r.typeLabel)}</span></td>
+              <td style="text-align:right;direction:ltr"><b class="orange">${maskable(fmtNum(r.amountVal))}</b></td>
               <td>${esc(r.durLabel)}</td>
               <td>${esc(r.startLabel)}</td>
               <td>
@@ -3408,9 +3600,7 @@ function renderAllCommitmentsMasterTable(){
 
 
 /* =========================================================
-   #7.0 MANUAL YEARLY FINANCIAL REPORT (التقرير المالي السنوي اليدوي)
-   - Manual entry of Income items & Expense/Commitment items with Duration, Start Month, and End Month
-   - Reflected in the Excel-style table below, automatically calculating Total Income, Total Expenses, and Net!
+   #7. MANUAL YEARLY FINANCIAL REPORT + COLLAPSIBLE LIST OF ADDED ITEMS ("تعديل البنود المضافة")
    ========================================================= */
 function setAnnualPlanItemType(t){
   setv('annItemType', t);
@@ -3500,7 +3690,7 @@ function deleteAnnualPlanItem(id){
 function renderYearlyExcelReport(){
   const headEl = document.getElementById('yearlyExcelHead');
   const bodyEl = document.getElementById('yearlyBreakdownBody');
-  const chipsEl = document.getElementById('annualPlanItemsChips');
+  const listContainer = document.getElementById('annualPlanItemsListContainer');
   if(!headEl || !bodyEl) return;
 
   const curYM = selected();
@@ -3508,15 +3698,23 @@ function renderYearlyExcelReport(){
   document.getElementById('forecastYearLabel').textContent = y;
 
   const items = state.annualPlanItems || [];
-  if(chipsEl){
-    chipsEl.innerHTML = items.map(it=>`
-      <span class="tag" style="cursor:pointer;border-color:${it.type==='income'?'var(--blue)':'var(--orange)'};color:${it.type==='income'?'var(--blue)':'var(--orange)'};padding:5px 10px" onclick="openEditAnnualPlanItem('${it.id}')">
-        ${it.type==='income'?'+':'−'} ${esc(it.title)}: ${fmtInt(it.amount)} (${formatYMArabic(it.start)} ← ${formatYMArabic(it.end)}) ✎
-      </span>
-    `).join('');
+  // 7.1 Render added items inside the collapsible "تعديل البنود المضافة" fold
+  if(listContainer){
+    if(!items.length){
+      listContainer.innerHTML = '<div class="empty" style="padding:12px">لا توجد بنود مضافة بعد. افتح «إضافة بند للتقرير السنوي» بالأعلى لإضافة بنود الدخل أو المصروفات.</div>';
+    } else {
+      listContainer.innerHTML = items.map(it=>`
+        <div class="listitem" style="padding:9px 4px;cursor:pointer" onclick="openEditAnnualPlanItem('${it.id}')">
+          <div class="info">
+            <b>${esc(it.title)} <span class="tag" style="color:${it.type==='income'?'var(--blue)':'var(--orange)'}">${it.type==='income'?'دخل':'صرف'}</span></b>
+            <small>${formatYMArabic(it.start)} ← ${formatYMArabic(it.end)} (${it.durationMonths||12} شهر)</small>
+          </div>
+          <strong class="${it.type==='income'?'blue':'orange'}">${maskable(egpSmart(it.amount))} ✎</strong>
+        </div>
+      `).join('');
+    }
   }
 
-  // Group manual items by distinct column names for Income & Expense
   const incItems = items.filter(x=>x.type==='income');
   const expItems = items.filter(x=>x.type==='expense');
   const incCols = [...new Set(incItems.map(x=>x.title))];
@@ -3682,7 +3880,7 @@ function showSalaryResult(){
 
 
 /* =========================================================
-   8.2 SETTINGS CATEGORIES TREE MANAGER (Income on Left, Expense on Right)
+   SETTINGS CATEGORIES TREE MANAGER
    ========================================================= */
 let settingsCatMode = 'income';
 let expandedSettingsMainCats = {};
@@ -3879,7 +4077,15 @@ function clearYMCell(){
   if(ymPickerState.onSelect) ymPickerState.onSelect('');
 }
 
-/* 8.2 Auto Backup to Google Drive (Daily / Weekly / Monthly) & Manual Backup/Restore */
+/* =========================================================
+   #8.3 GOOGLE DRIVE CLOUD SYNC (Gmail Account + Direct Cloud Upload via Google Script / OAuth2 / Android Share)
+   ========================================================= */
+function saveDriveAccountConfig(){
+  state.prefs = state.prefs || {};
+  state.prefs.driveEmail = val('prefDriveEmail').trim();
+  persist();
+}
+
 function saveAutoDriveBackupFreq(freq){
   state.prefs = state.prefs || {};
   state.prefs.autoDriveFreq = freq || 'off';
@@ -3887,36 +4093,128 @@ function saveAutoDriveBackupFreq(freq){
   toast(freq === 'off' ? 'تم إيقاف النسخ التلقائي لجوجل درايف' : 'تم تفعيل جدول النسخ التلقائي لجوجل درايف ✓');
 }
 
+function openDriveCloudSetupModal(){
+  const p = state.prefs || {};
+  const scriptCode = `function doPost(e){var f=DriveApp.createFile('x-wallet-backup-'+new Date().toISOString().slice(0,10)+'.json',e.postData.contents,'application/json');return ContentService.createTextOutput(JSON.stringify({ok:true,id:f.getId()})).setMimeType(ContentService.MimeType.JSON);}`;
+  const formHtml = `
+    <div class="c-list">
+      <div class="c-row"><label>حساب الجيميل</label><input id="drvCfgEmail" type="email" placeholder="example@gmail.com" value="${esc(p.driveEmail||'')}"></div>
+      <div class="c-row"><label>رابط سحابة Drive</label><input id="drvCfgWebhook" placeholder="https://script.google.com/macros/s/.../exec" value="${esc(p.driveWebhookUrl||'')}"></div>
+      <div class="c-row"><label>أو توكن OAuth</label><input id="drvCfgToken" placeholder="اختياري (Access Token)" value="${esc(p.driveAccessToken||'')}"></div>
+    </div>
+    <div style="margin-top:8px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px;font-size:.68rem;color:var(--muted);line-height:1.55">
+      <b style="color:var(--mint);display:block;margin-bottom:3px">كيف ترفع تلقائياً في الخلفية لحساب جوجل درايف؟</b>
+      1. افتح <b>script.google.com</b> بحساب الجيميل (${esc(p.driveEmail||'الخاص بك')}) والصق الكود التالي ثم اضغط Deploy → Web App (Anyone):<br>
+      <input readonly value="${esc(scriptCode)}" onclick="this.select();navigator.clipboard?.writeText(this.value);toast('تم نسخ كود الربط السحابي ✓')" style="width:100%;margin:4px 0;background:var(--panel);border:1px solid var(--line2);color:var(--mint);font-size:.62rem;padding:4px;border-radius:6px">
+      2. الصق الرابط الناتج في حقل «رابط سحابة Drive» بالأعلى، وسيقوم التطبيق برفع النسخة مباشرة إلى Google Drive بدون تحميلها على الهاتف!
+    </div>
+  `;
+  showAppCustomForm('إعداد الربط السحابي Google Drive', formHtml, ()=>{
+    state.prefs = state.prefs || {};
+    state.prefs.driveEmail = val('drvCfgEmail').trim();
+    state.prefs.driveWebhookUrl = val('drvCfgWebhook').trim();
+    state.prefs.driveAccessToken = val('drvCfgToken').trim();
+    setv('prefDriveEmail', state.prefs.driveEmail);
+    persist();
+    toast('تم حفظ إعدادات حساب Google Drive ✓');
+    return true;
+  });
+}
+
 async function exportBackupToGoogleDrive(silentAuto){
-  const fileName = 'x-wallet-drive-backup-' + today() + '.json';
+  const p = state.prefs || {};
+  const email = (p.driveEmail || val('prefDriveEmail') || '').trim();
+  if(!email && !p.driveWebhookUrl && !p.driveAccessToken){
+    if(!silentAuto){
+      openDriveCloudSetupModal();
+      toast('أدخل حساب الجيميل وإعدادات الربط أولاً');
+    }
+    return;
+  }
+
+  const fileName = `x-wallet-backup-${today()}.json`;
   const jsonStr = JSON.stringify(state, null, 2);
-  const blob = new Blob([jsonStr], {type: 'application/json'});
 
-  state.prefs = state.prefs || {};
-  state.prefs.lastDriveBackup = today();
-  state.prefs.lastBackupDate = today();
-  persist();
-
-  if(!silentAuto && navigator.canShare && navigator.share){
+  // Route 1: Direct Cloud Upload via Google Apps Script Web App Bridge (Zero prompts, uploads directly into user's Google Drive!)
+  if(p.driveWebhookUrl){
+    toast('جاري الرفع السحابي المباشر إلى Google Drive… ☁');
     try{
-      const fileObj = new File([blob], fileName, {type: 'application/json'});
-      if(navigator.canShare({files: [fileObj]})){
-        await navigator.share({
-          title: 'X-Wallet Google Drive Backup',
-          text: 'نسخة احتياطية لتطبيق X-Wallet (اختر الحفظ في Google Drive)',
-          files: [fileObj]
-        });
-        toast('تمت مشاركة النسخة إلى Google Drive ✓');
+      await fetch(p.driveWebhookUrl, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: {'Content-Type': 'text/plain;charset=utf-8'},
+        body: jsonStr
+      });
+      state.prefs.lastDriveBackup = today();
+      state.prefs.lastBackupDate = today();
+      persist();
+      toast(`تم رفع النسخة تلقائياً إلى Google Drive (${email||'السحابة'}) ✓`);
+      return;
+    }catch(err){
+      if(!silentAuto) toast('تعذر الاتصال برابط السحابة؛ جاري فتح المشاركة إلى Drive');
+    }
+  }
+
+  // Route 2: Direct Google Drive REST API v3 Multipart Upload via OAuth2 Access Token
+  if(p.driveAccessToken){
+    toast('جاري الرفع عبر Google Drive API… ☁');
+    try{
+      const metadata = { name: fileName, mimeType: 'application/json' };
+      const boundary = '-------314159265358979323846';
+      const delimiter = "\r\n--" + boundary + "\r\n";
+      const close_delim = "\r\n--" + boundary + "--";
+      const multipartRequestBody =
+        delimiter +
+        'Content-Type: application/json; charset=UTF-8\r\n\r\n' +
+        JSON.stringify(metadata) +
+        delimiter +
+        'Content-Type: application/json\r\n\r\n' +
+        jsonStr +
+        close_delim;
+
+      const res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + p.driveAccessToken,
+          'Content-Type': 'multipart/related; boundary="' + boundary + '"'
+        },
+        body: multipartRequestBody
+      });
+      if(res.ok){
+        state.prefs.lastDriveBackup = today();
+        state.prefs.lastBackupDate = today();
+        persist();
+        toast('تم رفع النسخة مباشرة إلى Google Drive ✓');
         return;
       }
     }catch(_){}
   }
 
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = fileName;
-  a.click();
-  toast(silentAuto ? 'تم حفظ النسخة الدورية التلقائية ✓' : 'تم تجهيز ملف النسخة لرفعه إلى Google Drive ✓');
+  // Route 3: Mobile Native Share Sheet to Google Drive app (instead of silent local download)
+  if(!silentAuto && navigator.canShare && navigator.share){
+    try{
+      const blob = new Blob([jsonStr], {type: 'application/json'});
+      const fileObj = new File([blob], fileName, {type: 'application/json'});
+      if(navigator.canShare({files: [fileObj]})){
+        await navigator.share({
+          title: `X-Wallet Backup (${email})`,
+          text: `نسخة احتياطية لحساب ${email} - اختر تطبيق Google Drive للحفظ`,
+          files: [fileObj]
+        });
+        state.prefs.lastDriveBackup = today();
+        state.prefs.lastBackupDate = today();
+        persist();
+        toast('تم إرسال النسخة إلى Google Drive ✓');
+        return;
+      }
+    }catch(_){
+      return;
+    }
+  }
+
+  if(!silentAuto){
+    openDriveCloudSetupModal();
+  }
 }
 
 function checkScheduledDriveBackupOnBoot(){
@@ -3935,11 +4233,9 @@ function checkScheduledDriveBackupOnBoot(){
     else if(freq === 'monthly' && diffDays >= 30) due = true;
   }
   if(due && (state.transactions?.length || state.accounts?.length)){
-    setTimeout(()=>{
-      showAppConfirm('نسخة Google Drive الدورية', 'حان موعد النسخة الاحتياطية التلقائية لجوجل درايف. هل تريد حفظها ورفعها الآن؟', ()=>{
-        exportBackupToGoogleDrive(false);
-      }, false);
-    }, 1200);
+    if(state.prefs?.driveWebhookUrl || state.prefs?.driveAccessToken){
+      exportBackupToGoogleDrive(true);
+    }
   }
 }
 
@@ -4048,7 +4344,7 @@ function installPWA(){
   toast('من قائمة المتصفح ⋮ اختر «تثبيت التطبيق»');
 }
 
-/* 3.2 All Selects Use Custom App Centered Select Modal (Including repPeriodMode & actAccountFilter!) */
+/* Custom Centered Select Modal (Always opens on top of any open modal!) */
 let _activeNativeSelect = null;
 function closeCustomSelectModal(){
   const m = document.getElementById('customSelectModal');
@@ -4092,7 +4388,7 @@ function syncCustomSelectTriggers(){
       if(sel.id === 'repPeriodMode' || sel.id === 'actAccountFilter'){
         trig.style.width = '100%';
         trig.style.maxWidth = '100%';
-        trig.style.height = sel.id === 'actAccountFilter' ? '42px' : '34px';
+        trig.style.height = sel.id === 'actAccountFilter' ? '40px' : '34px';
       }
       trig.innerHTML = '<span class="cs-val"></span><span class="cs-arr">▼</span>';
       trig.onclick = () => openCustomSelectFor(sel);
@@ -4259,7 +4555,7 @@ function applyLanguageTranslations(lang){
     }
   }
   const searchInp = document.getElementById('actSearch');
-  if(searchInp) searchInp.placeholder = isEn ? 'Search notes, description or category...' : 'بحث في الملاحظات أو الوصف أو القسم...';
+  if(searchInp) searchInp.placeholder = isEn ? 'Search notes, description or category...' : 'ابحث في الملاحظات أو الوصف أو القسم...';
   syncCustomSelectTriggers();
 }
 
@@ -4283,5 +4579,6 @@ recalcAnnualPlanItemEnd();
 updateBackupStatusUI();
 renderAll();
 recoverFromIndexedDBIfNeeded();
+checkAppLockOnBoot();
 checkScheduledDriveBackupOnBoot();
 try{if('serviceWorker'in navigator)window.addEventListener('load',()=>{navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'}).then(r=>r.update()).catch(()=>{});setTimeout(()=>checkForUpdate(true),1500);})}catch(e){}

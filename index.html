@@ -7,9 +7,24 @@
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+
+<!-- 8.4 شاشة قفل التطبيق بالبصمة أو رمز المرور عند الفتح -->
+<div class="app-lock-overlay" id="appLockScreen">
+  <div class="lock-card">
+    <div class="lock-logo"><img src="icon-192.png" alt="X-Wallet"></div>
+    <b style="font-size:1.15rem;font-weight:700">X-Wallet مقفل</b>
+    <span style="font-size:.76rem;color:var(--muted)">استخدم البصمة أو رمز المرور لفتح التطبيق</span>
+    <button type="button" class="primary" style="margin-top:6px;font-size:.86rem;padding:12px" onclick="unlockAppWithBiometrics()">🫆 فتح التطبيق بالبصمة</button>
+    <div id="lockPinWrap" style="display:none;width:100%;margin-top:6px;gap:6px">
+      <input id="lockPinInput" type="password" inputmode="numeric" placeholder="رمز المرور (PIN)..." style="flex:1;height:38px;background:var(--surface);border:1px solid var(--line2);border-radius:10px;padding:0 10px;color:var(--text);text-align:center" onkeydown="if(event.key==='Enter')unlockAppWithPin()">
+      <button type="button" class="smallbtn" style="border-color:var(--mint);color:var(--mint);padding:0 14px" onclick="unlockAppWithPin()">فتح</button>
+    </div>
+  </div>
+</div>
+
 <div class="app">
 
-<!-- Unified Top Brand Bar (Left: App Name, Right: Unified Fixed-Size Page Title Card) -->
+<!-- Unified Top Brand Bar -->
 <header class="top">
   <div class="brand">
     <div class="logo"><img src="icon-192.png" alt="X-Wallet"></div>
@@ -43,14 +58,16 @@
       </div>
     </div>
 
-    <!-- 2.1, 2.2, 2.3 مربع البحث الشامل (يبحث في الملاحظات والوصف والبيان والقسم) -->
+    <!-- 2.1 مربع البحث المصحح بالحجم الكامل والفلترة الفورية -->
     <div id="mmSearchBox" style="display:none;margin-bottom:8px">
-      <div style="display:flex;gap:6px;align-items:center">
-        <div style="position:relative;flex:1;display:flex;align-items:center">
-          <input id="actSearch" type="search" placeholder="بحث في الملاحظات أو الوصف أو القسم..." oninput="onTransactionsSearchInput()" style="width:100%;background:var(--surface);border:1px solid var(--line2);color:var(--text);text-align:left">
+      <div class="mm-search-grid">
+        <div class="mm-search-input-wrap">
+          <input id="actSearch" type="search" placeholder="ابحث في الملاحظات أو الوصف أو القسم..." oninput="onTransactionsSearchInput()">
           <button type="button" id="btnClearSearch" onclick="clearTransactionsSearch()" title="مسح الفلتر" style="display:none;position:absolute;right:8px;background:none;border:0;color:var(--muted);font-size:.88rem;padding:2px 6px">✕</button>
         </div>
-        <select id="actAccountFilter" onchange="renderTransactionsScreen()" style="background:var(--surface);border:1px solid var(--line2);color:var(--text)"><option value="">كل الحسابات</option></select>
+        <div class="mm-search-acc-wrap">
+          <select id="actAccountFilter" onchange="renderTransactionsScreen()"><option value="">كل الحسابات</option></select>
+        </div>
       </div>
     </div>
 
@@ -74,16 +91,14 @@
 </section>
 
 <!-- =========================================================
-     2. شاشة تحليل المعاملات (3.1 صف إجمالي الدخل وإجمالي المصروفات تحت التابين، ثم صف الفترة والتاريخ)
+     2. شاشة تحليل المعاملات
      ========================================================= -->
 <section id="reports" class="screen">
-  <!-- التابات: الدخل يساراً، المصروفات يميناً -->
   <div class="sub-tabs" style="margin-bottom:8px">
     <button type="button" class="sub-tab-btn" id="repTabInc" onclick="switchReportTab('inc')">الدخل</button>
     <button type="button" class="sub-tab-btn active" id="repTabExp" onclick="switchReportTab('exp')">المصروفات</button>
   </div>
 
-  <!-- 3.1 صف عرض إجمالي الدخل تحت الدخل وإجمالي المصروفات تحت المصروفات -->
   <div class="rep-dual-totals">
     <div class="rep-total-card" id="repCardTotalInc" onclick="switchReportTab('inc')" style="cursor:pointer">
       <small>إجمالي الدخل</small>
@@ -96,7 +111,6 @@
   </div>
 
   <div id="repViewMonthly">
-    <!-- 3.1 & 3.2 الصف الذي يحتوي على محدد الفترة (بالقائمة المنبثقة الخاصة بالتطبيق) والتاريخ -->
     <div class="mm-header-card">
       <div class="c-row" style="padding:0;min-height:38px;border:0;background:transparent">
         <div style="width:45%">
@@ -130,7 +144,7 @@
 </section>
 
 <!-- =========================================================
-     3. شاشة الحسابات والبطاقات (#4 تاب الحسابات & #5 تاب البطاقات)
+     3. شاشة الحسابات والبطاقات
      ========================================================= -->
 <section id="wallet" class="screen">
   <div class="sub-tabs">
@@ -138,15 +152,13 @@
     <button type="button" class="sub-tab-btn" id="tabBtnCard" onclick="switchWalletTab('card')">البطاقات</button>
   </div>
 
-  <!-- #4 تاب الحسابات -->
+  <!-- تاب الحسابات -->
   <div id="walletViewAcc">
-    <!-- 4.1 البطاقة الخضراء -->
     <div class="hero">
       <label>إجمالي أرصدة الحسابات</label>
       <div class="amount" id="accountsTotal">0 EGP</div>
     </div>
 
-    <!-- 4.2 بند إضافة حساب (مع أيقونة ومسافة) -->
     <details class="fold" id="addAccountFold">
       <summary><span class="ic-txt"><i>🏦</i><span>إضافة حساب</span></span><span>▼</span></summary>
       <div class="fold-body">
@@ -159,29 +171,17 @@
       </div>
     </details>
 
-    <!-- 4.3 قسم الحسابات المسجلة داخل فريم وبدون نص اضغط للخيارات -->
     <div class="sec-title-card"><h2>الحسابات المسجلة</h2></div>
     <div class="panel" id="accountsList"></div>
-
-    <!-- 4.4 كشف الحساب المعروض داخل تاب الحسابات بنفس شكل المعاملات اليومية بفلتر الحساب -->
-    <div id="accInlineStatementWrap" style="display:none">
-      <div class="sec-title-card" style="border-color:var(--mint)">
-        <h2 id="accInlineStatementTitle" style="color:var(--mint)">كشف حساب</h2>
-        <button type="button" class="smallbtn" onclick="closeInlineAccountStatement()">إغلاق ✕</button>
-      </div>
-      <div id="accInlineStatementFeed"></div>
-    </div>
   </div>
 
-  <!-- #5 تاب البطاقات -->
+  <!-- تاب البطاقات -->
   <div id="walletViewCard" style="display:none">
-    <!-- 5.1 البطاقة الخضراء -->
     <div class="hero">
       <label>إجمالي أرصدة البطاقات</label>
       <div class="amount" id="cardDebtTotal">0 EGP</div>
     </div>
 
-    <!-- 5.2 بند إضافة بطاقة (مع أيقونة ومسافة وتمييز عمود الفائدة وعمود الرسوم وإضافة فترة 15 شهر) -->
     <details class="fold" id="addCardFold">
       <summary><span class="ic-txt"><i>💳</i><span>إضافة بطاقة</span></span><span>▼</span></summary>
       <div class="fold-body">
@@ -214,23 +214,13 @@
       </div>
     </details>
 
-    <!-- 5.3 قسم البطاقات المسجلة داخل فريم وبدون نص إضافي (وتم حذف قسم كل عمليات البطاقة 5.5) -->
     <div class="sec-title-card"><h2>البطاقات المسجلة</h2></div>
     <div class="panel" id="cardsList"></div>
-
-    <!-- 5.4 كشف حساب البطاقة المعروض داخل تاب البطاقات بنفس شكل المعاملات اليومية بفلتر البطاقة -->
-    <div id="cardInlineStatementWrap" style="display:none">
-      <div class="sec-title-card" style="border-color:var(--mint)">
-        <h2 id="cardInlineStatementTitle" style="color:var(--mint)">كشف حساب البطاقة</h2>
-        <button type="button" class="smallbtn" onclick="closeInlineCardStatement()">إغلاق ✕</button>
-      </div>
-      <div id="cardInlineStatementFeed"></div>
-    </div>
   </div>
 </section>
 
 <!-- =========================================================
-     4. شاشة الالتزامات والتقرير السنوي (#6 تاب الالتزامات & #7 التقرير السنوي اليدوي)
+     4. شاشة الالتزامات والتقرير السنوي
      ========================================================= -->
 <section id="plan" class="screen">
   <div class="sub-tabs">
@@ -238,14 +228,13 @@
     <button type="button" class="sub-tab-btn" id="tabBtnYr" onclick="switchPlanTab('yr')">التقرير المالي السنوي</button>
   </div>
 
-  <!-- #6 تاب الالتزامات -->
+  <!-- تاب الالتزامات -->
   <div id="planViewCom">
     <div class="hero">
       <label>إجمالي التزامات الشهر (<span id="comHeroMonthLabel">نوفمبر 2026</span>)</label>
       <div class="amount" id="comHeroTotal">0 EGP</div>
     </div>
 
-    <!-- 6.1 بند إضافة معاملة (مع أيقونة ومسافة) -->
     <details class="fold" id="addCommitmentFold">
       <summary><span class="ic-txt"><i>📝</i><span>إضافة معاملة</span></span><span>▼</span></summary>
       <div class="fold-body">
@@ -256,7 +245,6 @@
         </div>
         <input type="hidden" id="comAddKind" value="deferred">
 
-        <!-- 1: مستحقات مؤجلة -->
         <div id="comFormDeferred" class="c-list">
           <div class="c-row"><label>اسم العملية</label><input id="defTitle" placeholder="مثال: سلفة / مصاريف مدرسة"></div>
           <div class="c-row"><label>المبلغ</label><input id="defAmount" type="number" step="0.01" inputmode="decimal" placeholder="0"></div>
@@ -265,7 +253,6 @@
           <button type="button" class="primary" style="margin-top:6px" onclick="saveNewCommitmentItem()">حفظ المستحق المؤجل</button>
         </div>
 
-        <!-- 2: التزامات شهرية -->
         <div id="comFormMonthly" class="c-list" style="display:none">
           <div class="c-row"><label>اسم العملية</label><input id="monTitle" placeholder="مثال: جمعية / قسط شقة / دروس"></div>
           <div class="c-row"><label>المبلغ الشهري</label><input id="monAmount" type="number" step="0.01" inputmode="decimal" placeholder="0"></div>
@@ -284,7 +271,6 @@
           <button type="button" class="primary" style="margin-top:6px" onclick="saveNewCommitmentItem()">حفظ الالتزام الشهري</button>
         </div>
 
-        <!-- 3: معاملات بالبطاقة -->
         <div id="comFormCard" class="c-list" style="display:none">
           <div class="c-row"><label>اسم البطاقة</label><select id="opCard" onchange="showCreditQuote()"></select></div>
           <div class="c-row">
@@ -316,7 +302,6 @@
       </div>
     </details>
 
-    <!-- 6.2 قسم مستحقات الشهر داخل فريم وبأعمدة منظمة -->
     <div class="sec-title-card">
       <h2>مستحقات الشهر</h2>
       <div class="ym-stepper" dir="ltr">
@@ -327,20 +312,19 @@
     </div>
     <div class="panel" style="padding:0;overflow:hidden" id="commitmentsList"></div>
 
-    <!-- 6.3 قسم جديد: جميع المستحقات (مرتبة تنازلياً: المعاملة | النوع | المدة | البدء | الانتهاء) -->
+    <!-- 6.1 & 6.2 جميع المستحقات (مع عمود المبلغ ومسمى شهري) -->
     <div class="sec-title-card">
       <h2>جميع المستحقات</h2>
-      <small style="color:var(--muted);font-size:.7rem">الأحدث أولاً</small>
     </div>
     <div class="panel" style="padding:0;overflow:hidden">
       <div class="com-table-wrap" id="allCommitmentsTableWrap"></div>
     </div>
   </div>
 
-  <!-- #7.0 التقرير المالي السنوي (مدخلات يدوية لبنود الدخل وبنود الصرف/الالتزامات بمدة وتاريخ بداية ونهاية، وتنعكس في جدول الإكسل بالأسفل) -->
+  <!-- 7. التقرير المالي السنوي (إضافة بند + قائمة منسدلة لتعديل البنود المضافة) -->
   <div id="planViewYr" style="display:none">
     <details class="fold" id="addManualAnnualFold">
-      <summary><span class="ic-txt"><i>📊</i><span>إضافة بند للتقرير السنوي (دخل / مصروف)</span></span><span>▼</span></summary>
+      <summary><span class="ic-txt"><i>📊</i><span>إضافة بند للتقرير السنوي</span></span><span>▼</span></summary>
       <div class="fold-body">
         <div class="c-list">
           <div class="c-row">
@@ -369,8 +353,11 @@
       </div>
     </details>
 
-    <!-- قائمة البنود اليدوية المسجلة في التقرير السنوي (للتحكم بالتعديل أو الحذف) -->
-    <div id="annualPlanItemsChips" style="display:flex;flex-wrap:wrap;gap:6px;margin:8px 0"></div>
+    <!-- 7.1 قائمة منسدلة لتعديل البنود المضافة تحت إضافة بند -->
+    <details class="fold" id="editManualAnnualFold">
+      <summary><span class="ic-txt"><i>✎</i><span>تعديل البنود المضافة</span></span><span>▼</span></summary>
+      <div class="fold-body" id="annualPlanItemsListContainer" style="padding:8px 12px"></div>
+    </details>
 
     <div class="sec-title-card">
       <h2>التقرير المالي السنوي</h2>
@@ -391,23 +378,23 @@
 </section>
 
 <!-- =========================================================
-     5. شاشة المزيد (#8 بطاقة التعريف + الإعدادات المطورة)
+     5. شاشة المزيد (#8)
      ========================================================= -->
 <section id="settings" class="screen">
-  <!-- 8.1 بطاقة تعريف التطبيق والمطور -->
+  <!-- 8.1 بطاقة تعريف التطبيق بدون أبو مليكة -->
   <div class="dev-profile-card">
     <div class="dev-card-left">
       <div class="dev-card-logo"><img src="icon-192.png" alt="X-Wallet"></div>
       <div class="dev-card-info">
         <b>X-Wallet</b>
         <span>مديرك المالي الشخصي الذكي</span>
-        <small>تطوير: م/ محمد خالد (أبو مليكة)</small>
+        <small>تطوير: م/ محمد خالد</small>
       </div>
     </div>
-    <span class="tag" id="devCardVerBadge" style="border-color:var(--mint);color:var(--mint);padding:4px 10px;font-size:.74rem">V13.1</span>
+    <span class="tag" id="devCardVerBadge" style="border-color:var(--mint);color:var(--mint);padding:4px 10px;font-size:.74rem">V13.2</span>
   </div>
 
-  <!-- 1. إعدادات عامة -->
+  <!-- 1. إعدادات عامة (10 ألوان: 5 فوق و 5 تحت) -->
   <details class="fold">
     <summary><span class="ic-txt"><i>⚙</i><span data-i18n="set_general">إعدادات عامة</span></span><span>▼</span></summary>
     <div class="fold-body">
@@ -424,8 +411,8 @@
             <option value="black">أسود (AMOLED Black)</option>
           </select>
         </div>
-        <div class="c-row">
-          <label>لون الثيم (8 ألوان)</label>
+        <div class="c-row" style="padding:10px 12px">
+          <label>لون الثيم (10 ألوان)</label>
           <div class="theme-dots" id="themeSelector">
             <button type="button" class="theme-dot" data-theme="mint" style="background:#43d6b2" onclick="selectTempTheme('mint')"></button>
             <button type="button" class="theme-dot" data-theme="blue" style="background:#569aff" onclick="selectTempTheme('blue')"></button>
@@ -435,6 +422,8 @@
             <button type="button" class="theme-dot" data-theme="cyan" style="background:#22d3ee" onclick="selectTempTheme('cyan')"></button>
             <button type="button" class="theme-dot" data-theme="orange" style="background:#fb923c" onclick="selectTempTheme('orange')"></button>
             <button type="button" class="theme-dot" data-theme="lime" style="background:#a3e635" onclick="selectTempTheme('lime')"></button>
+            <button type="button" class="theme-dot" data-theme="indigo" style="background:#6366f1" onclick="selectTempTheme('indigo')"></button>
+            <button type="button" class="theme-dot" data-theme="emerald" style="background:#10b981" onclick="selectTempTheme('emerald')"></button>
           </div>
         </div>
         <div class="c-row"><label>تثبيت التطبيق</label><button type="button" class="smallbtn" id="installAppBtn" style="border-color:var(--mint);color:var(--mint);padding:6px 12px" onclick="installPWA()">تثبيت الآن</button></div>
@@ -443,7 +432,7 @@
     </div>
   </details>
 
-  <!-- 2. إعدادات الخصوصية والأمان (باسورد وبصمة + فتح الأرقام المخفية بالبصمة) -->
+  <!-- 2. الخصوصية والأمان (قفل فتح التطبيق بالبصمة + قفل الأرقام المخفية بالبصمة) -->
   <details class="fold">
     <summary><span class="ic-txt"><i>🔒</i><span>الخصوصية والأمان</span></span><span>▼</span></summary>
     <div class="fold-body">
@@ -457,19 +446,26 @@
         </div>
         <div class="c-row">
           <label>كلمة المرور (PIN)</label>
-          <input id="secPinInput" type="password" inputmode="numeric" maxlength="8" placeholder="اتركه فارغاً لإلغاء الرمز">
+          <input id="secPinInput" type="password" inputmode="numeric" maxlength="8" placeholder="اختياري (احتياطي للبصمة)">
         </div>
         <div class="c-row">
-          <label>تفعيل البصمة</label>
+          <label>تسجيل البصمة</label>
           <div class="c-row-btns">
             <span class="tag" id="bioStatusBadge">غير مفعلة</span>
             <button type="button" class="smallbtn" style="border-color:var(--mint);color:var(--mint)" onclick="registerBiometricLock()">تسجيل البصمة 🫆</button>
           </div>
         </div>
         <div class="c-row">
+          <label>قفل فتح التطبيق بالبصمة</label>
+          <select id="secAppLockOnStart">
+            <option value="1">مفعل (يطلب البصمة عند فتح التطبيق)</option>
+            <option value="0">غير مفعل</option>
+          </select>
+        </div>
+        <div class="c-row">
           <label>قفل إظهار الأرقام بالبصمة</label>
           <select id="secBioOnPrivacy">
-            <option value="1">مفعل (يتطلب البصمة/الرمز عند فتح العين)</option>
+            <option value="1">مفعل (يطلب البصمة عند فتح العين)</option>
             <option value="0">غير مفعل</option>
           </select>
         </div>
@@ -529,7 +525,7 @@
     </div>
   </details>
 
-  <!-- 4. تخصيص الأقسام (أقسام الدخل على الشمال وأقسام المصروفات على اليمين) -->
+  <!-- 4. تخصيص الأقسام -->
   <details class="fold" id="settingsCatsFold" ontoggle="onSettingsCatsFoldToggle(this)">
     <summary>
       <span class="ic-txt"><i>🏷</i><span data-i18n="set_cats">تخصيص الأقسام</span></span>
@@ -544,12 +540,18 @@
     </div>
   </details>
 
-  <!-- 5. النسخ الاحتياطي (مع إعدادات التصدير التلقائي لجوجل درايف: يومي / أسبوعي / شهري) -->
+  <!-- 5. النسخ الاحتياطي ومزامنة حساب جوجل درايف (8.3) -->
   <details class="fold">
     <summary><span class="ic-txt"><i>💾</i><span data-i18n="set_backup">النسخ الاحتياطي</span></span><span>▼</span></summary>
     <div class="fold-body">
       <div class="c-list">
         <div class="c-row"><span class="c-lbl">حالة التخزين الآمن</span><span class="tag" id="storageSafetyBadge" style="color:var(--mint);border-color:var(--mint)">IndexedDB + محلي نشط ✓</span></div>
+        <div class="c-row">
+          <label>حساب الجيميل (Drive)</label>
+          <div class="c-row-btns" style="width:62%">
+            <input id="prefDriveEmail" type="email" placeholder="example@gmail.com" style="flex:1;height:32px" onchange="saveDriveAccountConfig()">
+          </div>
+        </div>
         <div class="c-row">
           <label>نسخ تلقائي لجوجل درايف</label>
           <select id="prefAutoDriveFreq" onchange="saveAutoDriveBackupFreq(this.value)">
@@ -560,9 +562,9 @@
           </select>
         </div>
         <div class="c-row">
-          <span class="c-lbl">مزامنة جوجل درايف</span>
+          <span class="c-lbl">مزامنة Google Drive</span>
           <div class="c-row-btns">
-            <small id="driveSyncStatusLbl" style="color:var(--muted);font-size:.65rem;align-self:center"></small>
+            <button type="button" class="smallbtn" onclick="openDriveCloudSetupModal()">ربط سحابي ⚙</button>
             <button type="button" class="smallbtn" style="border-color:var(--blue);color:var(--blue)" onclick="exportBackupToGoogleDrive(false)">رفع إلى Drive الآن ☁</button>
           </div>
         </div>
@@ -594,7 +596,7 @@
     <summary><span class="ic-txt"><i>⟳</i><span data-i18n="set_updates">التحديثات</span></span><span>▼</span></summary>
     <div class="fold-body">
       <div class="c-list">
-        <div class="c-row"><span class="c-lbl">الإصدار الحالي</span><span class="tag" id="appVersionTag">V13.1</span></div>
+        <div class="c-row"><span class="c-lbl">الإصدار الحالي</span><span class="tag" id="appVersionTag">V13.2</span></div>
         <div class="c-row">
           <span class="c-lbl">التحديثات</span>
           <div class="c-row-btns">
@@ -623,7 +625,7 @@
 
 </div>
 
-<!-- 2.1 Context-Aware Floating + Button -->
+<!-- Context-Aware Floating + Button -->
 <button class="fab" onclick="handleFabClick()">＋</button>
 
 <!-- Bottom 5-Tab Navigation -->
@@ -651,7 +653,7 @@
 </nav>
 
 <!-- =========================================================
-     #1 واجهة إدخال البيانات المطورة (بدون عام بدون فرعي، أسهم فقط، ملاحظات + وصف متعدد الأسطر، تظليل هادئ، وخلفية علوية فاتحة)
+     #1 واجهة إدخال وتعديل المعاملات (قسم علوي مضغوط مريح + فاصل واضح + جزء سفلي بحجم ثابت + أزرار نسخ وحذف عند التعديل)
      ========================================================= -->
 <div class="modal fullpage-modal" id="quickModal" onclick="if(event.target===this)closeQuickModal()">
   <div class="sheet fullpage-sheet">
@@ -667,14 +669,14 @@
       <button type="button" class="mm-tab trn" id="qmTabTrn" onclick="setQuickTxType('transfer')">تحويل</button>
     </div>
 
+    <!-- 1.1 قسم علوي مضغوط يكفي جميع البنود بما فيها التقسيط -->
     <div class="qm-form-scroll">
-      <div class="c-row"><label>التاريخ</label><input id="qmDate" type="date" onfocus="setQmDockMode('none')"></div>
+      <div class="c-row"><label>التاريخ</label><input id="qmDate" type="date"></div>
       <div class="c-row" id="qmAccRow" onclick="setQmDockMode('acc')">
         <label id="qmAccLabelTitle">الحساب</label>
         <div class="picker-trigger" id="qmAccTrigger"><b id="qmAccSelectedText">اختر الحساب</b></div>
       </div>
 
-      <!-- 1.2 الاكتفاء بالأسهم فقط بدون كلمة عكس الاتجاه -->
       <div class="swap-acc-row" id="qmSwapAccRow" style="display:none">
         <button type="button" class="swap-acc-btn" onclick="swapQuickTransferAccounts()" title="عكس اتجاه التحويل">⇅</button>
       </div>
@@ -705,35 +707,37 @@
 
       <div class="c-row" id="qmAmountRow">
         <label>المبلغ</label>
-        <div style="display:flex;align-items:center;width:70%;max-width:70%">
-          <input id="qmAmount" type="number" step="0.01" inputmode="decimal" placeholder="0" onfocus="setQmDockMode('none')" style="width:100%;max-width:100%">
+        <div style="display:flex;align-items:center;width:72%;max-width:72%">
+          <input id="qmAmount" type="number" step="0.01" inputmode="decimal" placeholder="0" style="width:100%;max-width:100%">
           <button type="button" id="qmFeeToggleBtn" class="fee-toggle-pill" style="display:none" onclick="toggleQuickTransferFeeRow()">رسوم</button>
         </div>
       </div>
 
       <div class="c-row" id="qmFeeRow" style="display:none">
         <label>رسوم</label>
-        <input id="qmFee" type="number" step="0.01" inputmode="decimal" placeholder="0" onfocus="setQmDockMode('none')">
+        <input id="qmFee" type="number" step="0.01" inputmode="decimal" placeholder="0">
       </div>
 
-      <!-- 1.3 إعادة تسمية بيان/ملاحظة إلى ملاحظات -->
-      <div class="c-row"><label>ملاحظات</label><input id="qmNote" placeholder="اختياري (يظهر في المعاملات اليومية)" onfocus="setQmDockMode('none')"></div>
+      <div class="c-row"><label>ملاحظات</label><input id="qmNote" placeholder="اختياري (يظهر في القائمة اليومية)"></div>
 
-      <!-- 1.4 إضافة حقل الوصف متعدد الأسطر (لا يظهر في القائمة اليومية ولكن يُحفظ ويُبحث فيه) -->
-      <div class="c-row" style="align-items:flex-start;padding-top:8px">
-        <label style="padding-top:6px">الوصف</label>
-        <textarea id="qmDesc" class="qm-desc-textarea" rows="2" placeholder="تفاصيل إضافية (تُحفظ للبحث ولا تزحم القائمة اليومية)..." onfocus="setQmDockMode('none')"></textarea>
+      <div class="c-row" style="align-items:center">
+        <label>الوصف</label>
+        <textarea id="qmDesc" class="qm-desc-textarea" rows="1" placeholder="تفاصيل إضافية (تُحفظ للبحث)..."></textarea>
       </div>
     </div>
 
+    <!-- 1.3 فاصل بصري واضح بين الجزء العلوي والسفلي -->
+    <div class="qm-divider-line"></div>
+
+    <!-- 1.2 الجزء السفلي بحجم ثابت لا يتغير -->
     <div id="qmBottomDock" class="qm-bottom-dock">
       <div id="qmDockAcc" style="display:flex;flex-direction:column;height:100%;min-height:0">
-        <div class="quick-grid-head"><span>الحساب / البطاقة</span><span style="cursor:pointer;padding:0 4px;font-size:.85rem" onclick="setQmDockMode('none')">✕</span></div>
+        <div class="quick-grid-head"><span>الحساب / البطاقة</span></div>
         <div class="quick-grid" id="qmAccGrid"></div>
       </div>
 
       <div id="qmDockToAcc" style="display:none;flex-direction:column;height:100%;min-height:0">
-        <div class="quick-grid-head"><span>الحساب المستقبِل</span><span style="cursor:pointer;padding:0 4px;font-size:.85rem" onclick="setQmDockMode('none')">✕</span></div>
+        <div class="quick-grid-head"><span>الحساب المستقبِل</span></div>
         <div class="quick-grid" id="qmToAccGrid"></div>
       </div>
 
@@ -743,7 +747,6 @@
           <div style="display:flex;gap:12px;align-items:center">
             <span style="cursor:pointer;color:var(--mint)" onclick="openAddQuickCatPrompt(false)">＋ رئيسي</span>
             <span style="cursor:pointer;color:var(--blue)" onclick="openAddQuickCatPrompt(true)">＋ فرعي</span>
-            <span style="cursor:pointer;padding:0 4px;font-size:.85rem;color:var(--text)" onclick="setQmDockMode('none')">✕</span>
           </div>
         </div>
         <div class="mm-cat-split">
@@ -759,24 +762,80 @@
       </div>
     </div>
 
-    <div class="actions">
+    <!-- 2.2 شريط الأزرار السفلي (يظهر فيه نسخ وحذف عند تعديل معاملة قائمة) -->
+    <div class="actions" id="qmBottomActionsBar">
+      <button type="button" class="secondary" id="qmBtnCopyExisting" style="display:none;border-color:var(--mint);color:var(--mint)" onclick="copyCurrentQuickModalItem()">نسخ</button>
       <button type="button" class="primary" onclick="saveQuickModal()">حفظ</button>
-      <button type="button" class="secondary" onclick="closeQuickModal()">إلغاء</button>
+      <button type="button" class="smallbtn danger" id="qmBtnDeleteExisting" style="display:none;flex:1;border-radius:12px" onclick="deleteCurrentQuickModalItem()">حذف</button>
+      <button type="button" class="secondary" id="qmBtnCancel" onclick="closeQuickModal()">إلغاء</button>
     </div>
   </div>
 </div>
 
 <!-- =========================================================
-     #3.3 صفحة تفاصيل البند في تحليل المعاملات (بدون بطاقة خضراء، عناوين في بطاقات، جدول الصنف|النسبة|المبلغ، شارت خطي بمحور رأسي، وتقرير يومي تفاعلي)
+     #3 صفحة تفاصيل البند في تحليل المعاملات (مع الحفاظ على فلتر الشهر بالأعلى + فلترة البند الفرعي عند الضغط عليه)
      ========================================================= -->
 <div class="modal fullpage-modal" id="catDetailModal" onclick="if(event.target===this)closeCatDetailModal()">
   <div class="sheet fullpage-sheet" style="overflow-y:auto">
     <div class="qm-top-bar">
       <button type="button" class="qm-back-btn" onclick="closeCatDetailModal()">←</button>
       <b id="catDetailTitle">تحليل البند</b>
-      <span class="tag" id="catDetailPeriodBadge">نوفمبر 2026</span>
+      <span class="tag" id="catDetailSubFilterBadge" style="display:none;cursor:pointer;border-color:var(--mint);color:var(--mint)" onclick="selectSubcategoryInDrillDown('')">الكل ✕</span>
     </div>
-    <div id="catDetailBody" style="padding-bottom:24px"></div>
+
+    <!-- 3.1 الحفاظ على فلتر الشهر والفترة بالأعلى داخل صفحة تفاصيل البند -->
+    <div class="mm-header-card" style="margin-bottom:8px;flex-shrink:0">
+      <div class="c-row" style="padding:0;min-height:36px;border:0;background:transparent">
+        <span style="font-size:.78rem;color:var(--muted)" id="catDetailPeriodLabel">فترة التقرير</span>
+        <div class="ym-stepper" id="catDetailStepperBox" dir="ltr" style="margin-left:auto">
+          <button type="button" class="step-arrow" onclick="shiftCatDrillPeriod(-1)">‹</button>
+          <button type="button" class="step-label" onclick="openCatDrillPeriodPicker()" id="catDetailStepLabel">نوفمبر 2026</button>
+          <button type="button" class="step-arrow" onclick="shiftCatDrillPeriod(1)">›</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="catDetailBody" style="padding-bottom:24px;overflow-y:auto;flex:1"></div>
+  </div>
+</div>
+
+<!-- =========================================================
+     #4.1 شاشة كشف الحساب الكاملة للحسابات والبطاقات (مثل المعاملات اليومية مع فلتر الشهر وإجمالي الدخل والمصروفات والصافي)
+     ========================================================= -->
+<div class="modal fullpage-modal" id="statementFullModal" onclick="if(event.target===this)closeFullStatementModal()">
+  <div class="sheet fullpage-sheet" style="overflow-y:auto">
+    <div class="qm-top-bar">
+      <button type="button" class="qm-back-btn" onclick="closeFullStatementModal()">←</button>
+      <b id="stmtModalTitle">كشف حساب</b>
+      <button type="button" class="smallbtn" id="stmtAllMonthsBtn" onclick="toggleStatementAllMonths()">كل الشهور</button>
+    </div>
+
+    <div class="mm-header-card" style="flex-shrink:0">
+      <div class="mm-nav-row" id="stmtMonthNavRow">
+        <span style="font-size:.76rem;color:var(--muted)">فترة الكشف</span>
+        <div class="ym-stepper" dir="ltr">
+          <button type="button" class="step-arrow" onclick="shiftStatementMonth(-1)">‹</button>
+          <button type="button" class="step-label" onclick="openStatementPeriodPicker()" id="stmtPeriodLabel">نوفمبر 2026</button>
+          <button type="button" class="step-arrow" onclick="shiftStatementMonth(1)">›</button>
+        </div>
+      </div>
+      <div class="mm-stats">
+        <div class="mm-stat-box">
+          <small>الدخل</small>
+          <b class="blue" id="stmtIncomeHero">0</b>
+        </div>
+        <div class="mm-stat-box">
+          <small>المصروفات</small>
+          <b class="red" id="stmtExpenseHero">0</b>
+        </div>
+        <div class="mm-stat-box">
+          <small>الصافي</small>
+          <b id="stmtNetHero">0</b>
+        </div>
+      </div>
+    </div>
+
+    <div id="stmtTransactionsFeed" style="padding-bottom:24px;overflow-y:auto;flex:1"></div>
   </div>
 </div>
 
@@ -806,7 +865,27 @@
   </div>
 </div>
 
-<!-- Custom Centered Select Picker Modal -->
+<!-- Unified Custom Dialog Modal -->
+<div class="modal center-modal" id="appDialogModal" onclick="if(event.target===this)closeAppDialog()">
+  <div class="sheet" style="max-width:390px">
+    <h3 style="justify-content:space-between;margin-bottom:8px">
+      <span id="appDialogTitle">تأكيد</span>
+      <span style="cursor:pointer;color:var(--muted)" onclick="closeAppDialog()">✕</span>
+    </h3>
+    <p class="hint" id="appDialogMsg" style="font-size:.8rem;margin:0 0 10px;display:none"></p>
+    <div id="appDialogInputWrap" style="display:none;margin-bottom:10px">
+      <input id="appDialogInput" style="width:100%;height:38px;background:var(--surface);border:1px solid var(--line2);border-radius:11px;padding:0 11px;color:var(--text);font-size:.8rem;outline:none" onkeydown="if(event.key==='Enter')submitAppDialog()">
+      <textarea id="appDialogTextarea" rows="5" style="display:none;width:100%;background:var(--surface);border:1px solid var(--line2);border-radius:11px;padding:9px 11px;color:var(--text);font-size:.75rem;outline:none;margin-top:6px"></textarea>
+    </div>
+    <div id="appDialogCustomBody" style="display:none;margin-bottom:10px;max-height:62vh;overflow-y:auto"></div>
+    <div class="actions" id="appDialogActionsBar">
+      <button type="button" class="primary" id="appDialogOkBtn" onclick="submitAppDialog()">موافق</button>
+      <button type="button" class="secondary" onclick="closeAppDialog()">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<!-- Custom Centered Select Picker Modal (Placed AFTER appDialogModal with z-index: 100 so it ALWAYS opens in front!) -->
 <div class="modal center-modal" id="customSelectModal" onclick="if(event.target===this)closeCustomSelectModal()">
   <div class="sheet" style="max-width:350px">
     <h3 style="justify-content:center;margin-bottom:10px" id="csModalTitle">اختر</h3>
@@ -825,26 +904,6 @@
     <div class="actions">
       <button type="button" class="primary" style="background:var(--red);color:#fff" onclick="confirmExitApp()">نعم، خروج</button>
       <button type="button" class="secondary" onclick="cancelExitApp()">البقاء في التطبيق</button>
-    </div>
-  </div>
-</div>
-
-<!-- Unified Custom Dialog Modal -->
-<div class="modal center-modal" id="appDialogModal" onclick="if(event.target===this)closeAppDialog()">
-  <div class="sheet" style="max-width:390px">
-    <h3 style="justify-content:space-between;margin-bottom:8px">
-      <span id="appDialogTitle">تأكيد</span>
-      <span style="cursor:pointer;color:var(--muted)" onclick="closeAppDialog()">✕</span>
-    </h3>
-    <p class="hint" id="appDialogMsg" style="font-size:.8rem;margin:0 0 10px;display:none"></p>
-    <div id="appDialogInputWrap" style="display:none;margin-bottom:10px">
-      <input id="appDialogInput" style="width:100%;height:38px;background:var(--surface);border:1px solid var(--line2);border-radius:11px;padding:0 11px;color:var(--text);font-size:.8rem;outline:none" onkeydown="if(event.key==='Enter')submitAppDialog()">
-      <textarea id="appDialogTextarea" rows="5" style="display:none;width:100%;background:var(--surface);border:1px solid var(--line2);border-radius:11px;padding:9px 11px;color:var(--text);font-size:.75rem;outline:none;margin-top:6px"></textarea>
-    </div>
-    <div id="appDialogCustomBody" style="display:none;margin-bottom:10px;max-height:62vh;overflow-y:auto"></div>
-    <div class="actions" id="appDialogActionsBar">
-      <button type="button" class="primary" id="appDialogOkBtn" onclick="submitAppDialog()">موافق</button>
-      <button type="button" class="secondary" onclick="closeAppDialog()">إلغاء</button>
     </div>
   </div>
 </div>

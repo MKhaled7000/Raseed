@@ -1,4 +1,4 @@
-const CACHE='xwallet-v131-20261113';
+const CACHE='xwallet-v132-20261113';
 const CORE=[
   './',
   './index.html',
