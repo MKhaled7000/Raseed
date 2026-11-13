@@ -9,31 +9,33 @@
 <body>
 <div class="app">
 
-<!-- Top Brand Bar (Left: App Name, Right: Current Tab Name) -->
+<!-- 10.1 & 10.2 Unified Top Brand Bar (Left: App Name, Right: Highlighted Page Title Card) -->
 <header class="top">
   <div class="brand">
     <div class="logo"><img src="icon-192.png" alt="X-Wallet"></div>
     <b>X-Wallet</b>
   </div>
-  <div class="top-tab-title" id="topActiveTabTitle" data-i18n="tab_trans">المعاملات</div>
+  <div class="top-tab-title" id="topActiveTabTitle">المعاملات</div>
 </header>
 
-<!-- 1. الشاشة الرئيسية: المعاملات -->
+<!-- =========================================================
+     1. شاشة المعاملات (المعاملات اليومية | الملخص الشهري)
+     ========================================================= -->
 <section id="trans" class="screen active">
   <div id="homeAvailableTotal" style="display:none">0 EGP</div>
 
-  <!-- الصف الثاني: التابات الفرعية بنفس ستايل باقي الصفحات -->
-  <div class="sub-tabs" style="margin-bottom:10px">
-    <button type="button" class="sub-tab-btn active" id="transTabDaily" data-i18n="sub_daily" onclick="switchTransSubTab('daily')">المعاملات اليومية</button>
-    <button type="button" class="sub-tab-btn" id="transTabMonthly" data-i18n="sub_monthly" onclick="switchTransSubTab('monthly')">الملخص الشهري</button>
+  <!-- الصف الثاني: التابات الفرعية -->
+  <div class="sub-tabs">
+    <button type="button" class="sub-tab-btn active" id="transTabDaily" onclick="switchTransSubTab('daily')">المعاملات اليومية</button>
+    <button type="button" class="sub-tab-btn" id="transTabMonthly" onclick="switchTransSubTab('monthly')">الملخص الشهري</button>
   </div>
 
-  <!-- الصف الثالث والرابع: الأيقونات يساراً والشهر يميناً، ثم الـ 3 مربعات -->
+  <!-- الصف الثالث والرابع: الأيقونات يساراً والشهر يميناً، ثم الـ 3 بطاقات الملخصة -->
   <div class="mm-header-card">
     <div class="mm-nav-row">
       <div class="mm-tools">
         <button type="button" class="mm-tool-btn" id="btnToggleSearch" onclick="toggleSearchBar()" title="بحث وفلترة">🔍</button>
-        <button type="button" class="mm-tool-btn dec-toggle-btn" onclick="toggleDecimalsMode()" title="إظهار الكسور العشرية">00</button>
+        <button type="button" class="mm-tool-btn dec-toggle-btn" onclick="toggleDecimalsMode()" title="إظهار الكسور العشرية">.00</button>
         <button type="button" class="mm-tool-btn privacy-toggle-btn" onclick="togglePrivacyMode()" title="إخفاء الأرقام">👁</button>
       </div>
       <div class="ym-stepper" dir="ltr">
@@ -43,356 +45,315 @@
       </div>
     </div>
 
-    <!-- Collapsible Search/Filter Bar -->
+    <!-- 2.1 مربع البحث المطور (ارتفاع أوضح وبحث شامل في الملاحظات والبيان) -->
     <div id="mmSearchBox" style="display:none;margin-bottom:8px">
       <div style="display:flex;gap:6px;align-items:center">
         <div style="position:relative;flex:1;display:flex;align-items:center">
-          <input id="actSearch" type="search" data-i18n-ph="ph_search" placeholder="بحث في البيان أو القسم..." oninput="onTransactionsSearchInput()" style="width:100%;background:var(--surface);border:1px solid var(--line2);border-radius:10px;padding:6px 28px 6px 10px;color:var(--text);font-size:.75rem;text-align:left">
-          <button type="button" id="btnClearSearch" onclick="clearTransactionsSearch()" title="مسح الفلتر" style="display:none;position:absolute;right:6px;background:none;border:0;color:var(--muted);font-size:.8rem;padding:2px 5px">✕</button>
+          <input id="actSearch" type="search" placeholder="بحث في البيان أو الملاحظات أو القسم..." oninput="onTransactionsSearchInput()" style="width:100%;background:var(--surface);border:1px solid var(--line2);color:var(--text);text-align:left">
+          <button type="button" id="btnClearSearch" onclick="clearTransactionsSearch()" title="مسح الفلتر" style="display:none;position:absolute;right:8px;background:none;border:0;color:var(--muted);font-size:.88rem;padding:2px 6px">✕</button>
         </div>
-        <select id="actAccountFilter" onchange="renderTransactionsScreen()" style="background:var(--surface);border:1px solid var(--line2);border-radius:10px;padding:6px;color:var(--text);font-size:.72rem"><option value="">كل الحسابات</option></select>
+        <select id="actAccountFilter" onchange="renderTransactionsScreen()" style="background:var(--surface);border:1px solid var(--line2);color:var(--text)"><option value="">كل الحسابات</option></select>
       </div>
     </div>
 
-    <!-- Row 4: 3 Summary Boxes (Left-to-Right: Income | Expenses | Total/Net) -->
+    <!-- 2.4 & 3.1 البطاقات الملخصة الثلاثة: الدخل | المصروفات | الصافي -->
     <div class="mm-stats">
       <div class="mm-stat-box">
-        <small data-i18n="lbl_income">الدخل</small>
+        <small>الدخل</small>
         <b class="blue" id="incomeHero">0</b>
       </div>
       <div class="mm-stat-box">
-        <small data-i18n="lbl_expenses">المصروفات</small>
+        <small>المصروفات</small>
         <b class="red" id="expenseHero">0</b>
       </div>
       <div class="mm-stat-box">
-        <small data-i18n="lbl_net">الصافي</small>
+        <small>الصافي</small>
         <b id="remaining">0</b>
       </div>
     </div>
   </div>
 
-  <!-- Daily or Monthly Transactions Feed -->
+  <!-- قائمة المعاملات اليومية أو جدول الملخص الشهري -->
   <div id="dailyTransactionsFeed"></div>
 </section>
 
-<!-- 2. شاشة التقارير (3 وظائف: توزيع مصاريف الشهر + توزيع دخل الشهر + التقرير السنوي) -->
+<!-- =========================================================
+     2. شاشة تحليل المعاملات (الدخل | المصروفات + محدد الفترة + تحليل البند التفصيلي)
+     ========================================================= -->
 <section id="reports" class="screen">
-  <!-- 3 Report Mode Sub-tabs -->
-  <div class="mm-type-tabs" style="margin-bottom:12px">
-    <button type="button" class="mm-tab active exp" id="repTabExp" onclick="switchReportTab('exp')">مصاريف الشهر</button>
-    <button type="button" class="mm-tab inc" id="repTabInc" onclick="switchReportTab('inc')">دخل الشهر</button>
-    <button type="button" class="mm-tab trn" id="repTabYr" onclick="switchReportTab('yr')">التقرير السنوي</button>
+  <!-- 4.1 & 4.2.3 & 4.2.6 قسمين فقط بارتفاع موحد: الدخل أولاً ثم المصروفات -->
+  <div class="sub-tabs">
+    <button type="button" class="sub-tab-btn" id="repTabInc" onclick="switchReportTab('inc')">الدخل</button>
+    <button type="button" class="sub-tab-btn active" id="repTabExp" onclick="switchReportTab('exp')">المصروفات</button>
   </div>
 
-  <!-- Sub-view 1 & 2: Monthly Category Breakdown (Expense or Income for selected top month) -->
   <div id="repViewMonthly">
     <div class="mm-header-card">
-      <div class="mm-nav-row" style="margin-bottom:0">
-        <div style="text-align:left">
-          <small style="display:block;font-size:.66rem;color:var(--muted)" id="repMonthlyTotalLabel">إجمالي المصاريف</small>
-          <b style="font-size:1rem;direction:ltr" class="red" id="repMonthlyTotalVal">0 EGP</b>
+      <div class="mm-nav-row" style="margin-bottom:0;gap:6px;flex-wrap:wrap">
+        <div style="text-align:left;min-width:95px">
+          <small style="display:block;font-size:.66rem;color:var(--muted)" id="repMonthlyTotalLabel">إجمالي المصروفات</small>
+          <b style="font-size:.96rem;direction:ltr" class="red" id="repMonthlyTotalVal">0 EGP</b>
         </div>
-        <div class="ym-stepper" dir="ltr">
-          <button type="button" class="step-arrow" onclick="shiftActiveMonth(-1)">‹</button>
-          <button type="button" class="step-label" onclick="openHomePeriodPicker()" id="repPeriodLabel">نوفمبر 2026</button>
-          <button type="button" class="step-arrow" onclick="shiftActiveMonth(1)">›</button>
+        <!-- 4.4 محدد الفترة الزمنية للتقارير بجوار اختيار الشهر -->
+        <div style="display:flex;align-items:center;gap:6px;margin-left:auto">
+          <select id="repPeriodMode" onchange="onReportPeriodModeChange(this.value)" style="height:34px;background:var(--surface);border:1px solid var(--line2);border-radius:10px;padding:0 8px;color:var(--text);font-size:.74rem">
+            <option value="monthly">شهري</option>
+            <option value="yearly">سنوي</option>
+            <option value="all">الكل</option>
+            <option value="custom">فترة محددة</option>
+          </select>
+          <div class="ym-stepper" id="repStepperBox" dir="ltr">
+            <button type="button" class="step-arrow" onclick="shiftReportPeriod(-1)">‹</button>
+            <button type="button" class="step-label" onclick="openReportPeriodPicker()" id="repPeriodLabel">نوفمبر 2026</button>
+            <button type="button" class="step-arrow" onclick="shiftReportPeriod(1)">›</button>
+          </div>
         </div>
+      </div>
+
+      <!-- حقول الفترة المحددة (تظهر عند اختيار فترة محددة) -->
+      <div id="repCustomDatesRow" style="display:none;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;padding-top:8px;border-top:1px solid var(--line)">
+        <div class="c-row" style="min-height:38px;padding:4px 8px"><label>من</label><input id="repCustomFrom" type="date" onchange="renderReportsScreen()"></div>
+        <div class="c-row" style="min-height:38px;padding:4px 8px"><label>إلى</label><input id="repCustomTo" type="date" onchange="renderReportsScreen()"></div>
       </div>
     </div>
 
-    <!-- Visual Donut + Category Breakdown List -->
-    <div class="panel" id="repChartPanel" style="display:flex;flex-direction:column;align-items:center;padding:16px 12px">
-      <div id="repDonutWrap" style="position:relative;width:170px;height:170px;display:grid;place-items:center;margin-bottom:10px"></div>
+    <!-- الرسم الدائري وتوزيع البنود -->
+    <div class="panel" id="repChartPanel" style="display:flex;flex-direction:column;align-items:center;padding:14px 12px">
+      <div id="repDonutWrap" style="position:relative;width:166px;height:166px;display:grid;place-items:center;margin-bottom:10px"></div>
       <div id="repLegendChips" style="display:flex;flex-wrap:wrap;justify-content:center;gap:6px;width:100%"></div>
     </div>
 
-    <div class="panel" id="repCatBreakdownList" style="padding:8px 12px"></div>
-  </div>
-
-  <!-- Sub-view 3: Yearly Report & Forecast -->
-  <div id="repViewYearly" style="display:none">
-    <div class="hero">
-      <label>توقعات الشهور القادمة (الدخل − الالتزامات والأقساط)</label>
-      <div class="amount" id="fcNextMonthNet">0 EGP</div>
-      <div class="sub" id="fcNextMonthSub">صافي الشهر القادم المتوقع</div>
-      <div class="hero-foot">
-        <div class="hero-pill"><span>المرتب المتوقع</span><b id="fcExpectedSal">0</b></div>
-        <div class="hero-pill"><span>التزامات الشهر الجاي</span><b id="fcNextDue">0</b></div>
-        <div class="hero-pill"><span>متبقي السلف</span><b id="fcLoansRemain">0</b></div>
-      </div>
-    </div>
-
-    <details class="fold">
-      <summary><span>✎ ضبط المرتب والأرباح المتوقعة للشهور الجاية</span><span>▼</span></summary>
-      <div class="fold-body">
-        <div class="c-list">
-          <div class="c-row"><label>المرتب الشهري المتوقع :</label><input id="repDefSalary" type="number" step="0.01" inputmode="decimal" placeholder="0"></div>
-          <div class="c-row"><label>الأرباح الشهرية المتوقعة :</label><input id="repDefProfit" type="number" step="0.01" inputmode="decimal" placeholder="0"></div>
-        </div>
-        <p class="hint">يُستخدم تلقائيًا في أي شهر قادم لم يُحسب مرتبه الفعلي بعد.</p>
-        <button type="button" class="primary" style="margin-top:6px" onclick="saveReportDefaults()">حفظ التوقعات</button>
-      </div>
-    </details>
-
-    <div class="section-head">
-      <h2>التقرير السنوي</h2>
-      <div class="ym-stepper">
-        <button type="button" class="step-arrow" onclick="shiftForecastYear(-1)">‹</button>
-        <button type="button" class="step-label" style="min-width:74px;cursor:default" id="forecastYearLabel">2026</button>
-        <button type="button" class="step-arrow" onclick="shiftForecastYear(1)">›</button>
-      </div>
-    </div>
-    <div class="panel" style="padding:10px">
-      <div class="yr-table-wrap">
-        <table class="yr-table">
-          <thead><tr><th>الشهر</th><th class="num">الدخل</th><th class="num">الالتزامات</th><th class="num">الفائض/العجز</th></tr></thead>
-          <tbody id="yearlyBreakdownBody"></tbody>
-        </table>
-      </div>
-    </div>
+    <div class="panel" id="repCatBreakdownList" style="padding:6px 10px"></div>
   </div>
 </section>
 
-<!-- 3. شاشة الحسابات والبطاقات -->
+<!-- =========================================================
+     3. شاشة الحسابات والبطاقات (الحسابات | البطاقات)
+     ========================================================= -->
 <section id="wallet" class="screen">
+  <!-- 5.1 & 6.1 إعادة تسمية التابات -->
   <div class="sub-tabs">
-    <button type="button" class="sub-tab-btn active" id="tabBtnAcc" onclick="switchWalletTab('acc')">الحسابات والأرصدة</button>
-    <button type="button" class="sub-tab-btn" id="tabBtnCard" onclick="switchWalletTab('card')">البطاقات الائتمانية</button>
+    <button type="button" class="sub-tab-btn active" id="tabBtnAcc" onclick="switchWalletTab('acc')">الحسابات</button>
+    <button type="button" class="sub-tab-btn" id="tabBtnCard" onclick="switchWalletTab('card')">البطاقات</button>
   </div>
 
-  <!-- Sub-view A: Accounts -->
+  <!-- 5.2 القسم الأول: تاب الحسابات (1. بطاقة خضراء، 2. زر إضافة حساب، 3. الحسابات المسجلة) -->
   <div id="walletViewAcc">
     <div class="hero">
-      <label>إجمالي الأموال المتاحة (الكاش والبنوك والمحافظ)</label>
+      <label>إجمالي أرصدة جميع الحسابات</label>
       <div class="amount" id="accountsTotal">0 EGP</div>
     </div>
-    <details class="fold">
+
+    <details class="fold" id="addAccountFold">
       <summary><span>＋ إضافة حساب جديد</span><span>▼</span></summary>
       <div class="fold-body">
         <div class="c-list">
-          <div class="c-row"><label>اسم الحساب :</label><input id="accName" placeholder="مثال: QNB أو كاش"></div>
-          <div class="c-row"><label>النوع :</label><select id="accType"><option value="cash">كاش</option><option value="bank">حساب بنكي</option><option value="wallet">محفظة إلكترونية</option><option value="prepaid">بطاقة مسبقة الدفع</option></select></div>
-          <div class="c-row"><label>الرصيد الافتتاحي :</label><input id="accOpening" type="number" step="0.01" inputmode="decimal" placeholder="0"></div>
+          <div class="c-row"><label>اسم الحساب</label><input id="accName" placeholder="مثال: QNB أو كاش"></div>
+          <div class="c-row"><label>النوع</label><select id="accType"><option value="cash">كاش</option><option value="bank">حساب بنكي</option><option value="wallet">محفظة إلكترونية</option><option value="prepaid">بطاقة مسبقة الدفع</option></select></div>
+          <div class="c-row"><label>الرصيد الافتتاحي</label><input id="accOpening" type="number" step="0.01" inputmode="decimal" placeholder="0"></div>
         </div>
         <button class="primary" style="margin-top:10px" onclick="addAccount()">إضافة الحساب</button>
       </div>
     </details>
-    <div class="section-head"><h2>حساباتي</h2><span>اضغط لكشف الحساب أو التعديل</span></div>
+
+    <div class="section-head"><h2>الحسابات المسجلة</h2><span>اضغط للخيارات</span></div>
     <div class="panel" id="accountsList"></div>
   </div>
 
-  <!-- Sub-view B: Credit Cards -->
+  <!-- 6.2 القسم الثاني: تاب البطاقات (1. بطاقة خضراء، 2. زر إضافة بطاقة، 3. البطاقات المسجلة + كل عمليات البطاقة) -->
   <div id="walletViewCard" style="display:none">
-    <div class="grid">
-      <div class="metric"><small>إجمالي المديونية (المستخدم)</small><strong class="orange" id="cardDebtTotal">0.00</strong><em>EGP</em></div>
-      <div class="metric"><small>مستحق (<span id="cardDueMonthName">نوفمبر</span>)</small><strong class="blue" id="cardDueTotal">0.00</strong><em>EGP</em></div>
+    <div class="hero">
+      <label>إجمالي أرصدة البطاقات (المستخدم حالياً)</label>
+      <div class="amount" id="cardDebtTotal">0 EGP</div>
     </div>
 
-    <div class="h-action-bar">
-      <button type="button" class="h-action-btn" id="btnCardPanelAdd" onclick="toggleCardPanel('cardPanelAdd', this)"><span>💳</span><span>إضافة بطاقة</span></button>
-      <button type="button" class="h-action-btn" id="btnCardPanelOp" onclick="toggleCardPanel('cardPanelOp', this)"><span>🛒</span><span>تسجيل عملية</span></button>
-      <button type="button" class="h-action-btn" id="btnCardPanelPay" onclick="toggleCardPanel('cardPanelPay', this)"><span>✓</span><span>سداد بطاقة</span></button>
-    </div>
-
-    <!-- Add Card -->
-    <div class="panel card-subpanel" id="cardPanelAdd">
-      <div class="section-head" style="margin-top:0"><h2>إضافة بطاقة</h2><span style="cursor:pointer" onclick="closeCardPanels()">✕</span></div>
-      <div class="c-list">
-        <div class="c-row"><label>اسم البطاقة :</label><input id="cardName" placeholder="مثال: QNB" onblur="applyKnownBankTerms()"></div>
-        <div class="c-row"><label>الحد الائتماني :</label><input id="cardLimit" type="number" step="0.01" placeholder="35400"></div>
-        <div class="c-row"><label>الرصيد المتاح :</label><input id="cardAvailable" type="number" step="0.01" placeholder="28657"></div>
-        <div class="c-row"><label>يوم السداد :</label><input id="cardPayDay" type="number" min="1" max="28" value="3"></div>
-      </div>
-      <details class="fold" style="margin-top:8px">
-        <summary><span>جدول الفوائد والرسوم (اختياري)</span><span>▼</span></summary>
-        <div class="fold-body">
-          <div class="c-list">
-            <div class="c-row"><label>3ش فائدة / رسوم % :</label><div style="display:flex;gap:5px;width:64%"><input id="ir3" type="number" step="0.01" value="0" style="width:50%"><input id="fee3" type="number" step="0.01" value="0" style="width:50%"></div></div>
-            <div class="c-row"><label>6ش فائدة / رسوم % :</label><div style="display:flex;gap:5px;width:64%"><input id="ir6" type="number" step="0.01" value="0" style="width:50%"><input id="fee6" type="number" step="0.01" value="0" style="width:50%"></div></div>
-            <div class="c-row"><label>12ش فائدة / رسوم % :</label><div style="display:flex;gap:5px;width:64%"><input id="ir12" type="number" step="0.01" value="0" style="width:50%"><input id="fee12" type="number" step="0.01" value="0" style="width:50%"></div></div>
-            <div class="c-row"><label>18ش فائدة / رسوم % :</label><div style="display:flex;gap:5px;width:64%"><input id="ir18" type="number" step="0.01" value="0" style="width:50%"><input id="fee18" type="number" step="0.01" value="0" style="width:50%"></div></div>
-            <div class="c-row"><label>24ش فائدة / رسوم % :</label><div style="display:flex;gap:5px;width:64%"><input id="ir24" type="number" step="0.01" value="0" style="width:50%"><input id="fee24" type="number" step="0.01" value="0" style="width:50%"></div></div>
+    <details class="fold" id="addCardFold">
+      <summary><span>💳 إضافة بطاقة جديدة</span><span>▼</span></summary>
+      <div class="fold-body">
+        <div class="c-list">
+          <div class="c-row"><label>اسم البطاقة</label><input id="cardName" placeholder="مثال: QNB أو قناة السويس" onblur="applyKnownBankTerms()"></div>
+          <div class="c-row"><label>الحد الائتماني</label><input id="cardLimit" type="number" step="0.01" placeholder="35400"></div>
+          <div class="c-row"><label>الرصيد المتاح</label><input id="cardAvailable" type="number" step="0.01" placeholder="28657"></div>
+          <div class="c-row"><label>يوم السداد</label><input id="cardPayDay" type="number" min="1" max="28" value="3"></div>
+        </div>
+        <details class="fold" style="margin-top:8px">
+          <summary><span>نظام التقسيط (الفائدة الشهرية % / الرسوم %)</span><span>▼</span></summary>
+          <div class="fold-body">
+            <div class="c-list">
+              <div class="c-row"><label>3 شهور (فائدة / رسوم)</label><div style="display:flex;gap:5px;width:62%"><input id="ir3" type="number" step="0.01" value="0" style="width:50%"><input id="fee3" type="number" step="0.01" value="0" style="width:50%"></div></div>
+              <div class="c-row"><label>6 شهور (فائدة / رسوم)</label><div style="display:flex;gap:5px;width:62%"><input id="ir6" type="number" step="0.01" value="0" style="width:50%"><input id="fee6" type="number" step="0.01" value="0" style="width:50%"></div></div>
+              <div class="c-row"><label>9 شهور (فائدة / رسوم)</label><div style="display:flex;gap:5px;width:62%"><input id="ir9" type="number" step="0.01" value="0" style="width:50%"><input id="fee9" type="number" step="0.01" value="0" style="width:50%"></div></div>
+              <div class="c-row"><label>12 شهر (فائدة / رسوم)</label><div style="display:flex;gap:5px;width:62%"><input id="ir12" type="number" step="0.01" value="0" style="width:50%"><input id="fee12" type="number" step="0.01" value="0" style="width:50%"></div></div>
+              <div class="c-row"><label>18 شهر (فائدة / رسوم)</label><div style="display:flex;gap:5px;width:62%"><input id="ir18" type="number" step="0.01" value="0" style="width:50%"><input id="fee18" type="number" step="0.01" value="0" style="width:50%"></div></div>
+              <div class="c-row"><label>24 شهر (فائدة / رسوم)</label><div style="display:flex;gap:5px;width:62%"><input id="ir24" type="number" step="0.01" value="0" style="width:50%"><input id="fee24" type="number" step="0.01" value="0" style="width:50%"></div></div>
+            </div>
           </div>
-        </div>
-      </details>
-      <button class="primary" style="margin-top:10px" onclick="addCard()">حفظ البطاقة</button>
-    </div>
-
-    <!-- Add Card Op -->
-    <div class="panel card-subpanel" id="cardPanelOp">
-      <div class="section-head" style="margin-top:0"><h2>تسجيل عملية على البطاقة</h2><span style="cursor:pointer" onclick="closeCardPanels()">✕</span></div>
-      <div class="c-list">
-        <div class="c-row"><label>اسم البطاقة :</label><select id="opCard" onchange="showCreditQuote()"></select></div>
-        <div class="c-row">
-          <label>نوع العملية :</label>
-          <div class="seg-group">
-            <button type="button" class="seg-btn active" id="segOpSwipe" onclick="setCardOpType('swipe')">شراء</button>
-            <button type="button" class="seg-btn" id="segOpInst" onclick="setCardOpType('installment')">تقسيط</button>
-          </div>
-          <input type="hidden" id="opType" value="swipe">
-        </div>
-        <div class="c-row"><label>وصف العملية :</label><input id="opTitle" placeholder="مثال: موبايل"></div>
-        <div class="c-row"><label>قيمة العملية :</label><input id="opAmount" type="number" min="1" inputmode="decimal" placeholder="0" oninput="showCreditQuote()"></div>
-        <div class="c-row"><label>تاريخ العملية :</label><input id="opDate" type="date" onchange="syncCardOpMonthsFromDate()"></div>
-        <div class="c-row installment-only"><label>مدة التقسيط :</label><select id="opMonths" onchange="showCreditQuote()"><option value="3">3 شهور</option><option value="6">6 شهور</option><option value="9">9 شهور</option><option value="12" selected>12 شهر</option><option value="15">15 شهر</option><option value="18">18 شهر</option><option value="24">24 شهر</option><option value="36">36 شهر</option></select></div>
-        <div class="c-row installment-only">
-          <label>شهر الشراء :</label>
-          <button type="button" class="picker-trigger" onclick="openCardOpPurchasePicker()"><b id="opPurchaseLabel">نوفمبر 2026</b><span>تغيير</span></button>
-          <input type="hidden" id="opPurchaseVal">
-        </div>
-        <div class="c-row installment-only">
-          <label>شهر المصاريف :</label>
-          <button type="button" class="picker-trigger" onclick="openCompactYMPicker('opFeeMonth')"><b id="opFeeMonthLabel">ديسمبر 2026</b><span>تغيير</span></button>
-          <input type="hidden" id="opFeeMonthVal">
-        </div>
+        </details>
+        <button class="primary" style="margin-top:10px" onclick="addCard()">حفظ البطاقة</button>
       </div>
-      <div id="creditQuote" class="panel installment-only" style="margin-top:8px;background:var(--surface);padding:10px"><div class="empty">أدخل المبلغ لعرض القسط والفائدة.</div></div>
-      <button class="primary" style="margin-top:10px" onclick="addCardOperation()">تسجيل العملية</button>
-    </div>
+    </details>
 
-    <!-- Pay Card -->
-    <div class="panel card-subpanel" id="cardPanelPay">
-      <div class="section-head" style="margin-top:0"><h2>سداد بطاقة</h2><span style="cursor:pointer" onclick="closeCardPanels()">✕</span></div>
-      <div class="c-list">
-        <div class="c-row"><label>البطاقة :</label><select id="payCard"></select></div>
-        <div class="c-row"><label>المبلغ المدفوع :</label><input id="cardPaymentAmount" type="number" min="1" inputmode="decimal" placeholder="0"></div>
-        <div class="c-row"><label>تاريخ الدفع :</label><input id="cardPaymentDate" type="date"></div>
-        <div class="c-row"><label>حساب السداد :</label><select id="cardPayAccount"></select></div>
-      </div>
-      <button class="primary" style="margin-top:10px" onclick="payCard()">تسجيل السداد</button>
-    </div>
-
-    <div class="section-head"><h2>البطاقات المسجلة</h2></div>
+    <div class="section-head"><h2>البطاقات المسجلة</h2><span>اضغط للتفاصيل والخيارات</span></div>
     <div class="panel" id="cardsList"></div>
-    <div class="section-head"><h2>مستحقات الشهر (<span id="cardMonthScheduleLabel">نوفمبر 2026</span>)</h2></div>
-    <div class="panel" id="cardMonthlyDueList"></div>
-    <div class="section-head"><h2>كل عمليات البطاقات</h2></div>
+
+    <div class="section-head"><h2>كل عمليات البطاقة</h2><span>الأصلية والمنسوخة</span></div>
     <div class="panel" id="cardOpsList"></div>
   </div>
 </section>
 
-<!-- 4. شاشة الالتزامات وحاسبة المرتب -->
+<!-- =========================================================
+     4. شاشة الالتزامات والتقرير المالي السنوي
+     ========================================================= -->
 <section id="plan" class="screen">
+  <!-- 7.1 & 8.1 & 8.2 تاب الالتزامات + تاب التقرير المالي السنوي -->
   <div class="sub-tabs">
-    <button type="button" class="sub-tab-btn active" id="tabBtnCom" onclick="switchPlanTab('com')">الالتزامات والسلف</button>
-    <button type="button" class="sub-tab-btn" id="tabBtnSal" onclick="switchPlanTab('sal')">حاسبة المرتب</button>
+    <button type="button" class="sub-tab-btn active" id="tabBtnCom" onclick="switchPlanTab('com')">الالتزامات</button>
+    <button type="button" class="sub-tab-btn" id="tabBtnYr" onclick="switchPlanTab('yr')">التقرير المالي السنوي</button>
   </div>
 
-  <!-- Sub-view A: Commitments & Loans -->
+  <!-- Sub-view A: الالتزامات -->
   <div id="planViewCom">
+    <!-- 7.8 البطاقة الخضراء بمؤشر واحد فقط: إجمالي التزامات الشهر -->
     <div class="hero">
-      <label>التزامات شهر (<span id="comHeroMonthLabel">نوفمبر 2026</span>)</label>
+      <label>إجمالي التزامات الشهر (<span id="comHeroMonthLabel">نوفمبر 2026</span>)</label>
       <div class="amount" id="comHeroTotal">0 EGP</div>
-      <div class="hero-foot">
-        <div class="hero-pill"><span>المسدد</span><b id="comHeroPaid">0</b></div>
-        <div class="hero-pill"><span>المتبقي</span><b id="comHeroRemain">0</b></div>
-        <div class="hero-pill"><span>متبقي السلف</span><b id="comHeroLoans">0</b></div>
-      </div>
     </div>
 
-    <details class="fold">
-      <summary><span>＋ إضافة التزام شهري أو سلفة</span><span>▼</span></summary>
+    <!-- 7.2 إلى 7.5 نظام إضافة الالتزامات المطور (3 أنواع) -->
+    <details class="fold" id="addCommitmentFold">
+      <summary><span>＋ إضافة التزام جديد</span><span>▼</span></summary>
       <div class="fold-body">
-        <div class="c-list">
-          <div class="c-row"><label>نظام السداد :</label><select id="comFreq" onchange="toggleCommitmentFreqFields()"><option value="monthly">شهري (قسط / جمعية / فاتورة)</option><option value="once">سلفة (مرة واحدة)</option></select></div>
-          <div class="c-row"><label>التصنيف :</label><select id="comType"><option>سلفة</option><option>جمعية</option><option>قسط شقة</option><option>قسط بنك</option><option>التزام شهري</option><option>فاتورة</option><option>أخرى</option></select></div>
-          <div class="c-row"><label>الاسم (اختياري) :</label><input id="comTitle" placeholder="مثال: أحمد / الشقة"></div>
-          <div class="c-row"><label>المبلغ :</label><input id="comAmount" type="number" step="0.01" inputmode="decimal" placeholder="0"></div>
-          <div class="c-row com-monthly-only"><label>يوم الاستحقاق :</label><input id="comDay" type="number" min="1" max="31" value="1"></div>
-          <div class="c-row com-monthly-only"><label>تاريخ البداية :</label><button type="button" class="picker-trigger" onclick="openCompactYMPicker('comStart')"><b id="comStartLabel">نوفمبر 2026</b><span>تغيير</span></button><input type="hidden" id="comStartVal"></div>
-          <div class="c-row com-monthly-only"><label>تاريخ النهاية :</label><button type="button" class="picker-trigger" onclick="openCompactYMPicker('comEnd',true)"><b id="comEndLabel">مفتوح</b><span>تغيير</span></button><input type="hidden" id="comEndVal" value=""></div>
-          <div class="c-row"><label>ميعاد السداد :</label><input id="comDueDate" type="date"></div>
-          <div class="c-row"><label>ملاحظة :</label><input id="comNote" placeholder="تفاصيل إضافية"></div>
+        <div class="mm-type-tabs" style="grid-template-columns:repeat(3,1fr);margin-bottom:10px">
+          <button type="button" class="mm-tab active exp" id="comKindTabDef" onclick="setCommitmentAddKind('deferred')">مستحقات مؤجلة</button>
+          <button type="button" class="mm-tab inc" id="comKindTabMon" onclick="setCommitmentAddKind('monthly')">التزامات شهرية</button>
+          <button type="button" class="mm-tab trn" id="comKindTabCard" onclick="setCommitmentAddKind('card')">معاملات بالبطاقة</button>
         </div>
-        <button class="primary" style="margin-top:10px" onclick="addCommitment()">حفظ</button>
+        <input type="hidden" id="comAddKind" value="deferred">
+
+        <!-- 7.3 النوع الأول: مستحقات مؤجلة -->
+        <div id="comFormDeferred" class="c-list">
+          <div class="c-row"><label>اسم العملية</label><input id="defTitle" placeholder="مثال: سلفة / مصاريف مدرسة"></div>
+          <div class="c-row"><label>المبلغ</label><input id="defAmount" type="number" step="0.01" inputmode="decimal" placeholder="0"></div>
+          <div class="c-row"><label>تاريخ الاستحقاق</label><input id="defDueDate" type="date"></div>
+          <div class="c-row"><label>ملاحظة</label><input id="defNote" placeholder="تفاصيل إضافية"></div>
+          <button type="button" class="primary" style="margin-top:6px" onclick="saveNewCommitmentItem()">حفظ المستحق المؤجل</button>
+        </div>
+
+        <!-- 7.4 النوع الثاني: التزامات شهرية -->
+        <div id="comFormMonthly" class="c-list" style="display:none">
+          <div class="c-row"><label>اسم العملية</label><input id="monTitle" placeholder="مثال: جمعية / قسط شقة / دروس"></div>
+          <div class="c-row"><label>المبلغ الشهري</label><input id="monAmount" type="number" step="0.01" inputmode="decimal" placeholder="0"></div>
+          <div class="c-row"><label>الفترة بالأشهر</label><input id="monDuration" type="number" min="1" max="360" value="12" oninput="recalcMonthlyCommitmentEnd()"></div>
+          <div class="c-row">
+            <label>تاريخ البدء</label>
+            <button type="button" class="picker-trigger" onclick="openCompactYMPicker('comStart', false, recalcMonthlyCommitmentEnd)"><b id="comStartLabel">نوفمبر 2026</b></button>
+            <input type="hidden" id="comStartVal">
+          </div>
+          <div class="c-row">
+            <label>تاريخ الانتهاء</label>
+            <input id="comEndAutoLabel" readonly style="color:var(--mint);background:var(--surface)">
+            <input type="hidden" id="comEndVal">
+          </div>
+          <div class="c-row"><label>ملاحظة</label><input id="monNote" placeholder="تفاصيل إضافية"></div>
+          <button type="button" class="primary" style="margin-top:6px" onclick="saveNewCommitmentItem()">حفظ الالتزام الشهري</button>
+        </div>
+
+        <!-- 7.5 النوع الثالث: معاملات بالبطاقة -->
+        <div id="comFormCard" class="c-list" style="display:none">
+          <div class="c-row"><label>اسم البطاقة</label><select id="opCard" onchange="showCreditQuote()"></select></div>
+          <div class="c-row">
+            <label>نوع العملية</label>
+            <div class="seg-group">
+              <button type="button" class="seg-btn active" id="segOpInst" onclick="setCardOpType('installment')">تقسيط</button>
+              <button type="button" class="seg-btn" id="segOpSwipe" onclick="setCardOpType('swipe')">شراء</button>
+            </div>
+            <input type="hidden" id="opType" value="installment">
+          </div>
+          <div class="c-row"><label>وصف العملية</label><input id="opTitle" placeholder="مثال: موبايل"></div>
+          <div class="c-row"><label>قيمة العملية</label><input id="opAmount" type="number" min="1" inputmode="decimal" placeholder="0" oninput="showCreditQuote()"></div>
+          <div class="c-row installment-only">
+            <label>مدة التقسيط</label>
+            <select id="opMonths" onchange="showCreditQuote()">
+              <option value="3">3 شهور</option><option value="6">6 شهور</option><option value="9">9 شهور</option>
+              <option value="12" selected>12 شهر</option><option value="15">15 شهر</option><option value="18">18 شهر</option>
+              <option value="24">24 شهر</option><option value="36">36 شهر</option>
+            </select>
+          </div>
+          <div class="c-row">
+            <label>شهر الشراء</label>
+            <button type="button" class="picker-trigger" onclick="openCardOpPurchasePicker()"><b id="opPurchaseLabel">نوفمبر 2026</b></button>
+            <input type="hidden" id="opPurchaseVal">
+          </div>
+          <div id="creditQuote" class="panel installment-only" style="margin-top:4px;background:var(--surface);padding:10px"><div class="empty">أدخل المبلغ لعرض القسط وتاريخ البدء حسب البنك.</div></div>
+          <button type="button" class="primary" style="margin-top:6px" onclick="addCardOperation()">تسجيل عملية البطاقة</button>
+        </div>
       </div>
     </details>
 
+    <!-- 7.6 قسم مستحقات الشهر الموحد -->
     <div class="section-head">
-      <h2>الالتزامات الشهرية</h2>
-      <div class="ym-stepper">
+      <h2>مستحقات الشهر</h2>
+      <div class="ym-stepper" dir="ltr">
         <button type="button" class="step-arrow" onclick="shiftActiveMonth(-1)">‹</button>
         <button type="button" class="step-label" onclick="openHomePeriodPicker()" id="comMonthLabel">نوفمبر 2026</button>
         <button type="button" class="step-arrow" onclick="shiftActiveMonth(1)">›</button>
       </div>
     </div>
     <div class="panel" id="commitmentsList"></div>
-
-    <div class="section-head"><h2>السلف القائمة</h2></div>
-    <div class="panel" id="oneTimeDebtsList"></div>
   </div>
 
-  <!-- Sub-view B: Salary Calculator (Closed by default) -->
-  <div id="planViewSal" style="display:none">
+  <!-- 8. Sub-view B: التقرير المالي السنوي (بدون بطاقة خضراء، بتصميم جدول Excel مع تثبيت عمود الشهر) -->
+  <div id="planViewYr" style="display:none">
     <details class="fold">
-      <summary><span>⚙ إعدادات السنة (ثابتة خلال السنة)</span><span>▼</span></summary>
-      <div class="fold-body">
-        <div class="c-list" id="salaryYearForm">
-          <div class="c-row"><label>السنة :</label><select id="salYear" onchange="loadSalaryConfig()"></select></div>
-          <div class="c-row"><label>الراتب الأساسي :</label><input id="salBasic" type="number"></div>
-          <div class="c-row"><label>الحضور الكامل :</label><input id="salAttendance" type="number"></div>
-          <div class="c-row"><label>سنوات الأجور :</label><input id="salYears" type="number"></div>
-          <div class="c-row"><label>أيام الشهر :</label><input id="salWorkDays" type="number" value="30"></div>
-          <div class="c-row"><label>ساعات العمل :</label><input id="salWorkHours" type="number" value="8"></div>
-          <div class="c-row"><label>معامل البدل :</label><input id="salAllowanceRate" type="number" step="0.1" value="1"></div>
-          <div class="c-row"><label>معامل الراحة :</label><input id="salRestRate" type="number" step="0.1" value="2"></div>
-          <div class="c-row"><label>معامل الإضافي :</label><input id="salOTRate" type="number" step="0.1" value="1.5"></div>
-          <div class="c-row"><label>معامل العيد :</label><input id="salHolidayRate" type="number" step="0.1" value="2"></div>
-          <div class="c-row"><label>سعر الوجبة :</label><input id="salMealPrice" type="number" value="70"></div>
-          <div class="c-row"><label>إضافة تأمين 1 :</label><input id="salInsAdd1" type="number" value="1400"></div>
-          <div class="c-row"><label>إضافة تأمين 2 :</label><input id="salInsAdd2" type="number" value="800"></div>
-          <div class="c-row"><label>نسبة التأمين % :</label><input id="salInsuranceBaseRate" type="number" step="0.1" value="10"></div>
-          <div class="c-row"><label>التأمين الطبي % :</label><input id="salMedicalRate" type="number" step="0.1" value="6"></div>
-          <div class="c-row"><label>صندوق الشهداء % :</label><input id="salMartyrsRate" type="number" step="0.001" value="0.05"></div>
-        </div>
-        <button class="primary" style="margin-top:10px" onclick="saveSalaryConfig()">حفظ إعدادات السنة</button>
-      </div>
-    </details>
-
-    <details class="fold">
-      <summary><span>📅 مدخلات الشهر</span><span>▼</span></summary>
+      <summary><span>✎ ضبط المرتب والأرباح المتوقعة للشهور القادمة</span><span>▼</span></summary>
       <div class="fold-body">
         <div class="c-list">
-          <div class="c-row"><label>الشهر :</label><select id="salMonth" onchange="loadSalaryConfig()"></select></div>
-          <div class="c-row"><label>يوم القبض :</label><select id="salPayDay"><option value="1">يوم 1</option><option value="2">يوم 2</option><option value="3">يوم 3</option></select></div>
-          <div class="c-row"><label>التقييم :</label><input id="salRating" type="number"></div>
-          <div class="c-row"><label>ساعات البدل :</label><input id="salAllowanceHours" type="number" oninput="updateMealPreview()"></div>
-          <div class="c-row"><label>ساعات الراحة :</label><input id="salRestHours" type="number"></div>
-          <div class="c-row"><label>ساعات الإضافي :</label><input id="salOvertime" type="number"></div>
-          <div class="c-row"><label>ساعات العيد :</label><input id="salHoliday" type="number"></div>
-          <div class="c-row"><label>أيام الحضور :</label><input id="salDays" type="number" oninput="updateMealPreview()"></div>
-          <div class="c-row"><label>حضور 12 ساعة :</label><input id="sal12H" type="number" oninput="updateMealPreview()"></div>
-          <div class="c-row"><label>حضور 8 ساعات :</label><input id="sal8Days" type="number" readonly></div>
-          <div class="c-row"><label>مكافآت / خصومات :</label><input id="salOther" type="number"></div>
+          <div class="c-row"><label>المرتب الشهري المتوقع</label><input id="repDefSalary" type="number" step="0.01" inputmode="decimal" placeholder="0"></div>
+          <div class="c-row"><label>الأرباح الشهرية المتوقعة</label><input id="repDefProfit" type="number" step="0.01" inputmode="decimal" placeholder="0"></div>
         </div>
-        <button class="primary" style="margin-top:10px" onclick="saveSalaryMonth()">احسب واحفظ الشهر</button>
+        <button type="button" class="primary" style="margin-top:8px" onclick="saveReportDefaults()">حفظ التوقعات</button>
       </div>
     </details>
 
-    <div class="section-head"><h2>تفاصيل مرتب الشهر</h2></div>
-    <div id="salaryResult" class="panel"><div class="empty">افتح «مدخلات الشهر» واضغط احسب لعرض تفاصيل المرتب.</div></div>
+    <div class="section-head">
+      <h2>التقرير المالي السنوي</h2>
+      <div class="ym-stepper" dir="ltr">
+        <button type="button" class="step-arrow" onclick="shiftForecastYear(-1)">‹</button>
+        <button type="button" class="step-label" style="min-width:74px;cursor:default" id="forecastYearLabel">2026</button>
+        <button type="button" class="step-arrow" onclick="shiftForecastYear(1)">›</button>
+      </div>
+    </div>
+
+    <div class="excel-table-wrap" id="yearlyExcelWrap">
+      <table class="excel-table" id="yearlyExcelTable">
+        <thead id="yearlyExcelHead"></thead>
+        <tbody id="yearlyBreakdownBody"></tbody>
+      </table>
+    </div>
   </div>
 </section>
 
-<!-- 5. شاشة المزيد والإعدادات (جميع القوائم مغلقة افتراضياً) -->
+<!-- =========================================================
+     5. شاشة المزيد / الإعدادات (تشمل قسم حاسبة المرتب المستقل)
+     ========================================================= -->
 <section id="settings" class="screen">
-  <!-- إعدادات عامة -->
+  <!-- 1. إعدادات عامة -->
   <details class="fold">
     <summary><span data-i18n="set_general">⚙ إعدادات عامة</span><span>▼</span></summary>
     <div class="fold-body">
       <div class="c-list">
-        <div class="c-row"><label data-i18n="lbl_lang">اللغة / Language :</label><select id="prefLang"><option value="ar">العربية</option><option value="en">English</option></select></div>
-        <div class="c-row"><label data-i18n="lbl_fontsize">حجم الخط :</label><select id="prefFontSize"><option value="0.86">صغير جدًا</option><option value="0.93">صغير</option><option value="1">متوسط</option><option value="1.08">كبير</option><option value="1.15">كبير جدًا</option></select></div>
-        <div class="c-row"><label data-i18n="lbl_def_acc">الحساب الافتراضي :</label><select id="prefDefaultAcc"></select></div>
+        <div class="c-row"><label data-i18n="lbl_lang">اللغة / Language</label><select id="prefLang"><option value="ar">العربية</option><option value="en">English</option></select></div>
+        <div class="c-row"><label data-i18n="lbl_fontsize">حجم الخط</label><select id="prefFontSize"><option value="0.86">صغير جدًا</option><option value="0.93">صغير</option><option value="1">متوسط</option><option value="1.08">كبير</option><option value="1.15">كبير جدًا</option></select></div>
+        <div class="c-row"><label data-i18n="lbl_def_acc">الحساب الافتراضي</label><select id="prefDefaultAcc"></select></div>
         <div class="c-row">
-          <label data-i18n="lbl_quick_opts">إخفاء الأرقام والكسور :</label>
+          <label data-i18n="lbl_quick_opts">إخفاء الأرقام والكسور</label>
           <div class="c-row-btns">
-            <button type="button" class="icon-pill dec-toggle-btn" onclick="toggleDecimalsMode()" title="إظهار الكسور العشرية">.00 الكسور</button>
-            <button type="button" class="icon-pill privacy-toggle-btn" onclick="togglePrivacyMode()" title="إخفاء الأرقام">👁 الإخفاء</button>
+            <button type="button" class="icon-pill dec-toggle-btn" onclick="toggleDecimalsMode()">.00 الكسور</button>
+            <button type="button" class="icon-pill privacy-toggle-btn" onclick="togglePrivacyMode()">👁 الإخفاء</button>
           </div>
         </div>
         <div class="c-row">
-          <label>وضع الخلفية :</label>
+          <label>وضع الخلفية</label>
           <select id="prefBgMode" onchange="previewBgMode(this.value)">
             <option value="dark">دارك (Dark)</option>
             <option value="light">فاتح (Light)</option>
@@ -401,32 +362,83 @@
           </select>
         </div>
         <div class="c-row">
-          <label>لون الثيم (8 ألوان) :</label>
+          <label>لون الثيم (8 ألوان)</label>
           <div class="theme-dots" id="themeSelector">
-            <button type="button" class="theme-dot" data-theme="mint" title="زمردي" style="background:#43d6b2" onclick="selectTempTheme('mint')"></button>
-            <button type="button" class="theme-dot" data-theme="blue" title="أزرق" style="background:#569aff" onclick="selectTempTheme('blue')"></button>
-            <button type="button" class="theme-dot" data-theme="gold" title="ذهبي" style="background:#f5b041" onclick="selectTempTheme('gold')"></button>
-            <button type="button" class="theme-dot" data-theme="purple" title="بنفسجي" style="background:#a582ff" onclick="selectTempTheme('purple')"></button>
-            <button type="button" class="theme-dot" data-theme="rose" title="وردي" style="background:#fb7185" onclick="selectTempTheme('rose')"></button>
-            <button type="button" class="theme-dot" data-theme="cyan" title="سماوي" style="background:#22d3ee" onclick="selectTempTheme('cyan')"></button>
-            <button type="button" class="theme-dot" data-theme="orange" title="برتقالي" style="background:#fb923c" onclick="selectTempTheme('orange')"></button>
-            <button type="button" class="theme-dot" data-theme="lime" title="ليموني" style="background:#a3e635" onclick="selectTempTheme('lime')"></button>
+            <button type="button" class="theme-dot" data-theme="mint" style="background:#43d6b2" onclick="selectTempTheme('mint')"></button>
+            <button type="button" class="theme-dot" data-theme="blue" style="background:#569aff" onclick="selectTempTheme('blue')"></button>
+            <button type="button" class="theme-dot" data-theme="gold" style="background:#f5b041" onclick="selectTempTheme('gold')"></button>
+            <button type="button" class="theme-dot" data-theme="purple" style="background:#a582ff" onclick="selectTempTheme('purple')"></button>
+            <button type="button" class="theme-dot" data-theme="rose" style="background:#fb7185" onclick="selectTempTheme('rose')"></button>
+            <button type="button" class="theme-dot" data-theme="cyan" style="background:#22d3ee" onclick="selectTempTheme('cyan')"></button>
+            <button type="button" class="theme-dot" data-theme="orange" style="background:#fb923c" onclick="selectTempTheme('orange')"></button>
+            <button type="button" class="theme-dot" data-theme="lime" style="background:#a3e635" onclick="selectTempTheme('lime')"></button>
           </div>
         </div>
-        <div class="c-row"><label>تثبيت التطبيق :</label><button type="button" class="smallbtn" id="installAppBtn" style="border-color:var(--mint);color:var(--mint);padding:6px 12px" onclick="installPWA()">تثبيت الآن</button></div>
+        <div class="c-row"><label>تثبيت التطبيق</label><button type="button" class="smallbtn" id="installAppBtn" style="border-color:var(--mint);color:var(--mint);padding:6px 12px" onclick="installPWA()">تثبيت الآن</button></div>
       </div>
       <button type="button" class="primary" style="margin-top:10px" onclick="saveGeneralSettings()">حفظ الإعدادات</button>
     </div>
   </details>
 
-  <!-- إدارة الأقسام الرئيسية والفرعية (تبدأ Collapsed، سهم يتحول لـ +، قلم تعديل، وسهم فتح الفرعي) -->
+  <!-- 2. حاسبة المرتب (منقولة إلى المزيد كقسم مستقل يضم الحاسبة الشهرية والسنوية) -->
+  <details class="fold" id="settingsSalaryFold">
+    <summary><span>💼 حاسبة المرتب (الشهرية والسنوية)</span><span>▼</span></summary>
+    <div class="fold-body">
+      <div class="sub-tabs" style="margin-bottom:10px">
+        <button type="button" class="sub-tab-btn active" id="salSubTabMonth" onclick="switchSalarySubView('month')">مدخلات وحسبة الشهر</button>
+        <button type="button" class="sub-tab-btn" id="salSubTabYear" onclick="switchSalarySubView('year')">إعدادات السنة الثابتة</button>
+      </div>
+
+      <div id="salSubViewMonth">
+        <div class="c-list">
+          <div class="c-row"><label>الشهر</label><select id="salMonth" onchange="loadSalaryConfig()"></select></div>
+          <div class="c-row"><label>يوم القبض</label><select id="salPayDay"><option value="1">يوم 1</option><option value="2">يوم 2</option><option value="3">يوم 3</option></select></div>
+          <div class="c-row"><label>التقييم</label><input id="salRating" type="number"></div>
+          <div class="c-row"><label>ساعات البدل</label><input id="salAllowanceHours" type="number" oninput="updateMealPreview()"></div>
+          <div class="c-row"><label>ساعات الراحة</label><input id="salRestHours" type="number"></div>
+          <div class="c-row"><label>ساعات الإضافي</label><input id="salOvertime" type="number"></div>
+          <div class="c-row"><label>ساعات العيد</label><input id="salHoliday" type="number"></div>
+          <div class="c-row"><label>أيام الحضور</label><input id="salDays" type="number" oninput="updateMealPreview()"></div>
+          <div class="c-row"><label>حضور 12 ساعة</label><input id="sal12H" type="number" oninput="updateMealPreview()"></div>
+          <div class="c-row"><label>حضور 8 ساعات</label><input id="sal8Days" type="number" readonly></div>
+          <div class="c-row"><label>مكافآت / خصومات</label><input id="salOther" type="number"></div>
+        </div>
+        <button class="primary" style="margin-top:10px" onclick="saveSalaryMonth()">احسب واحفظ مرتب الشهر</button>
+        <div id="salaryResult" class="panel" style="margin-top:10px;background:var(--surface)"><div class="empty">أدخل بيانات الشهر واضغط احسب لعرض صافي المرتب.</div></div>
+      </div>
+
+      <div id="salSubViewYear" style="display:none">
+        <div class="c-list" id="salaryYearForm">
+          <div class="c-row"><label>السنة</label><select id="salYear" onchange="loadSalaryConfig()"></select></div>
+          <div class="c-row"><label>الراتب الأساسي</label><input id="salBasic" type="number"></div>
+          <div class="c-row"><label>الحضور الكامل</label><input id="salAttendance" type="number"></div>
+          <div class="c-row"><label>سنوات الأجور</label><input id="salYears" type="number"></div>
+          <div class="c-row"><label>أيام الشهر</label><input id="salWorkDays" type="number" value="30"></div>
+          <div class="c-row"><label>ساعات العمل</label><input id="salWorkHours" type="number" value="8"></div>
+          <div class="c-row"><label>معامل البدل</label><input id="salAllowanceRate" type="number" step="0.1" value="1"></div>
+          <div class="c-row"><label>معامل الراحة</label><input id="salRestRate" type="number" step="0.1" value="2"></div>
+          <div class="c-row"><label>معامل الإضافي</label><input id="salOTRate" type="number" step="0.1" value="1.5"></div>
+          <div class="c-row"><label>معامل العيد</label><input id="salHolidayRate" type="number" step="0.1" value="2"></div>
+          <div class="c-row"><label>سعر الوجبة</label><input id="salMealPrice" type="number" value="70"></div>
+          <div class="c-row"><label>إضافة تأمين 1</label><input id="salInsAdd1" type="number" value="1400"></div>
+          <div class="c-row"><label>إضافة تأمين 2</label><input id="salInsAdd2" type="number" value="800"></div>
+          <div class="c-row"><label>نسبة التأمين %</label><input id="salInsuranceBaseRate" type="number" step="0.1" value="10"></div>
+          <div class="c-row"><label>التأمين الطبي %</label><input id="salMedicalRate" type="number" step="0.1" value="6"></div>
+          <div class="c-row"><label>صندوق الشهداء %</label><input id="salMartyrsRate" type="number" step="0.001" value="0.05"></div>
+        </div>
+        <button class="primary" style="margin-top:10px" onclick="saveSalaryConfig()">حفظ إعدادات السنة</button>
+      </div>
+    </div>
+  </details>
+
+  <!-- 3. تخصيص الأقسام -->
   <details class="fold" id="settingsCatsFold" ontoggle="onSettingsCatsFoldToggle(this)">
     <summary>
       <span data-i18n="set_cats">🏷 تخصيص الأقسام</span>
       <span id="settingsCatsFoldIcon" style="font-size:1.05rem;font-weight:400;color:var(--mint)">▼</span>
     </summary>
     <div class="fold-body">
-      <div class="seg-group" style="display:grid;grid-template-columns:1fr 1fr;height:36px;border-radius:11px;border:1px solid var(--line2);overflow:hidden;margin-bottom:10px;background:var(--surface)">
+      <div class="seg-group" style="display:grid;grid-template-columns:1fr 1fr;height:38px;border-radius:11px;border:1px solid var(--line2);overflow:hidden;margin-bottom:10px;background:var(--surface)">
         <button type="button" class="seg-btn active" id="setCatTabExp" onclick="setSettingsCatTab('expense')">أقسام المصروفات</button>
         <button type="button" class="seg-btn" id="setCatTabInc" onclick="setSettingsCatTab('income')">أقسام الدخل</button>
       </div>
@@ -434,15 +446,15 @@
     </div>
   </details>
 
-  <!-- النسخ الاحتياطي والاستيراد -->
+  <!-- 4. النسخ الاحتياطي (يدعم استيراد EGP + USD + CNY تلقائياً بسعر الصرف المسجل في قاعدة البيانات) -->
   <details class="fold">
     <summary><span data-i18n="set_backup">💾 النسخ الاحتياطي</span><span>▼</span></summary>
     <div class="fold-body">
       <div class="c-list">
-        <div class="c-row"><span class="c-lbl">حالة التخزين الآمن :</span><span class="tag" id="storageSafetyBadge" style="color:var(--mint);border-color:var(--mint)">IndexedDB + محلي نشط ✓</span></div>
-        <div class="c-row"><span class="c-lbl">تصدير نسخة (JSON) :</span><div class="c-row-btns"><small id="lastBackupLabel" style="color:var(--muted);font-size:.66rem;align-self:center"></small><button type="button" class="smallbtn" style="border-color:var(--mint);color:var(--mint)" onclick="backup()">تصدير</button></div></div>
+        <div class="c-row"><span class="c-lbl">حالة التخزين الآمن</span><span class="tag" id="storageSafetyBadge" style="color:var(--mint);border-color:var(--mint)">IndexedDB + محلي نشط ✓</span></div>
+        <div class="c-row"><span class="c-lbl">تصدير نسخة (JSON)</span><div class="c-row-btns"><small id="lastBackupLabel" style="color:var(--muted);font-size:.66rem;align-self:center"></small><button type="button" class="smallbtn" style="border-color:var(--mint);color:var(--mint)" onclick="backup()">تصدير</button></div></div>
         <div class="c-row">
-          <span class="c-lbl">استعادة نسخة :</span>
+          <span class="c-lbl">استعادة نسخة</span>
           <div class="c-row-btns">
             <input id="restore" class="file-hidden" type="file" onchange="restore(event)">
             <button type="button" class="smallbtn" onclick="openFilePicker('restore')">ملف</button>
@@ -450,27 +462,27 @@
           </div>
         </div>
         <div class="c-row">
-          <span class="c-lbl">Money Manager :</span>
+          <span class="c-lbl">Money Manager</span>
           <div class="c-row-btns">
             <input id="mmbakFile" class="file-hidden" type="file" accept=".mmbak,.db,.sqlite" onchange="readMmbak(event)">
             <button type="button" class="smallbtn" style="border-color:var(--blue);color:var(--blue)" onclick="openFilePicker('mmbakFile')">استيراد .mmbak</button>
           </div>
         </div>
-        <div class="c-row"><label>فلتر MM من :</label><input id="mmFrom" type="date" value="2021-01-01"></div>
-        <div class="c-row"><label>فلتر MM إلى :</label><input id="mmTo" type="date" value=""></div>
+        <div class="c-row"><label>فلتر MM من</label><input id="mmFrom" type="date" value="2021-01-01"></div>
+        <div class="c-row"><label>فلتر MM إلى</label><input id="mmTo" type="date" value=""></div>
       </div>
       <div id="mmbakPreview" style="margin-top:8px"></div>
     </div>
   </details>
 
-  <!-- التحديثات -->
+  <!-- 5. التحديثات -->
   <details class="fold">
     <summary><span data-i18n="set_updates">⟳ التحديثات</span><span>▼</span></summary>
     <div class="fold-body">
       <div class="c-list">
-        <div class="c-row"><span class="c-lbl">الإصدار الحالي :</span><span class="tag" id="appVersionTag">V12.4</span></div>
+        <div class="c-row"><span class="c-lbl">الإصدار الحالي</span><span class="tag" id="appVersionTag">V13.0</span></div>
         <div class="c-row">
-          <span class="c-lbl">التحديثات :</span>
+          <span class="c-lbl">التحديثات</span>
           <div class="c-row-btns">
             <button type="button" class="smallbtn" onclick="checkForUpdate()">فحص</button>
             <button type="button" class="smallbtn" style="border-color:var(--mint);color:var(--mint)" onclick="forceAppUpdate()">تحديث الآن</button>
@@ -483,13 +495,13 @@
     </div>
   </details>
 
-  <!-- مسح البيانات -->
+  <!-- 6. مسح البيانات -->
   <details class="fold" style="border-color:#75404b66">
     <summary><span style="color:#ffb3c0" data-i18n="set_wipe">⚠ مسح البيانات</span><span>▼</span></summary>
     <div class="fold-body">
       <div class="c-list">
-        <div class="c-row"><span class="c-lbl" style="color:#ffbd69">تصفير المعاملات والأقسام :</span><button type="button" class="smallbtn" style="border-color:#ffbd69;color:#ffbd69" onclick="clearTransactionsAndCats()">تصفير</button></div>
-        <div class="c-row"><span class="c-lbl" style="color:#ffdbe1">حذف كل بيانات التطبيق :</span><button type="button" class="smallbtn danger" onclick="resetApp()">مسح الكل</button></div>
+        <div class="c-row"><span class="c-lbl" style="color:#ffbd69">تصفير المعاملات والأقسام</span><button type="button" class="smallbtn" style="border-color:#ffbd69;color:#ffbd69" onclick="clearTransactionsAndCats()">تصفير</button></div>
+        <div class="c-row"><span class="c-lbl" style="color:#ffdbe1">حذف كل بيانات التطبيق</span><button type="button" class="smallbtn danger" onclick="resetApp()">مسح الكل</button></div>
       </div>
     </div>
   </details>
@@ -497,10 +509,10 @@
 
 </div>
 
-<!-- Floating + Button (Bottom RIGHT) -->
+<!-- Floating + Button -->
 <button class="fab" onclick="openQuickAddModal('expense')">＋</button>
 
-<!-- Bottom 5-Tab Navigation -->
+<!-- Bottom 5-Tab Navigation (Left-to-Right: المعاملات | تحليل المعاملات | الحسابات | الالتزامات | المزيد) -->
 <nav class="bottom">
   <button class="nav active" data-page="trans" onclick="go('trans',this)">
     <svg viewBox="0 0 24 24" fill="none"><rect x="4" y="3.5" width="16" height="17" rx="3" fill="#43d6b2" fill-opacity=".2" stroke="#43d6b2" stroke-width="1.8"/><path d="M8 8.5h8M8 12.5h8M8 16.5h5" stroke="#43d6b2" stroke-width="1.8" stroke-linecap="round"/></svg>
@@ -508,7 +520,7 @@
   </button>
   <button class="nav" data-page="reports" onclick="go('reports',this)">
     <svg viewBox="0 0 24 24" fill="none"><path d="M4 17l5-5 4 4 7-8" stroke="#b69aff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M16 8h4v4" stroke="#b69aff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    <span>التقارير</span>
+    <span>تحليل المعاملات</span>
   </button>
   <button class="nav" data-page="wallet" onclick="go('wallet',this)">
     <svg viewBox="0 0 24 24" fill="none"><rect x="2.5" y="5.5" width="19" height="13" rx="3" fill="#73a7ff" fill-opacity=".22" stroke="#73a7ff" stroke-width="1.8"/><circle cx="16.5" cy="12" r="1.5" fill="#73a7ff"/></svg>
@@ -520,11 +532,13 @@
   </button>
   <button class="nav" data-page="settings" onclick="go('settings',this)">
     <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" fill="#91a2b9" fill-opacity=".3" stroke="#91a2b9" stroke-width="1.8"/><path d="M12 3v2.2M12 18.8V21M3 12h2.2M18.8 12H21M5.6 5.6l1.6 1.6M16.8 16.8l1.6 1.6M18.4 5.6l-1.6 1.6M7.2 16.8l-1.6 1.6" stroke="#91a2b9" stroke-width="1.8" stroke-linecap="round"/></svg>
-    <span data-i18n="tab_settings">الإعدادات</span>
+    <span data-i18n="tab_settings">المزيد</span>
   </button>
 </nav>
 
-<!-- Money Manager Full-Screen Transaction Entry Page (Spacious Upper Form + Thumb-Zone Bottom Dock) -->
+<!-- =========================================================
+     1. واجهة إدخال المعاملات المطورة (صفحة كاملة: دخل - مصروف - تحويل، بدون نقطتين أو كلمة اختيار أو EGP، مع عكس التحويل والرسوم)
+     ========================================================= -->
 <div class="modal fullpage-modal" id="quickModal" onclick="if(event.target===this)closeQuickModal()">
   <div class="sheet fullpage-sheet">
     <div class="qm-top-bar">
@@ -533,33 +547,39 @@
       <button type="button" class="qm-top-save" onclick="saveQuickModal()">حفظ</button>
     </div>
 
-    <!-- Top 3 Type Tabs (Left to Right: مصروف | دخل | تحويل) -->
-    <div class="mm-type-tabs" dir="ltr">
-      <button type="button" class="mm-tab active exp" id="qmTabExp" onclick="setQuickTxType('expense')">مصروف</button>
+    <!-- 1.1.1 الترتيب من اليسار لليمين: دخل – مصروف – تحويل -->
+    <div class="mm-type-tabs" dir="ltr" style="grid-template-columns:repeat(3,1fr)">
       <button type="button" class="mm-tab inc" id="qmTabInc" onclick="setQuickTxType('income')">دخل</button>
+      <button type="button" class="mm-tab active exp" id="qmTabExp" onclick="setQuickTxType('expense')">مصروف</button>
       <button type="button" class="mm-tab trn" id="qmTabTrn" onclick="setQuickTxType('transfer')">تحويل</button>
     </div>
 
-    <!-- Compact Top Form Fields -->
+    <!-- 1.1.2, 1.1.3, 1.1.4 حقول بدون (:) وبدون كلمة «اختيار» وبدون «EGP» -->
     <div class="qm-form-scroll">
-      <div class="c-row"><label>التاريخ :</label><input id="qmDate" type="date" onfocus="setQmDockMode('none')"></div>
-      <div class="c-row" onclick="setQmDockMode('acc')">
-        <label id="qmAccLabelTitle">الحساب :</label>
-        <div class="picker-trigger" id="qmAccTrigger"><b id="qmAccSelectedText">اختر الحساب</b><span>اختيار</span></div>
+      <div class="c-row"><label>التاريخ</label><input id="qmDate" type="date" onfocus="setQmDockMode('none')"></div>
+      <div class="c-row" id="qmAccRow" onclick="setQmDockMode('acc')">
+        <label id="qmAccLabelTitle">الحساب</label>
+        <div class="picker-trigger" id="qmAccTrigger"><b id="qmAccSelectedText">اختر الحساب</b></div>
       </div>
+
+      <!-- 1.2.2 زر السهمين المتعاكسين لعكس اتجاه التحويل بضغطة واحدة -->
+      <div class="swap-acc-row" id="qmSwapAccRow" style="display:none">
+        <button type="button" class="swap-acc-btn" onclick="swapQuickTransferAccounts()" title="عكس اتجاه التحويل">⇅ عكس الاتجاه</button>
+      </div>
+
       <div class="c-row" id="qmToAccRow" style="display:none" onclick="setQmDockMode('toAcc')">
-        <label>إلى حساب :</label>
-        <div class="picker-trigger" id="qmToAccTrigger"><b id="qmToAccSelectedText">اختر الحساب</b><span>اختيار</span></div>
+        <label>إلى حساب</label>
+        <div class="picker-trigger" id="qmToAccTrigger"><b id="qmToAccSelectedText">اختر الحساب</b></div>
       </div>
       <div class="c-row" id="qmCardModeRow" style="display:none">
-        <label>نوع الدفع :</label>
+        <label>نوع الدفع</label>
         <div class="seg-group">
           <button type="button" class="seg-btn active" id="qmCardSwipeBtn" onclick="setQmCardMode('swipe')">شراء</button>
           <button type="button" class="seg-btn" id="qmCardInstBtn" onclick="setQmCardMode('installment')">تقسيط</button>
         </div>
       </div>
       <div class="c-row" id="qmCardMonthsRow" style="display:none">
-        <label>مدة التقسيط :</label>
+        <label>مدة التقسيط</label>
         <select id="qmCardMonths">
           <option value="3">3 شهور</option><option value="6">6 شهور</option><option value="9">9 شهور</option>
           <option value="12" selected>12 شهر</option><option value="15">15 شهر</option><option value="18">18 شهر</option>
@@ -567,31 +587,43 @@
         </select>
       </div>
       <div class="c-row" id="qmCatRow" onclick="setQmDockMode('cat')">
-        <label>القسم :</label>
-        <div class="picker-trigger" id="qmCatTrigger"><b id="qmCatSelectedText">اختر القسم</b><span>اختيار</span></div>
+        <label>القسم</label>
+        <div class="picker-trigger" id="qmCatTrigger"><b id="qmCatSelectedText">اختر القسم</b></div>
       </div>
-      <div class="c-row"><label>المبلغ (EGP) :</label><input id="qmAmount" type="number" step="0.01" inputmode="decimal" placeholder="0" onfocus="setQmDockMode('none')"></div>
-      <div class="c-row"><label>البيان / ملاحظة :</label><input id="qmNote" placeholder="اختياري (يأخذ اسم القسم لو فارغ)" onfocus="setQmDockMode('none')"></div>
+
+      <!-- 1.2.1 صف المبلغ مع زر «رسوم» في أقصى اليمين عند التحويل -->
+      <div class="c-row" id="qmAmountRow">
+        <label>المبلغ</label>
+        <div style="display:flex;align-items:center;width:70%;max-width:70%">
+          <input id="qmAmount" type="number" step="0.01" inputmode="decimal" placeholder="0" onfocus="setQmDockMode('none')" style="width:100%;max-width:100%">
+          <button type="button" id="qmFeeToggleBtn" class="fee-toggle-pill" style="display:none" onclick="toggleQuickTransferFeeRow()">رسوم</button>
+        </div>
+      </div>
+
+      <!-- صف الرسوم الإضافي أسفل المبلغ مباشرة عند الضغط على «رسوم» -->
+      <div class="c-row" id="qmFeeRow" style="display:none">
+        <label>رسوم</label>
+        <input id="qmFee" type="number" step="0.01" inputmode="decimal" placeholder="0" onfocus="setQmDockMode('none')">
+      </div>
+
+      <div class="c-row"><label>البيان / ملاحظة</label><input id="qmNote" placeholder="اختياري (يأخذ اسم القسم لو فارغ)" onfocus="setQmDockMode('none')"></div>
     </div>
 
-    <!-- Lower-Half Thumb-Zone Dock (Automatically shows Accounts first -> auto-advances to 2-Column Categories!) -->
+    <!-- الجزء السفلي القريب من اليد (الحسابات / البنود الرئيسية والفرعية) -->
     <div id="qmBottomDock" class="qm-bottom-dock">
-      <!-- Dock 1: Accounts + Credit Cards -->
       <div id="qmDockAcc" style="display:flex;flex-direction:column;height:100%;min-height:0">
         <div class="quick-grid-head"><span>الحساب / البطاقة</span><span style="cursor:pointer;padding:0 4px;font-size:.85rem" onclick="setQmDockMode('none')">✕</span></div>
         <div class="quick-grid" id="qmAccGrid"></div>
       </div>
 
-      <!-- Dock 2: Destination Account (for Transfers) -->
       <div id="qmDockToAcc" style="display:none;flex-direction:column;height:100%;min-height:0">
-        <div class="quick-grid-head"><span>2. اختر الحساب المحوّل إليه</span><span style="color:var(--mint)">ينتقل للمبلغ تلقائيًا</span></div>
+        <div class="quick-grid-head"><span>الحساب المستقبِل</span><span style="cursor:pointer;padding:0 4px;font-size:.85rem" onclick="setQmDockMode('none')">✕</span></div>
         <div class="quick-grid" id="qmToAccGrid"></div>
       </div>
 
-      <!-- Dock 3: Money Manager 2-Column Side-by-Side Category & Subcategory -->
       <div id="qmDockCat" style="display:none;flex-direction:column;height:100%;min-height:0">
         <div class="quick-grid-head">
-          <span>اختيار القسم الرئيسي والفرعي</span>
+          <span>القسم الرئيسي والفرعي</span>
           <div style="display:flex;gap:12px;align-items:center">
             <span style="cursor:pointer;color:var(--mint)" onclick="openAddQuickCatPrompt(false)">＋ رئيسي</span>
             <span style="cursor:pointer;color:var(--blue)" onclick="openAddQuickCatPrompt(true)">＋ فرعي</span>
@@ -618,7 +650,21 @@
   </div>
 </div>
 
-<!-- Account Statement & Edit Account Modal -->
+<!-- =========================================================
+     4.3 صفحة تحليل البند المستقلة (1. ملخص البنود الفرعية تنازلياً، 2. الرسم البياني الشهري، 3. التقرير اليومي التفصيلي)
+     ========================================================= -->
+<div class="modal fullpage-modal" id="catDetailModal" onclick="if(event.target===this)closeCatDetailModal()">
+  <div class="sheet fullpage-sheet" style="overflow-y:auto">
+    <div class="qm-top-bar">
+      <button type="button" class="qm-back-btn" onclick="closeCatDetailModal()">←</button>
+      <b id="catDetailTitle">تحليل البند</b>
+      <span class="tag" id="catDetailPeriodBadge">نوفمبر 2026</span>
+    </div>
+    <div id="catDetailBody" style="padding-bottom:24px"></div>
+  </div>
+</div>
+
+<!-- Account & Card Statement Modal -->
 <div class="modal center-modal" id="accountModal" onclick="if(event.target===this)closeAccountModal()">
   <div class="sheet">
     <h3>
@@ -667,9 +713,9 @@
   </div>
 </div>
 
-<!-- Unified Custom Dialog Modal (Replaces native confirm & prompt) -->
+<!-- Unified Custom Dialog Modal -->
 <div class="modal center-modal" id="appDialogModal" onclick="if(event.target===this)closeAppDialog()">
-  <div class="sheet" style="max-width:360px">
+  <div class="sheet" style="max-width:390px">
     <h3 style="justify-content:space-between;margin-bottom:8px">
       <span id="appDialogTitle">تأكيد</span>
       <span style="cursor:pointer;color:var(--muted)" onclick="closeAppDialog()">✕</span>
@@ -679,8 +725,8 @@
       <input id="appDialogInput" style="width:100%;height:38px;background:var(--surface);border:1px solid var(--line2);border-radius:11px;padding:0 11px;color:var(--text);font-size:.8rem;outline:none" onkeydown="if(event.key==='Enter')submitAppDialog()">
       <textarea id="appDialogTextarea" rows="5" style="display:none;width:100%;background:var(--surface);border:1px solid var(--line2);border-radius:11px;padding:9px 11px;color:var(--text);font-size:.75rem;outline:none;margin-top:6px"></textarea>
     </div>
-    <div id="appDialogCustomBody" style="display:none;margin-bottom:10px"></div>
-    <div class="actions">
+    <div id="appDialogCustomBody" style="display:none;margin-bottom:10px;max-height:62vh;overflow-y:auto"></div>
+    <div class="actions" id="appDialogActionsBar">
       <button type="button" class="primary" id="appDialogOkBtn" onclick="submitAppDialog()">موافق</button>
       <button type="button" class="secondary" onclick="closeAppDialog()">إلغاء</button>
     </div>
