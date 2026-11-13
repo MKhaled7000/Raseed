@@ -528,3 +528,320 @@ details.fold .fold-body{padding:12px 14px}
   min-width: 0;
   width: 100%;
 }
+
+
+/* =========================================================
+   V12.4 Unified Left-to-Right Layout & Money Manager Styling
+   ========================================================= */
+html, body {
+  direction: ltr;
+  text-align: left;
+}
+
+/* 1. Wider spacing between transactions in Daily & Monthly feeds */
+.day-group {
+  border-radius: 14px;
+  margin-bottom: 10px;
+}
+.day-head {
+  direction: ltr;
+  padding: 8px 12px;
+  font-size: .76rem;
+}
+.tx-row {
+  direction: ltr;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  padding: 11px 12px;
+  border-bottom: 1px solid var(--line);
+  cursor: pointer;
+}
+.tx-cat-col {
+  width: 104px;
+  min-width: 94px;
+  max-width: 115px;
+  text-align: left;
+  flex-shrink: 0;
+}
+.tx-cat-col b {
+  font-size: .77rem;
+  line-height: 1.35;
+}
+.tx-cat-col small {
+  font-size: .68rem;
+  margin-top: 2px;
+}
+.tx-acc-col {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+  padding-left: 4px;
+}
+.tx-acc-col span {
+  font-size: .77rem;
+  line-height: 1.35;
+}
+.tx-acc-col small {
+  font-size: .69rem;
+  margin-top: 2px;
+}
+.tx-amt-col {
+  font-size: .85rem;
+  direction: ltr;
+  white-space: nowrap;
+  text-align: right;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+.mm-month-row {
+  padding: 12px 14px;
+}
+
+/* 2. All Form Rows (.c-row) Across All Pages: Label on LEFT, Option/Input on RIGHT */
+.c-row {
+  direction: ltr;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 12px;
+  min-height: 46px;
+}
+.c-row > label, .c-row > .c-lbl {
+  text-align: left;
+  width: 38%;
+  flex-shrink: 0;
+}
+.c-row input, .c-row select {
+  text-align: left;
+  direction: ltr;
+}
+.c-row .picker-trigger, .c-row .custom-sel-trigger {
+  direction: ltr;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  text-align: left;
+}
+.c-row .custom-sel-trigger span.cs-arr {
+  margin-right: 0;
+  margin-left: 6px;
+}
+.c-row .theme-dots, .c-row-btns {
+  direction: ltr;
+  justify-content: flex-end;
+}
+
+/* 3. All Section Headers, Accordions, Cards, Metrics, Action Bars & List Items Left-to-Right */
+.section-head,
+details.fold > summary,
+.h-action-bar,
+.grid,
+.hero-foot,
+.rowline,
+.actions,
+.cat-mgr-main,
+.cat-mgr-sub-row {
+  direction: ltr;
+}
+.hero .amount,
+.metric strong {
+  text-align: left;
+}
+.listitem {
+  direction: ltr;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 4px;
+  text-align: left;
+}
+.listitem .info {
+  text-align: left;
+}
+.listitem strong {
+  margin-left: auto;
+  text-align: right;
+}
+.yr-table {
+  direction: ltr;
+  text-align: left;
+}
+.yr-table th, .yr-table td {
+  text-align: left;
+}
+.yr-table td.num, .yr-table th.num {
+  text-align: right;
+}
+
+/* 4. Full-Screen Money Manager Style Transaction Entry Page (#quickModal) */
+.modal.fullpage-modal {
+  padding: 0;
+  align-items: stretch;
+  background: var(--bg);
+}
+.sheet.fullpage-sheet {
+  width: 100%;
+  max-width: 540px;
+  height: 100dvh;
+  max-height: 100dvh;
+  border-radius: 0;
+  border: 0;
+  background: var(--bg);
+  padding: 10px 14px calc(10px + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  box-shadow: none;
+}
+.qm-top-bar {
+  direction: ltr;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 2px 10px;
+  flex-shrink: 0;
+}
+.qm-back-btn {
+  background: transparent;
+  border: 0;
+  color: var(--text);
+  font-size: 1.25rem;
+  padding: 4px 8px;
+  line-height: 1;
+}
+.qm-top-bar b {
+  font-size: .98rem;
+  font-weight: 700;
+  color: var(--text);
+}
+.qm-top-save {
+  background: var(--mint);
+  color: #06221e;
+  border: 0;
+  border-radius: 9px;
+  padding: 6px 14px;
+  font-size: .78rem;
+}
+
+/* Spacious Flat Underline Form Rows in Upper Half of Quick Entry (Like Image 4) */
+.qm-form-scroll {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 4px;
+  padding: 0 2px;
+}
+.qm-form-scroll .c-row {
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  padding: 8px 4px;
+  min-height: 46px;
+}
+.qm-form-scroll .c-row > label {
+  width: 30%;
+  color: var(--muted);
+  font-size: .8rem;
+}
+.qm-form-scroll .c-row input,
+.qm-form-scroll .c-row select,
+.qm-form-scroll .c-row .picker-trigger,
+.qm-form-scroll .c-row .custom-sel-trigger,
+.qm-form-scroll .c-row .seg-group {
+  width: 70%;
+  max-width: 70%;
+  height: 36px;
+  background: transparent;
+  border: 0;
+  border-bottom: 1.5px solid transparent;
+  border-radius: 0;
+  padding: 0 4px;
+  font-size: .85rem;
+  color: var(--text);
+}
+.qm-form-scroll .c-row input:focus,
+.qm-form-scroll .c-row .picker-trigger.focused-field {
+  border-bottom-color: var(--mint);
+  box-shadow: none;
+}
+
+/* Thumb-Zone Lower Half Dock in Quick Entry (Like Money Manager Category Grid at Bottom) */
+.qm-bottom-dock {
+  margin-top: auto;
+  margin-left: -14px;
+  margin-right: -14px;
+  background: var(--panel);
+  border: 0;
+  border-top: 1px solid var(--line2);
+  border-radius: 0;
+  padding: 0;
+  height: 44dvh;
+  min-height: 230px;
+  max-height: 340px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.qm-bottom-dock .quick-grid-head {
+  direction: ltr;
+  background: var(--surface2);
+  padding: 8px 14px;
+  margin-bottom: 0;
+  border-bottom: 1px solid var(--line);
+  font-size: .75rem;
+  color: var(--text-sub);
+}
+.qm-bottom-dock .quick-grid {
+  padding: 10px 12px;
+  align-content: start;
+}
+.qm-bottom-dock .mm-cat-split {
+  direction: ltr;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+}
+.qm-bottom-dock .mm-cat-col {
+  background: var(--panel);
+  border: 0;
+  border-right: 1px solid var(--line);
+  border-radius: 0;
+  padding: 0;
+  gap: 0;
+}
+.qm-bottom-dock .mm-cat-col:last-child {
+  border-right: 0;
+  background: var(--surface);
+}
+.qm-bottom-dock .mm-cat-col-title {
+  background: var(--panel2);
+  padding: 6px 10px;
+  font-size: .68rem;
+}
+.qm-bottom-dock .mm-cat-item {
+  direction: ltr;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  padding: 12px 12px;
+  font-size: .78rem;
+  text-align: left;
+}
+.qm-bottom-dock .mm-cat-item.active {
+  background: #43d6b224;
+  color: var(--mint);
+  border-left: 3px solid var(--mint);
+}
+.sheet.fullpage-sheet > .actions {
+  margin-top: 8px;
+}

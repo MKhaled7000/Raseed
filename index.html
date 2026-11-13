@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ar" dir="rtl">
+<html lang="ar" dir="ltr">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,interactive-widget=resizes-content"><meta name="theme-color" content="#101827"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="description" content="مديرك المالي الشخصي">
 <title>X-Wallet</title>
@@ -22,13 +22,21 @@
 <section id="trans" class="screen active">
   <div id="homeAvailableTotal" style="display:none">0 EGP</div>
 
-  <!-- Compact 3-Row Header Card: Row 2 (Search + Month), Row 3 (Daily / Monthly Tabs), Row 4 (3 Summary Boxes) -->
+  <!-- الصف الثاني: التابات الفرعية بنفس ستايل باقي الصفحات -->
+  <div class="sub-tabs" style="margin-bottom:10px">
+    <button type="button" class="sub-tab-btn active" id="transTabDaily" data-i18n="sub_daily" onclick="switchTransSubTab('daily')">المعاملات اليومية</button>
+    <button type="button" class="sub-tab-btn" id="transTabMonthly" data-i18n="sub_monthly" onclick="switchTransSubTab('monthly')">الملخص الشهري</button>
+  </div>
+
+  <!-- الصف الثالث والرابع: الأيقونات يساراً والشهر يميناً، ثم الـ 3 مربعات -->
   <div class="mm-header-card">
     <div class="mm-nav-row">
       <div class="mm-tools">
         <button type="button" class="mm-tool-btn" id="btnToggleSearch" onclick="toggleSearchBar()" title="بحث وفلترة">🔍</button>
+        <button type="button" class="mm-tool-btn dec-toggle-btn" onclick="toggleDecimalsMode()" title="إظهار الكسور العشرية">00</button>
+        <button type="button" class="mm-tool-btn privacy-toggle-btn" onclick="togglePrivacyMode()" title="إخفاء الأرقام">👁</button>
       </div>
-      <div class="ym-stepper">
+      <div class="ym-stepper" dir="ltr">
         <button type="button" class="step-arrow" onclick="shiftTransPeriod(-1)">‹</button>
         <button type="button" class="step-label" onclick="openTransPeriodPicker()" id="homePeriodLabel">نوفمبر 2026</button>
         <button type="button" class="step-arrow" onclick="shiftTransPeriod(1)">›</button>
@@ -39,17 +47,11 @@
     <div id="mmSearchBox" style="display:none;margin-bottom:8px">
       <div style="display:flex;gap:6px;align-items:center">
         <div style="position:relative;flex:1;display:flex;align-items:center">
-          <input id="actSearch" type="search" data-i18n-ph="ph_search" placeholder="بحث في البيان أو القسم..." oninput="onTransactionsSearchInput()" style="width:100%;background:var(--surface);border:1px solid var(--line2);border-radius:10px;padding:6px 10px 6px 28px;color:var(--text);font-size:.74rem">
-          <button type="button" id="btnClearSearch" onclick="clearTransactionsSearch()" title="مسح الفلتر" style="display:none;position:absolute;left:6px;background:none;border:0;color:var(--muted);font-size:.8rem;padding:2px 5px">✕</button>
+          <input id="actSearch" type="search" data-i18n-ph="ph_search" placeholder="بحث في البيان أو القسم..." oninput="onTransactionsSearchInput()" style="width:100%;background:var(--surface);border:1px solid var(--line2);border-radius:10px;padding:6px 28px 6px 10px;color:var(--text);font-size:.75rem;text-align:left">
+          <button type="button" id="btnClearSearch" onclick="clearTransactionsSearch()" title="مسح الفلتر" style="display:none;position:absolute;right:6px;background:none;border:0;color:var(--muted);font-size:.8rem;padding:2px 5px">✕</button>
         </div>
         <select id="actAccountFilter" onchange="renderTransactionsScreen()" style="background:var(--surface);border:1px solid var(--line2);border-radius:10px;padding:6px;color:var(--text);font-size:.72rem"><option value="">كل الحسابات</option></select>
       </div>
-    </div>
-
-    <!-- Row 3: Daily | Monthly Sub-tabs -->
-    <div class="trans-mode-tabs">
-      <button type="button" class="trans-mode-btn active" id="transTabDaily" data-i18n="sub_daily" onclick="switchTransSubTab('daily')">يومي</button>
-      <button type="button" class="trans-mode-btn" id="transTabMonthly" data-i18n="sub_monthly" onclick="switchTransSubTab('monthly')">شهري</button>
     </div>
 
     <!-- Row 4: 3 Summary Boxes (Left-to-Right: Income | Expenses | Total/Net) -->
@@ -86,14 +88,14 @@
   <div id="repViewMonthly">
     <div class="mm-header-card">
       <div class="mm-nav-row" style="margin-bottom:0">
-        <div class="ym-stepper">
-          <button type="button" class="step-arrow" onclick="shiftActiveMonth(-1)">‹</button>
-          <button type="button" class="step-label" onclick="openHomePeriodPicker()" id="repPeriodLabel">نوفمبر 2026</button>
-          <button type="button" class="step-arrow" onclick="shiftActiveMonth(1)">›</button>
-        </div>
         <div style="text-align:left">
           <small style="display:block;font-size:.66rem;color:var(--muted)" id="repMonthlyTotalLabel">إجمالي المصاريف</small>
           <b style="font-size:1rem;direction:ltr" class="red" id="repMonthlyTotalVal">0 EGP</b>
+        </div>
+        <div class="ym-stepper" dir="ltr">
+          <button type="button" class="step-arrow" onclick="shiftActiveMonth(-1)">‹</button>
+          <button type="button" class="step-label" onclick="openHomePeriodPicker()" id="repPeriodLabel">نوفمبر 2026</button>
+          <button type="button" class="step-arrow" onclick="shiftActiveMonth(1)">›</button>
         </div>
       </div>
     </div>
@@ -466,7 +468,7 @@
     <summary><span data-i18n="set_updates">⟳ التحديثات</span><span>▼</span></summary>
     <div class="fold-body">
       <div class="c-list">
-        <div class="c-row"><span class="c-lbl">الإصدار الحالي :</span><span class="tag" id="appVersionTag">V12.3</span></div>
+        <div class="c-row"><span class="c-lbl">الإصدار الحالي :</span><span class="tag" id="appVersionTag">V12.4</span></div>
         <div class="c-row">
           <span class="c-lbl">التحديثات :</span>
           <div class="c-row-btns">
@@ -522,13 +524,14 @@
   </button>
 </nav>
 
-<!-- Money Manager Style Bottom-Sheet Quick Entry Modal (Thumb-Zone Lower Half) -->
-<div class="modal" id="quickModal" onclick="if(event.target===this)closeQuickModal()">
-  <div class="sheet">
-    <h3>
-      <span id="qmHeaderTitle">تسجيل حركة</span>
-      <span style="cursor:pointer;color:var(--muted)" onclick="closeQuickModal()">✕</span>
-    </h3>
+<!-- Money Manager Full-Screen Transaction Entry Page (Spacious Upper Form + Thumb-Zone Bottom Dock) -->
+<div class="modal fullpage-modal" id="quickModal" onclick="if(event.target===this)closeQuickModal()">
+  <div class="sheet fullpage-sheet">
+    <div class="qm-top-bar">
+      <button type="button" class="qm-back-btn" onclick="closeQuickModal()" title="رجوع">←</button>
+      <b id="qmHeaderTitle">تسجيل حركة جديدة</b>
+      <button type="button" class="qm-top-save" onclick="saveQuickModal()">حفظ</button>
+    </div>
 
     <!-- Top 3 Type Tabs (Left to Right: مصروف | دخل | تحويل) -->
     <div class="mm-type-tabs" dir="ltr">
@@ -575,7 +578,7 @@
     <div id="qmBottomDock" class="qm-bottom-dock">
       <!-- Dock 1: Accounts + Credit Cards -->
       <div id="qmDockAcc" style="display:flex;flex-direction:column;height:100%;min-height:0">
-        <div class="quick-grid-head"><span>1. اختر الحساب أو البطاقة</span><span style="color:var(--mint)">ينتقل للأقسام تلقائيًا</span></div>
+        <div class="quick-grid-head"><span>الحساب / البطاقة</span><span style="cursor:pointer;padding:0 4px;font-size:.85rem" onclick="setQmDockMode('none')">✕</span></div>
         <div class="quick-grid" id="qmAccGrid"></div>
       </div>
 
@@ -588,10 +591,11 @@
       <!-- Dock 3: Money Manager 2-Column Side-by-Side Category & Subcategory -->
       <div id="qmDockCat" style="display:none;flex-direction:column;height:100%;min-height:0">
         <div class="quick-grid-head">
-          <span>2. القسم الرئيسي / الفرعي</span>
-          <div style="display:flex;gap:10px">
+          <span>اختيار القسم الرئيسي والفرعي</span>
+          <div style="display:flex;gap:12px;align-items:center">
             <span style="cursor:pointer;color:var(--mint)" onclick="openAddQuickCatPrompt(false)">＋ رئيسي</span>
             <span style="cursor:pointer;color:var(--blue)" onclick="openAddQuickCatPrompt(true)">＋ فرعي</span>
+            <span style="cursor:pointer;padding:0 4px;font-size:.85rem;color:var(--text)" onclick="setQmDockMode('none')">✕</span>
           </div>
         </div>
         <div class="mm-cat-split">

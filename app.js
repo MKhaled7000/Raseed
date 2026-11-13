@@ -1,4 +1,4 @@
-const APP_VERSION='12.3';
+const APP_VERSION='12.4';
 const APP_BUILD='2026-11-13';
 const KEY='raseed_mobile_v2';
 
@@ -350,16 +350,18 @@ function applyPreferences(){
   setv('prefLang', lang);
   document.documentElement.lang = lang;
   // Keep layout direction fixed as requested without flipping directions on English
-  document.documentElement.dir = 'rtl';
+  document.documentElement.dir = 'ltr';
   setv('prefFontSize', p.fontSize || '1');
 
   document.querySelectorAll('.dec-toggle-btn').forEach(b=>{
     b.classList.toggle('active', !!p.homeDecimals);
-    b.textContent = lang === 'en' ? '.00 Decimals' : '.00 الكسور';
+    if(b.classList.contains('mm-tool-btn')) b.textContent = '.00';
+    else b.textContent = lang === 'en' ? '.00 Decimals' : '.00 الكسور';
   });
   document.querySelectorAll('.privacy-toggle-btn').forEach(b=>{
     b.classList.toggle('active', !!p.privacy);
-    b.textContent = p.privacy ? (lang === 'en' ? '🙈 Hidden' : '🙈 مخفي') : (lang === 'en' ? '👁 Privacy' : '👁 الإخفاء');
+    if(b.classList.contains('mm-tool-btn')) b.textContent = p.privacy ? '🙈' : '👁';
+    else b.textContent = p.privacy ? (lang === 'en' ? '🙈 Hidden' : '🙈 مخفي') : (lang === 'en' ? '👁 Privacy' : '👁 الإخفاء');
   });
   applyLanguageTranslations(lang);
 
@@ -917,7 +919,7 @@ function renderMonthlyCategoryReport(curYM, mode){
         <div class="info" style="padding:0 6px">
           <b>${esc(cat)}</b>
         </div>
-        <strong style="direction:ltr;font-size:.86rem">${maskable(egp(amt))} ‹</strong>
+        <strong style="direction:ltr;font-size:.86rem">${maskable(egp(amt))} ›</strong>
       </div>
     `;
   }).join('');
@@ -2676,6 +2678,8 @@ const UI_TEXT_PAIRS = [
   ['الالتزامات', 'Commitments'],
   ['الإعدادات', 'Settings'],
   ['المزيد', 'Settings'],
+  ['المعاملات اليومية', 'Daily Transactions'],
+  ['الملخص الشهري', 'Monthly Summary'],
   ['يومي', 'Daily'],
   ['شهري', 'Monthly'],
   ['الدخل', 'Income'],
