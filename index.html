@@ -299,8 +299,11 @@ details.fold .fold-body{padding:12px 14px}
 
     <!-- Collapsible Search/Filter Bar -->
     <div id="mmSearchBox" style="display:none;margin-bottom:10px">
-      <div style="display:flex;gap:6px">
-        <input id="actSearch" type="search" placeholder="بحث في البيان أو القسم..." oninput="renderTransactionsScreen()" style="flex:1;background:var(--surface);border:1px solid var(--line2);border-radius:10px;padding:7px 10px;color:var(--text);font-size:.75rem">
+      <div style="display:flex;gap:6px;align-items:center">
+        <div style="position:relative;flex:1;display:flex;align-items:center">
+          <input id="actSearch" type="search" placeholder="بحث في البيان أو القسم..." oninput="onTransactionsSearchInput()" style="width:100%;background:var(--surface);border:1px solid var(--line2);border-radius:10px;padding:7px 10px 7px 28px;color:var(--text);font-size:.75rem">
+          <button type="button" id="btnClearSearch" onclick="clearTransactionsSearch()" title="مسح الفلتر" style="display:none;position:absolute;left:6px;background:none;border:0;color:var(--muted);font-size:.8rem;padding:2px 5px">✕</button>
+        </div>
         <select id="actAccountFilter" onchange="renderTransactionsScreen()" style="background:var(--surface);border:1px solid var(--line2);border-radius:10px;padding:7px;color:var(--text);font-size:.74rem"><option value="">كل الحسابات</option></select>
       </div>
     </div>
@@ -711,7 +714,7 @@ details.fold .fold-body{padding:12px 14px}
     <summary><span>⟳ التحديثات</span><span>▼</span></summary>
     <div class="fold-body">
       <div class="c-list">
-        <div class="c-row"><span class="c-lbl">الإصدار الحالي :</span><span class="tag" id="appVersionTag">V12.0</span></div>
+        <div class="c-row"><span class="c-lbl">الإصدار الحالي :</span><span class="tag" id="appVersionTag">V12.1</span></div>
         <div class="c-row">
           <span class="c-lbl">التحديثات :</span>
           <div class="c-row-btns">
@@ -912,7 +915,7 @@ details.fold .fold-body{padding:12px 14px}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
 <script>
-const APP_VERSION='12.0';
+const APP_VERSION='12.1';
 const APP_BUILD='2026-11-13';
 const KEY='raseed_mobile_v2';
 
@@ -955,6 +958,18 @@ function syncCategoryTrees(){
   for(const c of (state.incomeCategories||[])){
     if(c && !state.categoryTree.income[c] && !incSubsSet.has(c)){
       state.categoryTree.income[c] = [];
+    }
+  }
+  for(const tx of (state.transactions||[])){
+    if(tx.type !== 'expense' && tx.type !== 'income') continue;
+    const tree = tx.type === 'income' ? state.categoryTree.income : state.categoryTree.expense;
+    const catList = tx.type === 'income' ? state.incomeCategories : state.categories;
+    const mc = String(tx.category||'').trim();
+    const sc = String(tx.subCategory||'').trim();
+    if(mc){
+      if(!tree[mc]) tree[mc] = [];
+      if(!catList.includes(mc)) catList.push(mc);
+      if(sc && !tree[mc].includes(sc)) tree[mc].push(sc);
     }
   }
 }
@@ -1186,13 +1201,60 @@ function shiftForecastYear(delta){
   forecastYear += delta;
   renderReportsScreen();
 }
+let activeReportCategoryFilter = null; // { category, type }
+
 function toggleSearchBar(){
   const box = document.getElementById('mmSearchBox');
   const btn = document.getElementById('btnToggleSearch');
   const open = box.style.display === 'none';
   box.style.display = open ? 'block' : 'none';
   btn.classList.toggle('active', open);
-  if(open) document.getElementById('actSearch').focus();
+  if(open){
+    document.getElementById('actSearch').focus();
+  } else {
+    clearTransactionsSearch();
+  }
+}
+function onTransactionsSearchInput(){
+  const inp = document.getElementById('actSearch');
+  const qVal = (inp?.value || '').trim();
+  if(activeReportCategoryFilter && qVal !== activeReportCategoryFilter.category){
+    activeReportCategoryFilter = null;
+  }
+  state.prefs = state.prefs || {};
+  state.prefs.savedSearch = qVal;
+  try{localStorage.setItem(KEY,JSON.stringify(state))}catch(_){}
+  const clrBtn = document.getElementById('btnClearSearch');
+  if(clrBtn) clrBtn.style.display = qVal ? 'block' : 'none';
+  renderTransactionsScreen();
+}
+function clearTransactionsSearch(){
+  activeReportCategoryFilter = null;
+  const inp = document.getElementById('actSearch');
+  if(inp) inp.value = '';
+  state.prefs = state.prefs || {};
+  state.prefs.savedSearch = '';
+  try{localStorage.setItem(KEY,JSON.stringify(state))}catch(_){}
+  const clrBtn = document.getElementById('btnClearSearch');
+  if(clrBtn) clrBtn.style.display = 'none';
+  renderTransactionsScreen();
+}
+function filterTransactionsByCategory(catName, txType){
+  const cleanCat = String(catName||'').trim();
+  activeReportCategoryFilter = { category: cleanCat, type: txType || '' };
+  state.prefs = state.prefs || {};
+  state.prefs.savedSearch = cleanCat;
+  try{localStorage.setItem(KEY,JSON.stringify(state))}catch(_){}
+  const box = document.getElementById('mmSearchBox');
+  const btn = document.getElementById('btnToggleSearch');
+  const inp = document.getElementById('actSearch');
+  const clrBtn = document.getElementById('btnClearSearch');
+  if(box) box.style.display = 'block';
+  if(btn) btn.classList.add('active');
+  if(inp) inp.value = cleanCat;
+  if(clrBtn) clrBtn.style.display = cleanCat ? 'block' : 'none';
+  go('trans', document.querySelector('.nav[data-page="trans"]'));
+  renderTransactionsScreen();
 }
 function toggleItemActions(el, ev){
   if(ev && ev.target.closest('button')) return;
@@ -1311,7 +1373,18 @@ function renderTransactionsScreen(){
     if([...af.options].some(o=>o.value===cur)) af.value = cur;
   }
 
-  const q = (document.getElementById('actSearch')?.value||'').trim().toLowerCase();
+  const searchInputEl = document.getElementById('actSearch');
+  if(searchInputEl && !searchInputEl.value && state.prefs?.savedSearch){
+    searchInputEl.value = state.prefs.savedSearch;
+    const box = document.getElementById('mmSearchBox');
+    const btn = document.getElementById('btnToggleSearch');
+    if(box) box.style.display = 'block';
+    if(btn) btn.classList.add('active');
+  }
+  const rawQ = (searchInputEl?.value||'').trim();
+  const q = rawQ.toLowerCase();
+  const clrBtn = document.getElementById('btnClearSearch');
+  if(clrBtn) clrBtn.style.display = rawQ ? 'block' : 'none';
   const accFilter = af?.value || '';
 
   const txList = monthTx(m).map(x=>({...x, _kind:'tx'}));
@@ -1334,6 +1407,13 @@ function renderTransactionsScreen(){
 
   let combined = [...txList, ...ledList].filter(it=>{
     if(accFilter && it.accountId !== accFilter) return false;
+    if(activeReportCategoryFilter && rawQ === activeReportCategoryFilter.category){
+      const itCat = String(it.category||'أخرى').trim() || 'أخرى';
+      if(itCat !== activeReportCategoryFilter.category) return false;
+      if(activeReportCategoryFilter.type === 'expense' && !isActualExpenseTx(it)) return false;
+      if(activeReportCategoryFilter.type === 'income' && it.type !== 'income') return false;
+      return true;
+    }
     if(q && !(String(it.title||'').toLowerCase().includes(q) || String(it.category||'').toLowerCase().includes(q) || String(it.subCategory||'').toLowerCase().includes(q))) return false;
     return true;
   }).sort((a,b)=>String(b.date).localeCompare(String(a.date)));
@@ -1358,7 +1438,7 @@ function renderTransactionsScreen(){
     const monNum = dStr.slice(5,7);
     const yrNum = dStr.slice(0,4);
     const dayName = !isNaN(dtObj) ? dayNamesAr[dtObj.getDay()] : '';
-    const naturalDateText = `${dayName} ${dayNum}/${monNum}/${yrNum}`;
+    const naturalDateText = `${dayName} ${dayNum}-${monNum}-${yrNum}`;
 
     let dayInc = 0, dayExp = 0;
     for(const it of items){
@@ -1493,22 +1573,23 @@ function renderMonthlyCategoryReport(curYM, mode){
     </div>
   `;
 
+  const repTypeStr = isInc ? 'income' : 'expense';
   chipsWrap.innerHTML = entries.slice(0, 6).map(([cat, amt], idx)=>{
     const color = CHART_COLORS[idx % CHART_COLORS.length];
     const pct = Math.round((amt / grandTotal) * 100);
-    return `<span class="tag" style="display:inline-flex;align-items:center;gap:5px"><i style="width:8px;height:8px;border-radius:50%;background:${color};display:inline-block"></i>${esc(cat)} ${pct}%</span>`;
+    return `<span class="tag" style="display:inline-flex;align-items:center;gap:5px;cursor:pointer" onclick="filterTransactionsByCategory(${ JSON.stringify(cat).replace(/"/g,'&quot;') }, '${repTypeStr}')"><i style="width:8px;height:8px;border-radius:50%;background:${color};display:inline-block"></i>${esc(cat)} ${pct}%</span>`;
   }).join('');
 
   listEl.innerHTML = entries.map(([cat, amt], idx)=>{
     const color = CHART_COLORS[idx % CHART_COLORS.length];
     const pct = Math.max(1, Math.round((amt / grandTotal) * 100));
     return `
-      <div class="listitem" style="cursor:default;align-items:center;padding:10px 2px">
+      <div class="listitem" style="cursor:pointer;align-items:center;padding:10px 4px" onclick="filterTransactionsByCategory(${ JSON.stringify(cat).replace(/"/g,'&quot;') }, '${repTypeStr}')" title="اضغط لعرض معاملات هذا البند">
         <span style="background:${color};color:#08121e;font-weight:400;font-size:.7rem;padding:3px 7px;border-radius:8px;min-width:42px;text-align:center">${pct}%</span>
         <div class="info" style="padding:0 6px">
           <b>${esc(cat)}</b>
         </div>
-        <strong style="direction:ltr;font-size:.86rem">${maskable(egp(amt))}</strong>
+        <strong style="direction:ltr;font-size:.86rem">${maskable(egp(amt))} ‹</strong>
       </div>
     `;
   }).join('');
@@ -1965,7 +2046,7 @@ function readMmbak(ev){
       }
 
       // Exact Money Manager ZCATEGORY Parser (ID, C_IS_DEL, uid, NAME, ORDERSEQ, TYPE, STATUS, pUid)
-      let catInfoMap = {}; // uid -> { name, parentName, doType }
+      let catInfoMap = {}; // key (uid or ID) -> { name, parentName, doType }
       let expTree = {};
       let incTree = {};
       try{
@@ -1974,54 +2055,60 @@ function readMmbak(ev){
         if(catTable){
           const pragma = db.exec(`PRAGMA table_info("${catTable}")`)[0]?.values || [];
           const cols = pragma.map(x=>String(x[1]));
-          const uidCol = cols.find(c=>/^uid$/i.test(c)) || cols.find(c=>/uid|id/i.test(c));
+          const idCol = cols.find(c=>/^ID$/i.test(c)) || cols.find(c=>/id/i.test(c));
+          const uidCol = cols.find(c=>/^uid$/i.test(c)) || idCol;
           const nameCol = cols.find(c=>/^NAME$/i.test(c)) || cols.find(c=>/name/i.test(c));
           const typeCol = cols.find(c=>/^TYPE$/i.test(c)) || cols.find(c=>/type/i.test(c));
           const pUidCol = cols.find(c=>/^pUid$/i.test(c)) || cols.find(c=>/p_?uid|parent/i.test(c));
           const delCol = cols.find(c=>/^C_IS_DEL$/i.test(c)) || cols.find(c=>/is_del/i.test(c));
+          const statusCol = cols.find(c=>/^STATUS$/i.test(c));
           const ordCol = cols.find(c=>/^ORDERSEQ$/i.test(c)) || cols.find(c=>/order|seq/i.test(c));
-          const idCol = cols.find(c=>/^ID$/i.test(c)) || uidCol;
 
-          const qSql = `SELECT "${uidCol}", "${nameCol}", ${typeCol?`"${typeCol}"`:'1'}, ${pUidCol?`"${pUidCol}"`:"'0'"}, ${delCol?`COALESCE("${delCol}",0)`:'0'} FROM "${catTable}" ORDER BY ${ordCol?`COALESCE("${ordCol}",0) ASC, `:''}"${idCol}" ASC`;
+          const qSql = `SELECT ${idCol?`"${idCol}"`:'0'}, "${uidCol}", "${nameCol}", ${typeCol?`"${typeCol}"`:'1'}, ${pUidCol?`"${pUidCol}"`:"'0'"}, ${delCol?`COALESCE("${delCol}",0)`:'0'}, ${statusCol?`COALESCE("${statusCol}",0)`:'0'} FROM "${catTable}" ORDER BY ${ordCol?`COALESCE("${ordCol}",0) ASC, `:''}${idCol?`"${idCol}"`:'1'} ASC`;
           const rows = db.exec(qSql)[0]?.values || [];
-          const byUid = {};
+          const byKey = {};
+          const allObjs = [];
           for(const r of rows){
-            const u = String(r[0]??'').trim();
-            const nm = String(r[1]??'').trim();
-            const tp = Number(r[2]);
-            const pu = String(r[3]??'0').trim();
-            const isDel = Number(r[4]) === 1;
-            if(u && nm) byUid[u] = {uid:u, name:nm, type:tp, pUid:pu, isDel};
+            const rawId = String(r[0]??'').trim();
+            const rawUid = String(r[1]??'').trim();
+            const nm = String(r[2]??'').trim();
+            const tp = Number(r[3]);
+            const rawP = String(r[4]??'').trim();
+            const pu = (!rawP || rawP === '0' || rawP === '-1' || /^null$/i.test(rawP)) ? '' : rawP;
+            const isDel = Number(r[5]) === 1;
+            const st = Number(r[6]) || 0;
+            if(!nm) continue;
+            const obj = {id:rawId, uid:rawUid||rawId, name:nm, type:tp, pUid:pu, isDel, status:st};
+            allObjs.push(obj);
+            if(rawUid) byKey[rawUid] = obj;
+            if(rawId && !byKey[rawId]) byKey[rawId] = obj;
           }
-          // Pass 1: Active Main Categories (pUid === '0' or empty)
-          for(const r of rows){
-            const u = String(r[0]??'').trim();
-            const obj = byUid[u];
-            if(!obj || obj.isDel) continue;
-            if(obj.pUid === '0' || obj.pUid === ''){
-              if(obj.type === 0) incTree[obj.name] = incTree[obj.name] || [];
-              else expTree[obj.name] = expTree[obj.name] || [];
+          // Resolve parent relationships accurately
+          for(const obj of allObjs){
+            let parent = (obj.pUid && obj.pUid !== obj.uid && obj.pUid !== obj.id) ? byKey[obj.pUid] : null;
+            // Walk up if multi-level
+            if(parent && parent.pUid && parent.pUid !== parent.uid && parent.pUid !== parent.id && byKey[parent.pUid]){
+              parent = byKey[parent.pUid];
             }
-          }
-          // Pass 2: Active Subcategories (pUid !== '0') + map all UIDs for historical transactions
-          for(const r of rows){
-            const u = String(r[0]??'').trim();
-            const obj = byUid[u];
-            if(!obj) continue;
-            if(obj.pUid !== '0' && obj.pUid !== ''){
-              const parent = byUid[obj.pUid];
+            const effType = parent ? parent.type : obj.type;
+            const info = {
+              name: obj.name,
+              parentName: parent ? parent.name : '',
+              doType: String(effType)
+            };
+            if(obj.uid) catInfoMap[obj.uid] = info;
+            if(obj.id && !catInfoMap[obj.id]) catInfoMap[obj.id] = info;
+
+            if(!obj.isDel){
+              const tTree = effType === 0 ? incTree : expTree;
               if(parent){
-                catInfoMap[obj.uid] = { name: obj.name, parentName: parent.name, doType: String(parent.type) };
-                if(!obj.isDel && !parent.isDel){
-                  const tTree = (obj.type === 0 || parent.type === 0) ? incTree : expTree;
+                if(!parent.isDel){
                   tTree[parent.name] = tTree[parent.name] || [];
                   if(!tTree[parent.name].includes(obj.name)) tTree[parent.name].push(obj.name);
                 }
               } else {
-                catInfoMap[obj.uid] = { name: obj.name, parentName: '', doType: String(obj.type) };
+                tTree[obj.name] = tTree[obj.name] || [];
               }
-            } else {
-              catInfoMap[obj.uid] = { name: obj.name, parentName: '', doType: String(obj.type) };
             }
           }
         }
@@ -2108,35 +2195,54 @@ function commitMmbakDirect(){
     const rawCatKey = String(cat??'').trim();
     const rawSubKey = String(subCtgRaw??'').trim();
     const rawCatName = String(catNameRaw??'').trim();
-    const cInfo = mmPending.catInfoMap[rawSubKey] || mmPending.catInfoMap[rawCatKey] || mmPending.catInfoMap[rawCatName];
+    const catObj = rawCatKey ? mmPending.catInfoMap[rawCatKey] : null;
+    const subObj = rawSubKey ? mmPending.catInfoMap[rawSubKey] : null;
+    const nameObj = rawCatName ? mmPending.catInfoMap[rawCatName] : null;
+
     const cleanMemo = String(content??'').trim();
     const isMemoUuid = /^[0-9a-f-]{16,}$/i.test(cleanMemo);
     const usableMemo = (cleanMemo && !isMemoUuid) ? cleanMemo : '';
 
     let mainCat = '';
     let subCat = '';
-    if(cInfo){
-      mainCat = cInfo.parentName || cInfo.name;
-      subCat = cInfo.parentName ? cInfo.name : '';
+    if(subObj){
+      mainCat = subObj.parentName || (catObj ? (catObj.parentName || catObj.name) : subObj.name);
+      subCat = (subObj.name && subObj.name !== mainCat) ? subObj.name : '';
+    } else if(catObj){
+      mainCat = catObj.parentName || catObj.name;
+      subCat = catObj.parentName ? catObj.name : '';
+    } else if(nameObj){
+      mainCat = nameObj.parentName || nameObj.name;
+      subCat = nameObj.parentName ? nameObj.name : '';
     } else if(rawCatName && !/^\d+$/.test(rawCatName) && !/^[0-9a-f-]{16,}$/i.test(rawCatName)){
       mainCat = rawCatName;
     } else if(rawCatKey && !/^\d+$/.test(rawCatKey) && !/^[0-9a-f-]{16,}$/i.test(rawCatKey)){
       mainCat = rawCatKey;
-    } else if(usableMemo){
-      mainCat = usableMemo;
     } else {
       mainCat = 'أخرى';
     }
     const titleText = usableMemo;
 
+    // Ensure every imported category and subcategory is registered in state.categoryTree without any loss
+    if(t === 'expense' || t === 'income'){
+      const targetTree = t === 'income' ? state.categoryTree.income : state.categoryTree.expense;
+      const targetList = t === 'income' ? state.incomeCategories : state.categories;
+      if(mainCat){
+        if(!targetTree[mainCat]) targetTree[mainCat] = [];
+        if(!targetList.includes(mainCat)) targetList.push(mainCat);
+        if(subCat && !targetTree[mainCat].includes(subCat)){
+          targetTree[mainCat].push(subCat);
+        }
+      }
+    }
+
     const id = t==='transfer' ? 'mm-xfer-'+transferKey : 'mm-'+uid;
     if(seen.has(id)){
-      // Update existing imported transaction's category & subCategory if it was previously 'أخرى'
       const prev = existingTxById.get(id);
       if(prev && t !== 'transfer'){
         prev.category = mainCat;
         prev.subCategory = subCat;
-        if(!prev.title || prev.title === 'أخرى') prev.title = titleText;
+        prev.title = titleText;
       }
       continue;
     }
@@ -2956,6 +3062,87 @@ function renderAll(){
   renderPlanScreen();
   renderSettingsCategories();
 }
+
+
+/* Horizontal Swipe Navigation (5 Main Screens + Sub-tabs) */
+(function initSwipeNavigation(){
+  const MAIN_PAGES = ['trans', 'reports', 'wallet', 'plan', 'settings'];
+  const SUB_TABS = {
+    reports: {
+      list: ['exp', 'inc', 'yr'],
+      getActive: () => activeReportTab || 'exp',
+      setActive: (val) => switchReportTab(val)
+    },
+    wallet: {
+      list: ['acc', 'card'],
+      getActive: () => document.getElementById('tabBtnCard')?.classList.contains('active') ? 'card' : 'acc',
+      setActive: (val) => switchWalletTab(val)
+    },
+    plan: {
+      list: ['com', 'sal'],
+      getActive: () => document.getElementById('tabBtnSal')?.classList.contains('active') ? 'sal' : 'com',
+      setActive: (val) => switchPlanTab(val)
+    }
+  };
+
+  let startX = 0, startY = 0, startTime = 0, ignoreTouch = false;
+
+  document.addEventListener('touchstart', function(e){
+    if(e.touches.length !== 1) { ignoreTouch = true; return; }
+    if(document.querySelector('.modal.show')) { ignoreTouch = true; return; }
+    const tgt = e.target;
+    if(tgt && tgt.closest('input, textarea, select, .yr-table-wrap, [contenteditable="true"]')) {
+      ignoreTouch = true;
+      return;
+    }
+    ignoreTouch = false;
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+    startTime = Date.now();
+  }, {passive: true});
+
+  document.addEventListener('touchend', function(e){
+    if(ignoreTouch || !e.changedTouches.length) return;
+    if(document.querySelector('.modal.show')) return;
+    const dt = Date.now() - startTime;
+    if(dt > 600) return;
+
+    const dx = e.changedTouches[0].clientX - startX;
+    const dy = e.changedTouches[0].clientY - startY;
+    if(Math.abs(dx) < 55 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+
+    const curPage = document.querySelector('.screen.active')?.id || 'trans';
+    const pageIdx = MAIN_PAGES.indexOf(curPage);
+    if(pageIdx === -1) return;
+
+    // In RTL layout, tabs are ordered Right-to-Left (index 0 on right, index 4 on left).
+    // Swiping finger Left (dx < 0) moves toward left tab (+1); Swiping Right (dx > 0) moves toward right tab (-1).
+    const step = (dx < 0) ? 1 : -1;
+
+    const subCfg = SUB_TABS[curPage];
+    if(subCfg){
+      const curSub = subCfg.getActive();
+      const subIdx = subCfg.list.indexOf(curSub);
+      const nextSubIdx = subIdx + step;
+      if(nextSubIdx >= 0 && nextSubIdx < subCfg.list.length){
+        subCfg.setActive(subCfg.list[nextSubIdx]);
+        return;
+      }
+    }
+
+    const nextPageIdx = pageIdx + step;
+    if(nextPageIdx >= 0 && nextPageIdx < MAIN_PAGES.length){
+      const nextPage = MAIN_PAGES[nextPageIdx];
+      const navBtn = document.querySelector(`.nav[data-page="${nextPage}"]`);
+      go(nextPage, navBtn);
+      const nextSubCfg = SUB_TABS[nextPage];
+      if(nextSubCfg){
+        const targetSub = step > 0 ? nextSubCfg.list[0] : nextSubCfg.list[nextSubCfg.list.length - 1];
+        nextSubCfg.setActive(targetSub);
+      }
+    }
+  }, {passive: true});
+})();
 
 /* Boot */
 applyPreferences();
