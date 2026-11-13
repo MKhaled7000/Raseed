@@ -232,6 +232,16 @@ details.fold .fold-body{padding:12px 14px}
 .file-hidden{display:none}
 .toast{position:fixed;top:15px;left:50%;transform:translateX(-50%);background:var(--panel2);border:1px solid var(--mint);color:var(--text);padding:10px 15px;border-radius:13px;z-index:60;font-size:.75rem;display:none;max-width:90%;text-align:center;box-shadow:0 8px 25px #0005}
 
+
+/* Custom Centered Select Modal (Matches Exit Confirmation Card Design) */
+.custom-sel-trigger{width:64%;max-width:64%;min-width:0;height:36px;background:var(--surface2);border:1px solid var(--line2);border-radius:10px;padding:0 10px;color:var(--text);font-size:.76rem;display:flex;align-items:center;justify-content:space-between;cursor:pointer;text-align:right;overflow:hidden}
+.custom-sel-trigger span.cs-val{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1}
+.custom-sel-trigger span.cs-arr{color:var(--mint);font-size:.65rem;margin-right:6px;flex-shrink:0}
+.qm-form-scroll .custom-sel-trigger{height:32px}
+.cs-opt-list{display:flex;flex-direction:column;gap:7px;max-height:52vh;overflow-y:auto;margin:6px 0}
+.cs-opt-btn{width:100%;background:var(--surface);border:1px solid var(--line);color:var(--text-sub);border-radius:12px;padding:11px 14px;font-size:.82rem;display:flex;align-items:center;justify-content:space-between;text-align:right}
+.cs-opt-btn.selected{border-color:var(--mint);background:#43d6b21a;color:var(--mint)}
+
 /* Compact Month/Year Grid Picker */
 .ym-year-bar{display:flex;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--line2);border-radius:12px;padding:6px 10px;margin-bottom:10px}
 .ym-year-bar button{background:var(--surface2);border:1px solid var(--line);color:var(--text);width:32px;height:32px;border-radius:9px;font-weight:400}
@@ -701,7 +711,7 @@ details.fold .fold-body{padding:12px 14px}
     <summary><span>⟳ التحديثات</span><span>▼</span></summary>
     <div class="fold-body">
       <div class="c-list">
-        <div class="c-row"><span class="c-lbl">الإصدار الحالي :</span><span class="tag" id="appVersionTag">V11.9</span></div>
+        <div class="c-row"><span class="c-lbl">الإصدار الحالي :</span><span class="tag" id="appVersionTag">V12.0</span></div>
         <div class="c-row">
           <span class="c-lbl">التحديثات :</span>
           <div class="c-row-btns">
@@ -875,6 +885,17 @@ details.fold .fold-body{padding:12px 14px}
   </div>
 </div>
 
+<!-- Custom Centered Select Picker Modal -->
+<div class="modal center-modal" id="customSelectModal" onclick="if(event.target===this)closeCustomSelectModal()">
+  <div class="sheet" style="max-width:350px">
+    <h3 style="justify-content:center;margin-bottom:10px" id="csModalTitle">اختر</h3>
+    <div class="cs-opt-list" id="csModalOptions"></div>
+    <div class="actions" style="margin-top:10px">
+      <button type="button" class="secondary" onclick="closeCustomSelectModal()">إغلاق</button>
+    </div>
+  </div>
+</div>
+
 <!-- Exit Confirmation Modal -->
 <div class="modal center-modal" id="exitConfirmModal" onclick="if(event.target===this)cancelExitApp()">
   <div class="sheet" style="max-width:340px;text-align:center">
@@ -891,7 +912,7 @@ details.fold .fold-body{padding:12px 14px}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
 <script>
-const APP_VERSION='11.9';
+const APP_VERSION='12.0';
 const APP_BUILD='2026-11-13';
 const KEY='raseed_mobile_v2';
 
@@ -980,12 +1001,7 @@ function persist(){
 
 /* Exit Confirmation & Back-Button Handling (Chrome & Installed PWA) */
 let _allowExit = false;
-window.addEventListener('beforeunload', function(e){
-  if(_allowExit) return;
-  e.preventDefault();
-  e.returnValue = 'هل تريد الخروج من X-Wallet؟';
-  return 'هل تريد الخروج من X-Wallet؟';
-});
+/* Native beforeunload suppressed in favor of custom Exit Confirmation Card */
 function armBackGuard(){
   try{
     history.replaceState({xwGuard:1}, '');
@@ -1018,6 +1034,8 @@ window.addEventListener('popstate', function(){
   if(qm && qm.classList.contains('show')){ closeQuickModal(); try{history.pushState({xwGuard:2},'');}catch(_){} return; }
   if(am && am.classList.contains('show')){ closeAccountModal(); try{history.pushState({xwGuard:2},'');}catch(_){} return; }
   if(ym && ym.classList.contains('show')){ ym.classList.remove('show'); try{history.pushState({xwGuard:2},'');}catch(_){} return; }
+  const cs = document.getElementById('customSelectModal');
+  if(cs && cs.classList.contains('show')){ closeCustomSelectModal(); try{history.pushState({xwGuard:2},'');}catch(_){} return; }
   const activePage = document.querySelector('.screen.active')?.id;
   if(activePage && activePage !== 'trans'){
     go('trans', document.querySelector('.nav[data-page="trans"]'));
@@ -1117,6 +1135,7 @@ function saveGeneralSettings(){
   _pendingTheme = null;
   _pendingBgMode = null;
   applyPreferences();
+syncCustomSelectTriggers();
   persist();
   toast('تم حفظ الإعدادات ✓');
 }
@@ -1187,10 +1206,16 @@ function isCardPurchaseTx(t){
   return t.type==='card_purchase' || String(t.source||'').startsWith('card-purchase:');
 }
 function monthTx(m){return state.transactions.filter(t=>monthKey(t.date)===m)}
+function isActualExpenseTx(t){
+  if(t.type !== 'expense') return false;
+  if(isCardPurchaseTx(t)) return false;
+  if(t.source === 'card-payment') return false;
+  return true;
+}
 function totals(m){
   let a=monthTx(m),
       inc=round2(a.filter(t=>t.type==='income').reduce((s,t)=>s+(Number(t.amount)||0),0)),
-      exp=round2(a.filter(t=>(t.type==='expense' || t.type==='credit_payment') && !isCardPurchaseTx(t)).reduce((s,t)=>s+(Number(t.amount)||0),0));
+      exp=round2(a.filter(t=>isActualExpenseTx(t)).reduce((s,t)=>s+(Number(t.amount)||0),0));
   return{a,inc,exp,net:round2(inc-exp)};
 }
 function accountBalance(a){
@@ -1330,13 +1355,15 @@ function renderTransactionsScreen(){
   for(const [dStr, items] of Object.entries(byDay)){
     const dtObj = new Date(dStr + 'T12:00:00');
     const dayNum = dStr.slice(8,10);
+    const monNum = dStr.slice(5,7);
+    const yrNum = dStr.slice(0,4);
     const dayName = !isNaN(dtObj) ? dayNamesAr[dtObj.getDay()] : '';
-    const ymText = dStr.slice(5,7) + '.' + dStr.slice(0,4);
+    const naturalDateText = `${dayName} ${dayNum}/${monNum}/${yrNum}`;
 
     let dayInc = 0, dayExp = 0;
     for(const it of items){
       if(it.type === 'income') dayInc += Number(it.amount)||0;
-      else if((it.type === 'expense' || it.type === 'credit_payment') && !isCardPurchaseTx(it)) dayExp += Number(it.amount)||0;
+      else if(isActualExpenseTx(it)) dayExp += Number(it.amount)||0;
     }
 
     const rowsHtml = items.map(it=>{
@@ -1375,9 +1402,7 @@ function renderTransactionsScreen(){
       <div class="day-group">
         <div class="day-head">
           <div class="day-head-right">
-            <span class="day-badge">${dayName}</span>
-            <span class="day-num">${dayNum}</span>
-            <span class="day-ym">${ymText}</span>
+            <span style="font-size:.82rem;color:var(--text)">${naturalDateText}</span>
           </div>
           <div class="day-totals">
             <span class="blue">${maskable(fmt(dayInc))} EGP</span>
@@ -1420,7 +1445,7 @@ function switchReportTab(tab){
 function renderMonthlyCategoryReport(curYM, mode){
   document.getElementById('repPeriodLabel').textContent = formatYMArabic(curYM);
   const isInc = (mode === 'inc');
-  const mTxs = monthTx(curYM).filter(t => isInc ? t.type==='income' : ((t.type==='expense' || t.type==='credit_payment') && !isCardPurchaseTx(t)));
+  const mTxs = monthTx(curYM).filter(t => isInc ? t.type==='income' : isActualExpenseTx(t));
 
   const byMain = {};
   let grandTotal = 0;
@@ -2876,7 +2901,55 @@ function installPWA(){
   toast('من قائمة المتصفح ⋮ اختر «تثبيت التطبيق»');
 }
 
+
+/* Custom Centered Select Enhancer (Replaces native OS select popups with Exit-Card style modal) */
+let _activeNativeSelect = null;
+function closeCustomSelectModal(){
+  const m = document.getElementById('customSelectModal');
+  if(m) m.classList.remove('show');
+  _activeNativeSelect = null;
+}
+function openCustomSelectFor(sel){
+  if(!sel) return;
+  _activeNativeSelect = sel;
+  const rowLbl = sel.closest('.c-row')?.querySelector('label,.c-lbl')?.textContent?.replace(':','').trim() || 'اختر';
+  document.getElementById('csModalTitle').textContent = rowLbl;
+  const opts = [...sel.options];
+  document.getElementById('csModalOptions').innerHTML = opts.map((o, idx)=>`
+    <button type="button" class="cs-opt-btn ${o.selected?'selected':''}" onclick="pickCustomSelectOption(${idx})">
+      <span>${esc(o.textContent)}</span>
+      <span>${o.selected?'●':'○'}</span>
+    </button>
+  `).join('');
+  document.getElementById('customSelectModal').classList.add('show');
+}
+function pickCustomSelectOption(idx){
+  if(_activeNativeSelect && _activeNativeSelect.options[idx]){
+    _activeNativeSelect.selectedIndex = idx;
+    _activeNativeSelect.dispatchEvent(new Event('change', {bubbles:true}));
+    syncCustomSelectTriggers();
+  }
+  closeCustomSelectModal();
+}
+function syncCustomSelectTriggers(){
+  document.querySelectorAll('select').forEach(sel=>{
+    if(sel.id === 'actAccountFilter') return; // keep compact inline filter in search bar
+    let trig = sel.nextElementSibling;
+    if(!trig || !trig.classList.contains('custom-sel-trigger')){
+      sel.style.display = 'none';
+      trig = document.createElement('div');
+      trig.className = 'custom-sel-trigger';
+      trig.innerHTML = '<span class="cs-val"></span><span class="cs-arr">▼</span>';
+      trig.onclick = () => openCustomSelectFor(sel);
+      sel.parentNode.insertBefore(trig, sel.nextSibling);
+    }
+    const curOpt = sel.options[sel.selectedIndex];
+    trig.querySelector('.cs-val').textContent = curOpt ? curOpt.textContent : '';
+  });
+}
+
 function renderAll(){
+  syncCustomSelectTriggers();
   renderTransactionsScreen();
   renderReportsScreen();
   renderAccountsAndCards();
