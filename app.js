@@ -1,4 +1,4 @@
-const APP_VERSION='12.2';
+const APP_VERSION='12.3';
 const APP_BUILD='2026-11-13';
 const KEY='raseed_mobile_v2';
 
@@ -346,19 +346,22 @@ function applyPreferences(){
   document.documentElement.style.setProperty('--hero3', th.h3);
   document.querySelectorAll('.theme-dot').forEach(btn=>btn.classList.toggle('active', btn.dataset.theme===(p.theme||'mint')));
 
-  const uName = (p.userName || '').trim();
-  const av = document.getElementById('userAvatarLetter');
-  if(av) av.textContent = uName ? uName.slice(0, 12) : 'م';
-  const uInp = document.getElementById('prefUserName');
-  if(uInp && document.activeElement !== uInp) uInp.value = uName;
   const lang = p.lang || 'ar';
   setv('prefLang', lang);
   document.documentElement.lang = lang;
-  document.documentElement.dir = lang === 'en' ? 'ltr' : 'rtl';
+  // Keep layout direction fixed as requested without flipping directions on English
+  document.documentElement.dir = 'rtl';
   setv('prefFontSize', p.fontSize || '1');
 
-  document.querySelectorAll('.dec-toggle-btn').forEach(b=>b.classList.toggle('active', !!p.homeDecimals));
-  document.querySelectorAll('.privacy-toggle-btn').forEach(b=>b.textContent = p.privacy ? '🙈' : '👁');
+  document.querySelectorAll('.dec-toggle-btn').forEach(b=>{
+    b.classList.toggle('active', !!p.homeDecimals);
+    b.textContent = lang === 'en' ? '.00 Decimals' : '.00 الكسور';
+  });
+  document.querySelectorAll('.privacy-toggle-btn').forEach(b=>{
+    b.classList.toggle('active', !!p.privacy);
+    b.textContent = p.privacy ? (lang === 'en' ? '🙈 Hidden' : '🙈 مخفي') : (lang === 'en' ? '👁 Privacy' : '👁 الإخفاء');
+  });
+  applyLanguageTranslations(lang);
 
   const defAccSel = document.getElementById('prefDefaultAcc');
   if(defAccSel){
@@ -393,6 +396,19 @@ function togglePrivacyMode(){
 }
 
 /* Navigation */
+const TAB_TITLES = {
+  ar: { trans:'المعاملات', reports:'التقارير', wallet:'الحسابات', plan:'الالتزامات', settings:'الإعدادات' },
+  en: { trans:'Transactions', reports:'Reports', wallet:'Accounts', plan:'Commitments', settings:'Settings' }
+};
+
+function updateTopTabTitle(pageId){
+  const el = document.getElementById('topActiveTabTitle');
+  if(!el) return;
+  const curId = pageId || document.querySelector('.screen.active')?.id || 'trans';
+  const lang = state.prefs?.lang || 'ar';
+  el.textContent = (TAB_TITLES[lang] || TAB_TITLES.ar)[curId] || '';
+}
+
 function go(id, btn){
   document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));
   const t = document.getElementById(id);
@@ -402,6 +418,7 @@ function go(id, btn){
   if(id === 'settings'){
     document.querySelectorAll('#settings details.fold[open]').forEach(f=>f.removeAttribute('open'));
   }
+  updateTopTabTitle(id);
   window.scrollTo(0,0);
 }
 function switchWalletTab(which){
@@ -581,22 +598,56 @@ function oneTimeDebtsStats(m){
   return {list, total:round2(total), paid:round2(paid), remain:round2(Math.max(0,total-paid))};
 }
 
-/* 1. Render Transactions Screen */
+/* 1. Render Transactions Screen (Supports Daily & Monthly Tabs like Money Manager) */
+let activeTransSubTab = 'daily'; // 'daily' | 'monthly'
+const monthNamesEn = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const dayNamesEn = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+function switchTransSubTab(mode){
+  activeTransSubTab = (mode === 'monthly') ? 'monthly' : 'daily';
+  document.getElementById('transTabDaily')?.classList.toggle('active', activeTransSubTab === 'daily');
+  document.getElementById('transTabMonthly')?.classList.toggle('active', activeTransSubTab === 'monthly');
+  renderTransactionsScreen();
+}
+
+function shiftTransPeriod(delta){
+  if(activeTransSubTab === 'monthly'){
+    activeYear += delta;
+    forecastYear = activeYear;
+    renderAll();
+  } else {
+    shiftActiveMonth(delta);
+  }
+}
+
+function openTransPeriodPicker(){
+  if(activeTransSubTab === 'monthly'){
+    openHomePeriodPicker();
+  } else {
+    openHomePeriodPicker();
+  }
+}
+
+function selectMonthFromMonthlyTab(yr, mn){
+  activeYear = yr;
+  activeMonth = mn;
+  forecastYear = yr;
+  switchTransSubTab('daily');
+  renderAll();
+}
+
 function renderTransactionsScreen(){
+  const lang = state.prefs?.lang || 'ar';
+  const isEn = lang === 'en';
   const m = selected();
-  const t = totals(m);
-  document.getElementById('homeAvailableTotal').textContent = maskable(egpSmart(allAccountsAvailable()));
-  document.getElementById('homePeriodLabel').textContent = formatYMArabic(m);
-  document.getElementById('incomeHero').textContent = maskable(fmtNum(t.inc));
-  document.getElementById('expenseHero').textContent = maskable(fmtNum(t.exp));
-  const remEl = document.getElementById('remaining');
-  remEl.textContent = maskable(fmtNum(t.net));
-  remEl.className = t.net >= 0 ? 'mint' : 'red';
+
+  document.getElementById('transTabDaily')?.classList.toggle('active', activeTransSubTab === 'daily');
+  document.getElementById('transTabMonthly')?.classList.toggle('active', activeTransSubTab === 'monthly');
 
   const af = document.getElementById('actAccountFilter');
   if(af){
     const cur = af.value;
-    af.innerHTML = '<option value="">كل الحسابات</option>' + state.accounts.map(a=>`<option value="${a.id}">${esc(a.name)}</option>`).join('');
+    af.innerHTML = `<option value="">${isEn ? 'All Accounts' : 'كل الحسابات'}</option>` + state.accounts.map(a=>`<option value="${a.id}">${esc(a.name)}</option>`).join('');
     if([...af.options].some(o=>o.value===cur)) af.value = cur;
   }
 
@@ -614,16 +665,65 @@ function renderTransactionsScreen(){
   if(clrBtn) clrBtn.style.display = rawQ ? 'block' : 'none';
   const accFilter = af?.value || '';
 
+  const feed = document.getElementById('dailyTransactionsFeed');
+
+  // === MODE B: MONTHLY TAB (Like Money Manager Monthly Screenshot) ===
+  if(activeTransSubTab === 'monthly'){
+    document.getElementById('homePeriodLabel').textContent = String(activeYear);
+    let yrInc = 0, yrExp = 0;
+    const monthRows = [];
+    for(let mn = 12; mn >= 1; mn--){
+      const ym = String(activeYear) + '-' + String(mn).padStart(2, '0');
+      const mt = totals(ym);
+      yrInc = round2(yrInc + mt.inc);
+      yrExp = round2(yrExp + mt.exp);
+      const lastDay = new Date(activeYear, mn, 0).getDate();
+      const mLabel = isEn ? monthNamesEn[mn-1] : monthNamesAr[mn-1];
+      const rangeStr = `${String(mn).padStart(2,'0')}.01 - ${String(mn).padStart(2,'0')}.${String(lastDay).padStart(2,'0')}`;
+      monthRows.push({ mn, ym, mLabel, rangeStr, inc: mt.inc, exp: mt.exp, net: mt.net });
+    }
+    const yrNet = round2(yrInc - yrExp);
+    document.getElementById('incomeHero').textContent = maskable(fmtNum(yrInc));
+    document.getElementById('expenseHero').textContent = maskable(fmtNum(yrExp));
+    const remEl = document.getElementById('remaining');
+    remEl.textContent = maskable(fmtNum(yrNet));
+    remEl.className = yrNet >= 0 ? 'mint' : 'red';
+
+    feed.innerHTML = `<div class="day-group">` + monthRows.map(r => `
+      <div class="mm-month-row ${r.mn === activeMonth ? 'cur-month' : ''}" onclick="selectMonthFromMonthlyTab(${activeYear}, ${r.mn})">
+        <div class="mm-m-name">
+          <b>${esc(r.mLabel)}</b>
+          <small>${r.rangeStr}</small>
+        </div>
+        <div class="mm-m-inc blue">${maskable(fmt(r.inc))} EGP</div>
+        <div class="mm-m-exp">
+          <b class="red">${maskable(fmt(r.exp))} EGP</b>
+          <small>${maskable(fmt(r.net))} EGP</small>
+        </div>
+      </div>
+    `).join('') + `</div>`;
+    return;
+  }
+
+  // === MODE A: DAILY TAB ===
+  const t = totals(m);
+  document.getElementById('homePeriodLabel').textContent = isEn ? `${monthNamesEn[activeMonth-1]} ${activeYear}` : formatYMArabic(m);
+  document.getElementById('incomeHero').textContent = maskable(fmtNum(t.inc));
+  document.getElementById('expenseHero').textContent = maskable(fmtNum(t.exp));
+  const remEl = document.getElementById('remaining');
+  remEl.textContent = maskable(fmtNum(t.net));
+  remEl.className = t.net >= 0 ? 'mint' : 'red';
+
   const txList = monthTx(m).map(x=>({...x, _kind:'tx'}));
   const ledList = (state.ledger||[]).filter(l=>monthKey(l.date)===m).map(l=>{
-    const fromA = state.accounts.find(a=>a.id===l.from)?.name || 'حساب';
-    const toA = state.accounts.find(a=>a.id===l.to)?.name || 'حساب';
+    const fromA = state.accounts.find(a=>a.id===l.from)?.name || (isEn?'Account':'حساب');
+    const toA = state.accounts.find(a=>a.id===l.to)?.name || (isEn?'Account':'حساب');
     return {
       id: l.id,
       type: l.type,
-      category: l.type==='transfer' ? 'تحويل' : 'تسوية',
+      category: l.type==='transfer' ? (isEn?'Transfer':'تحويل') : (isEn?'Adjustment':'تسوية'),
       subCategory: '',
-      title: l.type==='transfer' ? `${fromA} ← ${toA}` : (l.note || 'تسوية رصيد'),
+      title: l.type==='transfer' ? `${fromA} → ${toA}` : (l.note || (isEn?'Balance Adjustment':'تسوية رصيد')),
       accountLabel: l.type==='transfer' ? `${fromA} → ${toA}` : fromA,
       accountId: l.from,
       amount: l.type==='transfer' ? Number(l.amount)||0 : Number(l.delta??l.amount)||0,
@@ -645,9 +745,8 @@ function renderTransactionsScreen(){
     return true;
   }).sort((a,b)=>String(b.date).localeCompare(String(a.date)));
 
-  const feed = document.getElementById('dailyTransactionsFeed');
   if(!combined.length){
-    feed.innerHTML = `<div class="panel"><div class="empty">لا توجد معاملات مسجلة في ${formatYMArabic(m)}.<br>اضغط على زر <b>＋</b> لإضافة معاملة جديدة.</div></div>`;
+    feed.innerHTML = `<div class="panel"><div class="empty">${isEn ? 'No transactions in this period.<br>Tap <b>＋</b> to add one.' : `لا توجد معاملات مسجلة في ${formatYMArabic(m)}.<br>اضغط على زر <b>＋</b> لإضافة معاملة جديدة.`}</div></div>`;
     return;
   }
 
@@ -664,8 +763,10 @@ function renderTransactionsScreen(){
     const dayNum = dStr.slice(8,10);
     const monNum = dStr.slice(5,7);
     const yrNum = dStr.slice(0,4);
-    const dayName = !isNaN(dtObj) ? dayNamesAr[dtObj.getDay()] : '';
-    const naturalDateText = `${dayName} ${dayNum}-${monNum}-${yrNum}`;
+    const dayName = !isNaN(dtObj) ? (isEn ? dayNamesEn[dtObj.getDay()] : dayNamesAr[dtObj.getDay()]) : '';
+    const naturalDateText = isEn
+      ? `${dayName} ${dayNum}-${monNum}-${yrNum}`
+      : `${dayName} ${dayNum}‏-${monNum}‏-${yrNum}`;
 
     let dayInc = 0, dayExp = 0;
     for(const it of items){
@@ -674,15 +775,15 @@ function renderTransactionsScreen(){
     }
 
     const rowsHtml = items.map(it=>{
-      let accName = it.accountLabel || (state.accounts.find(a=>a.id===it.accountId)?.name || (isCardPurchaseTx(it)?'بطاقة ائتمان':''));
+      let accName = it.accountLabel || (state.accounts.find(a=>a.id===it.accountId)?.name || (isCardPurchaseTx(it)?(isEn?'Credit Card':'بطاقة ائتمان'):''));
       let amtClass = it.type==='income' ? 'blue' : (it.type==='transfer' ? 'mint' : (isCardPurchaseTx(it) ? 'orange' : 'red'));
       let amtPrefix = it.type==='income' ? '+' : (it.type==='transfer' ? '⇄ ' : '−');
       const canEdit = it._kind === 'tx' && !isCardPurchaseTx(it) && !String(it.id).startsWith('salary-');
       const actions = it._kind === 'tx' ? `
         <div class="tap-actions">
-          <button type="button" class="smallbtn" style="border-color:var(--mint);color:var(--mint)" onclick="duplicateTxToday('${esc(it.id)}')">تكرار اليوم ↻</button>
-          ${canEdit ? `<button type="button" class="smallbtn" onclick="openEditQuickTx('${esc(it.id)}')">تعديل</button>` : ''}
-          <button type="button" class="smallbtn danger" onclick="deleteTransaction('${esc(it.id)}')">حذف</button>
+          <button type="button" class="smallbtn" style="border-color:var(--mint);color:var(--mint)" onclick="duplicateTxToday('${esc(it.id)}')">${isEn?'Duplicate Today ↻':'تكرار اليوم ↻'}</button>
+          ${canEdit ? `<button type="button" class="smallbtn" onclick="openEditQuickTx('${esc(it.id)}')">${isEn?'Edit':'تعديل'}</button>` : ''}
+          <button type="button" class="smallbtn danger" onclick="deleteTransaction('${esc(it.id)}')">${isEn?'Delete':'حذف'}</button>
         </div>` : '';
       const rawTitle = String(it.title||'').trim();
       const isDupTitle = !rawTitle || rawTitle === String(it.category||'').trim() || rawTitle === String(it.subCategory||'').trim();
@@ -690,15 +791,15 @@ function renderTransactionsScreen(){
       return `
         <div class="tx-wrap" onclick="toggleItemActions(this, event)">
           <div class="tx-row">
-            <div class="tx-amt-right ${amtClass}">${maskable(amtPrefix + fmt(Math.abs(Number(it.amount)||0)))} EGP</div>
-            <div class="tx-mid-acc">
-              ${memoLine ? `<span>${esc(memoLine)}</span>` : ''}
-              <small>${esc(accName)}</small>
-            </div>
-            <div class="tx-cat-left">
+            <div class="tx-cat-col">
               <b>${esc(it.category||'أخرى')}</b>
               ${it.subCategory ? `<small>${esc(it.subCategory)}</small>` : ''}
             </div>
+            <div class="tx-acc-col">
+              ${memoLine ? `<span>${esc(memoLine)}</span>` : ''}
+              <small>${esc(accName)}</small>
+            </div>
+            <div class="tx-amt-col ${amtClass}">${maskable(amtPrefix + fmt(Math.abs(Number(it.amount)||0)))} EGP</div>
           </div>
           ${actions}
         </div>
@@ -709,7 +810,7 @@ function renderTransactionsScreen(){
       <div class="day-group">
         <div class="day-head">
           <div class="day-head-right">
-            <span style="font-size:.82rem;color:var(--text)">${naturalDateText}</span>
+            <span dir="${isEn?'ltr':'rtl'}" style="font-size:.8rem;color:var(--text);unicode-bidi:isolate">${naturalDateText}</span>
           </div>
           <div class="day-totals">
             <span class="blue">${maskable(fmt(dayInc))} EGP</span>
@@ -2481,10 +2582,15 @@ function renderAll(){
 }
 
 
-/* Horizontal Swipe Navigation (5 Main Screens + Sub-tabs) */
+/* Horizontal Swipe Navigation (5 Main Screens + Sub-tabs, Left-to-Right Tab Order) */
 (function initSwipeNavigation(){
   const MAIN_PAGES = ['trans', 'reports', 'wallet', 'plan', 'settings'];
   const SUB_TABS = {
+    trans: {
+      list: ['daily', 'monthly'],
+      getActive: () => activeTransSubTab || 'daily',
+      setActive: (val) => switchTransSubTab(val)
+    },
     reports: {
       list: ['exp', 'inc', 'yr'],
       getActive: () => activeReportTab || 'exp',
@@ -2508,7 +2614,7 @@ function renderAll(){
     if(e.touches.length !== 1) { ignoreTouch = true; return; }
     if(document.querySelector('.modal.show')) { ignoreTouch = true; return; }
     const tgt = e.target;
-    if(tgt && tgt.closest('input, textarea, select, .yr-table-wrap, [contenteditable="true"]')) {
+    if(tgt && tgt.closest('input, textarea, select, [contenteditable="true"]')) {
       ignoreTouch = true;
       return;
     }
@@ -2522,18 +2628,18 @@ function renderAll(){
     if(ignoreTouch || !e.changedTouches.length) return;
     if(document.querySelector('.modal.show')) return;
     const dt = Date.now() - startTime;
-    if(dt > 600) return;
+    if(dt > 650) return;
 
     const dx = e.changedTouches[0].clientX - startX;
     const dy = e.changedTouches[0].clientY - startY;
-    if(Math.abs(dx) < 55 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+    if(Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy) * 1.4) return;
 
     const curPage = document.querySelector('.screen.active')?.id || 'trans';
     const pageIdx = MAIN_PAGES.indexOf(curPage);
     if(pageIdx === -1) return;
 
-    // In RTL layout, tabs are ordered Right-to-Left (index 0 on right, index 4 on left).
-    // Swiping finger Left (dx < 0) moves toward left tab (+1); Swiping Right (dx > 0) moves toward right tab (-1).
+    // Tabs are ordered Left-to-Right: [0: trans, 1: reports, 2: wallet, 3: plan, 4: settings]
+    // Swiping finger Left (dx < 0) advances to next right tab (+1); Swiping Right (dx > 0) goes back to left tab (-1).
     const step = (dx < 0) ? 1 : -1;
 
     const subCfg = SUB_TABS[curPage];
@@ -2560,6 +2666,128 @@ function renderAll(){
     }
   }, {passive: true});
 })();
+
+
+/* Full UI Bilingual Translation Engine (Arabic <-> English) with Fixed Layout Directions */
+const UI_TEXT_PAIRS = [
+  ['المعاملات', 'Transactions'],
+  ['التقارير', 'Reports'],
+  ['الحسابات', 'Accounts'],
+  ['الالتزامات', 'Commitments'],
+  ['الإعدادات', 'Settings'],
+  ['المزيد', 'Settings'],
+  ['يومي', 'Daily'],
+  ['شهري', 'Monthly'],
+  ['الدخل', 'Income'],
+  ['المصروفات', 'Expenses'],
+  ['الصافي', 'Total'],
+  ['مصاريف الشهر', 'Monthly Expenses'],
+  ['دخل الشهر', 'Monthly Income'],
+  ['التقرير السنوي', 'Yearly Report'],
+  ['الحسابات والأرصدة', 'Accounts & Balances'],
+  ['البطاقات الائتمانية', 'Credit Cards'],
+  ['إجمالي الأموال المتاحة (الكاش والبنوك والمحافظ)', 'Total Available Balance (Cash, Banks & Wallets)'],
+  ['＋ إضافة حساب جديد', '＋ Add New Account'],
+  ['اسم الحساب :', 'Account Name :'],
+  ['النوع :', 'Type :'],
+  ['الرصيد الافتتاحي :', 'Opening Balance :'],
+  ['إضافة الحساب', 'Add Account'],
+  ['حساباتي', 'My Accounts'],
+  ['اضغط لكشف الحساب أو التعديل', 'Tap for statement or edit'],
+  ['إجمالي المديونية (المستخدم)', 'Total Used Debt'],
+  ['إضافة بطاقة', 'Add Card'],
+  ['تسجيل عملية', 'Add Operation'],
+  ['سداد بطاقة', 'Pay Card'],
+  ['البطاقات المسجلة', 'Registered Cards'],
+  ['كل عمليات البطاقات', 'All Card Operations'],
+  ['الالتزامات والسلف', 'Commitments & Loans'],
+  ['حاسبة المرتب', 'Salary Calculator'],
+  ['المسدد', 'Paid'],
+  ['المتبقي', 'Remaining'],
+  ['متبقي السلف', 'Loans Left'],
+  ['＋ إضافة التزام شهري أو سلفة', '＋ Add Commitment or Loan'],
+  ['الالتزامات الشهرية', 'Monthly Commitments'],
+  ['السلف القائمة', 'Active Loans'],
+  ['⚙ إعدادات السنة (ثابتة خلال السنة)', '⚙ Yearly Salary Settings'],
+  ['📅 مدخلات الشهر', '📅 Monthly Salary Inputs'],
+  ['تفاصيل مرتب الشهر', 'Monthly Salary Breakdown'],
+  ['احسب واحفظ الشهر', 'Calculate & Save Month'],
+  ['حفظ إعدادات السنة', 'Save Yearly Settings'],
+  ['⚙ إعدادات عامة', '⚙ General Settings'],
+  ['🏷 تخصيص الأقسام', '🏷 Customize Categories'],
+  ['💾 النسخ الاحتياطي', '💾 Backup & Restore'],
+  ['⟳ التحديثات', '⟳ Updates'],
+  ['⚠ مسح البيانات', '⚠ Wipe Data'],
+  ['اللغة / Language :', 'Language :'],
+  ['حجم الخط :', 'Font Size :'],
+  ['الحساب الافتراضي :', 'Default Account :'],
+  ['إخفاء الأرقام والكسور :', 'Privacy & Decimals :'],
+  ['وضع الخلفية :', 'Background Mode :'],
+  ['لون الثيم (8 ألوان) :', 'Theme Color (8 Colors) :'],
+  ['تثبيت التطبيق :', 'Install App :'],
+  ['تثبيت الآن', 'Install Now'],
+  ['حفظ الإعدادات', 'Save Settings'],
+  ['أقسام المصروفات', 'Expense Categories'],
+  ['أقسام الدخل', 'Income Categories'],
+  ['حالة التخزين الآمن :', 'Safe Storage Status :'],
+  ['تصدير نسخة (JSON) :', 'Export Backup (JSON) :'],
+  ['تصدير', 'Export'],
+  ['استعادة نسخة :', 'Restore Backup :'],
+  ['ملف', 'File'],
+  ['لصق نص', 'Paste JSON'],
+  ['استيراد .mmbak', 'Import .mmbak'],
+  ['الإصدار الحالي :', 'Current Version :'],
+  ['التحديثات :', 'Updates :'],
+  ['فحص', 'Check'],
+  ['تحديث الآن', 'Update Now'],
+  ['تصفير المعاملات والأقسام :', 'Clear Transactions & Categories :'],
+  ['تصفير', 'Clear'],
+  ['حذف كل بيانات التطبيق :', 'Delete All App Data :'],
+  ['مسح الكل', 'Wipe All'],
+  ['تسجيل حركة جديدة', 'New Transaction'],
+  ['مصروف', 'Expense'],
+  ['دخل', 'Income'],
+  ['تحويل', 'Transfer'],
+  ['التاريخ :', 'Date :'],
+  ['الحساب :', 'Account :'],
+  ['من حساب :', 'From Account :'],
+  ['إلى حساب :', 'To Account :'],
+  ['القسم :', 'Category :'],
+  ['المبلغ (EGP) :', 'Amount (EGP) :'],
+  ['البيان / ملاحظة :', 'Note / Memo :'],
+  ['القسم الرئيسي', 'Main Category'],
+  ['القسم الفرعي', 'Subcategory'],
+  ['حفظ', 'Save'],
+  ['إلغاء', 'Cancel'],
+  ['إغلاق', 'Close'],
+  ['الشهر', 'Month'],
+  ['الفائض/العجز', 'Net'],
+  ['الإجمالي', 'Total']
+];
+
+function applyLanguageTranslations(lang){
+  const isEn = (lang === 'en');
+  updateTopTabTitle();
+
+  // Translate static text nodes matching dictionary pairs
+  const map = new Map(UI_TEXT_PAIRS.map(([ar, en]) => isEn ? [ar, en] : [en, ar]));
+  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
+  let node;
+  while((node = walker.nextNode())){
+    const raw = node.nodeValue.trim();
+    if(raw && map.has(raw)){
+      node.nodeValue = node.nodeValue.replace(raw, map.get(raw));
+    }
+  }
+
+  // Translate placeholders
+  const searchInp = document.getElementById('actSearch');
+  if(searchInp) searchInp.placeholder = isEn ? 'Search memo or category...' : 'بحث في البيان أو القسم...';
+  const qmNote = document.getElementById('qmNote');
+  if(qmNote) qmNote.placeholder = isEn ? 'Optional note...' : 'اختياري (يأخذ اسم القسم لو فارغ)';
+
+  syncCustomSelectTriggers();
+}
 
 /* Boot */
 applyPreferences();

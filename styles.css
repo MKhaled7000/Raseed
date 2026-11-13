@@ -250,3 +250,281 @@ details.fold .fold-body{padding:12px 14px}
 .yr-table td{padding:9px 6px;border-bottom:1px solid var(--line)}
 .yr-table tr.cur-row{background:#43d6b214}
 .yr-table td.num,.yr-table th.num{direction:ltr;text-align:left}
+
+
+/* V12.3 Compact Money Manager Layout & Fixed Left-to-Right Structure */
+.app {
+  max-width: 540px;
+  margin: auto;
+  padding: 8px 8px 24px;
+}
+
+/* Row 1: Top Header (Left: App Brand, Right: Current Tab Title) */
+.top {
+  direction: ltr;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 2px 2px 8px;
+  padding: 2px 4px;
+}
+.brand {
+  direction: ltr;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.logo {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  padding: 2px;
+}
+.brand b {
+  font-size: 1.05rem;
+  letter-spacing: -.3px;
+  font-weight: 700;
+}
+.top-tab-title {
+  font-size: .98rem;
+  font-weight: 700;
+  color: var(--mint);
+  text-align: right;
+}
+
+/* Compact Header Card in Transactions & Reports */
+.mm-header-card {
+  background: linear-gradient(150deg, var(--panel2), var(--panel));
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 8px 10px;
+  margin-bottom: 8px;
+}
+/* Row 2: Left = Icons, Right = Month/Year Stepper */
+.mm-nav-row {
+  direction: ltr;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+.mm-tools {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.mm-tool-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  font-size: .82rem;
+}
+.ym-stepper {
+  direction: ltr;
+  border-radius: 10px;
+}
+.ym-stepper button.step-arrow {
+  padding: 4px 10px;
+  font-size: .95rem;
+}
+.ym-stepper button.step-label {
+  padding: 4px 10px;
+  font-size: .78rem;
+  min-width: 100px;
+}
+
+/* Row 3: Daily / Monthly Sub-tabs inside Transactions Header */
+.trans-mode-tabs {
+  direction: ltr;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-bottom: 1px solid var(--line);
+  margin: 0 -10px 8px;
+  padding: 0 10px;
+}
+.trans-mode-btn {
+  background: transparent;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  color: var(--muted);
+  padding: 6px 4px;
+  font-size: .78rem;
+  text-align: center;
+  transition: color .15s, border-color .15s;
+}
+.trans-mode-btn.active {
+  color: var(--mint);
+  border-bottom-color: var(--mint);
+}
+
+/* Row 4: Compact 3 Summary Boxes (Left-to-Right: Income | Expenses | Net) */
+.mm-stats {
+  direction: ltr;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  text-align: center;
+}
+.mm-stat-box {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 5px 4px;
+}
+.mm-stat-box small {
+  font-size: .64rem;
+}
+.mm-stat-box b {
+  font-size: .82rem;
+  margin-top: 1px;
+  direction: ltr;
+}
+
+/* Compact Spacious Daily Group & Transaction Row (Money Manager Style) */
+.day-group {
+  border-radius: 13px;
+  margin-bottom: 7px;
+}
+.day-head {
+  direction: ltr;
+  padding: 6px 10px;
+  font-size: .73rem;
+}
+.day-head-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.day-totals {
+  direction: ltr;
+  display: flex;
+  gap: 12px;
+  font-size: .74rem;
+}
+
+/* Transaction Row: Left = Category/Subcat, Next to it = Memo + Account, Far Right = Amount */
+.tx-row {
+  direction: ltr;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--line);
+  cursor: pointer;
+}
+.tx-cat-col {
+  width: 96px;
+  min-width: 88px;
+  max-width: 108px;
+  text-align: left;
+  flex-shrink: 0;
+}
+.tx-cat-col b {
+  display: block;
+  font-size: .74rem;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tx-cat-col small {
+  display: block;
+  font-size: .66rem;
+  color: var(--muted);
+  margin-top: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tx-acc-col {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+  padding-left: 2px;
+}
+.tx-acc-col span {
+  display: block;
+  font-size: .75rem;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tx-acc-col small {
+  display: block;
+  font-size: .68rem;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tx-amt-col {
+  font-size: .82rem;
+  direction: ltr;
+  white-space: nowrap;
+  text-align: right;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+/* Monthly Summary View in Transactions (Like Money Manager Monthly Tab) */
+.mm-month-row {
+  direction: ltr;
+  display: grid;
+  grid-template-columns: 1.1fr 1fr 1fr;
+  align-items: center;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+  cursor: pointer;
+}
+.mm-month-row:last-child {
+  border-bottom: 0;
+}
+.mm-month-row.cur-month {
+  background: #43d6b212;
+}
+.mm-m-name b {
+  display: block;
+  font-size: .84rem;
+  color: var(--text);
+  text-align: left;
+}
+.mm-m-name small {
+  display: block;
+  font-size: .64rem;
+  color: var(--muted);
+  margin-top: 2px;
+  text-align: left;
+}
+.mm-m-inc {
+  text-align: center;
+  font-size: .8rem;
+  direction: ltr;
+}
+.mm-m-exp {
+  text-align: right;
+  direction: ltr;
+}
+.mm-m-exp b {
+  display: block;
+  font-size: .8rem;
+}
+.mm-m-exp small {
+  display: block;
+  font-size: .68rem;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+/* Sub-tabs & Bottom Nav Left-to-Right Order */
+.bottom {
+  direction: ltr;
+}
+.sub-tabs, .mm-type-tabs {
+  direction: ltr;
+}
+.yr-table {
+  min-width: 0;
+  width: 100%;
+}

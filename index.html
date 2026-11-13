@@ -9,69 +9,67 @@
 <body>
 <div class="app">
 
-<!-- Top Brand Bar -->
+<!-- Top Brand Bar (Left: App Name, Right: Current Tab Name) -->
 <header class="top">
   <div class="brand">
     <div class="logo"><img src="icon-192.png" alt="X-Wallet"></div>
-    <div><b>X-Wallet</b><small>مديرك المالي الشخصي</small></div>
+    <b>X-Wallet</b>
   </div>
-  <div class="top-right">
-    <button type="button" class="icon-pill dec-toggle-btn" onclick="toggleDecimalsMode()" title="إظهار الكسور">00</button>
-    <button type="button" class="icon-pill privacy-toggle-btn" onclick="togglePrivacyMode()" title="إخفاء الأرقام">👁</button>
-    <div class="avatar" id="userAvatarLetter">م</div>
-  </div>
+  <div class="top-tab-title" id="topActiveTabTitle" data-i18n="tab_trans">المعاملات</div>
 </header>
 
 <!-- 1. الشاشة الرئيسية: المعاملات -->
 <section id="trans" class="screen active">
-  <!-- Slim Available Liquidity Strip -->
-  <div class="liq-strip" onclick="go('wallet')">
-    <span>إجمالي المتاح في حساباتك</span>
-    <b id="homeAvailableTotal">0 EGP</b>
-  </div>
+  <div id="homeAvailableTotal" style="display:none">0 EGP</div>
 
-  <!-- Month Stepper + 3-Column MM Summary -->
+  <!-- Compact 3-Row Header Card: Row 2 (Search + Month), Row 3 (Daily / Monthly Tabs), Row 4 (3 Summary Boxes) -->
   <div class="mm-header-card">
     <div class="mm-nav-row">
-      <div class="ym-stepper">
-        <button type="button" class="step-arrow" onclick="shiftActiveMonth(-1)">‹</button>
-        <button type="button" class="step-label" onclick="openHomePeriodPicker()" id="homePeriodLabel">نوفمبر 2026</button>
-        <button type="button" class="step-arrow" onclick="shiftActiveMonth(1)">›</button>
-      </div>
       <div class="mm-tools">
         <button type="button" class="mm-tool-btn" id="btnToggleSearch" onclick="toggleSearchBar()" title="بحث وفلترة">🔍</button>
-        <button type="button" class="mm-tool-btn" onclick="openQuickAddModal('transfer')" title="تحويل بين حسابين">⇄</button>
+      </div>
+      <div class="ym-stepper">
+        <button type="button" class="step-arrow" onclick="shiftTransPeriod(-1)">‹</button>
+        <button type="button" class="step-label" onclick="openTransPeriodPicker()" id="homePeriodLabel">نوفمبر 2026</button>
+        <button type="button" class="step-arrow" onclick="shiftTransPeriod(1)">›</button>
       </div>
     </div>
 
     <!-- Collapsible Search/Filter Bar -->
-    <div id="mmSearchBox" style="display:none;margin-bottom:10px">
+    <div id="mmSearchBox" style="display:none;margin-bottom:8px">
       <div style="display:flex;gap:6px;align-items:center">
         <div style="position:relative;flex:1;display:flex;align-items:center">
-          <input id="actSearch" type="search" placeholder="بحث في البيان أو القسم..." oninput="onTransactionsSearchInput()" style="width:100%;background:var(--surface);border:1px solid var(--line2);border-radius:10px;padding:7px 10px 7px 28px;color:var(--text);font-size:.75rem">
+          <input id="actSearch" type="search" data-i18n-ph="ph_search" placeholder="بحث في البيان أو القسم..." oninput="onTransactionsSearchInput()" style="width:100%;background:var(--surface);border:1px solid var(--line2);border-radius:10px;padding:6px 10px 6px 28px;color:var(--text);font-size:.74rem">
           <button type="button" id="btnClearSearch" onclick="clearTransactionsSearch()" title="مسح الفلتر" style="display:none;position:absolute;left:6px;background:none;border:0;color:var(--muted);font-size:.8rem;padding:2px 5px">✕</button>
         </div>
-        <select id="actAccountFilter" onchange="renderTransactionsScreen()" style="background:var(--surface);border:1px solid var(--line2);border-radius:10px;padding:7px;color:var(--text);font-size:.74rem"><option value="">كل الحسابات</option></select>
+        <select id="actAccountFilter" onchange="renderTransactionsScreen()" style="background:var(--surface);border:1px solid var(--line2);border-radius:10px;padding:6px;color:var(--text);font-size:.72rem"><option value="">كل الحسابات</option></select>
       </div>
     </div>
 
+    <!-- Row 3: Daily | Monthly Sub-tabs -->
+    <div class="trans-mode-tabs">
+      <button type="button" class="trans-mode-btn active" id="transTabDaily" data-i18n="sub_daily" onclick="switchTransSubTab('daily')">يومي</button>
+      <button type="button" class="trans-mode-btn" id="transTabMonthly" data-i18n="sub_monthly" onclick="switchTransSubTab('monthly')">شهري</button>
+    </div>
+
+    <!-- Row 4: 3 Summary Boxes (Left-to-Right: Income | Expenses | Total/Net) -->
     <div class="mm-stats">
       <div class="mm-stat-box">
-        <small>الصافي</small>
-        <b id="remaining">0</b>
+        <small data-i18n="lbl_income">الدخل</small>
+        <b class="blue" id="incomeHero">0</b>
       </div>
       <div class="mm-stat-box">
-        <small>المصروفات</small>
+        <small data-i18n="lbl_expenses">المصروفات</small>
         <b class="red" id="expenseHero">0</b>
       </div>
       <div class="mm-stat-box">
-        <small>الدخل</small>
-        <b class="blue" id="incomeHero">0</b>
+        <small data-i18n="lbl_net">الصافي</small>
+        <b id="remaining">0</b>
       </div>
     </div>
   </div>
 
-  <!-- Daily Grouped Transactions Feed -->
+  <!-- Daily or Monthly Transactions Feed -->
   <div id="dailyTransactionsFeed"></div>
 </section>
 
@@ -378,13 +376,19 @@
 <section id="settings" class="screen">
   <!-- إعدادات عامة -->
   <details class="fold">
-    <summary><span>🎨 إعدادات عامة والمظهر</span><span>▼</span></summary>
+    <summary><span data-i18n="set_general">⚙ إعدادات عامة</span><span>▼</span></summary>
     <div class="fold-body">
       <div class="c-list">
-        <div class="c-row"><label>مالك الحساب :</label><input id="prefUserName" placeholder="محمد خالد"></div>
-        <div class="c-row"><label>اللغة / Language :</label><select id="prefLang"><option value="ar">العربية</option><option value="en">English</option></select></div>
-        <div class="c-row"><label>حجم الخط :</label><select id="prefFontSize"><option value="0.86">صغير جدًا</option><option value="0.93">صغير</option><option value="1">متوسط</option><option value="1.08">كبير</option><option value="1.15">كبير جدًا</option></select></div>
-        <div class="c-row"><label>الحساب الافتراضي :</label><select id="prefDefaultAcc"></select></div>
+        <div class="c-row"><label data-i18n="lbl_lang">اللغة / Language :</label><select id="prefLang"><option value="ar">العربية</option><option value="en">English</option></select></div>
+        <div class="c-row"><label data-i18n="lbl_fontsize">حجم الخط :</label><select id="prefFontSize"><option value="0.86">صغير جدًا</option><option value="0.93">صغير</option><option value="1">متوسط</option><option value="1.08">كبير</option><option value="1.15">كبير جدًا</option></select></div>
+        <div class="c-row"><label data-i18n="lbl_def_acc">الحساب الافتراضي :</label><select id="prefDefaultAcc"></select></div>
+        <div class="c-row">
+          <label data-i18n="lbl_quick_opts">إخفاء الأرقام والكسور :</label>
+          <div class="c-row-btns">
+            <button type="button" class="icon-pill dec-toggle-btn" onclick="toggleDecimalsMode()" title="إظهار الكسور العشرية">.00 الكسور</button>
+            <button type="button" class="icon-pill privacy-toggle-btn" onclick="togglePrivacyMode()" title="إخفاء الأرقام">👁 الإخفاء</button>
+          </div>
+        </div>
         <div class="c-row">
           <label>وضع الخلفية :</label>
           <select id="prefBgMode" onchange="previewBgMode(this.value)">
@@ -416,7 +420,7 @@
   <!-- إدارة الأقسام الرئيسية والفرعية (تبدأ Collapsed، سهم يتحول لـ +، قلم تعديل، وسهم فتح الفرعي) -->
   <details class="fold" id="settingsCatsFold" ontoggle="onSettingsCatsFoldToggle(this)">
     <summary>
-      <span>🏷 أقسام الدخل والمصروفات</span>
+      <span data-i18n="set_cats">🏷 تخصيص الأقسام</span>
       <span id="settingsCatsFoldIcon" style="font-size:1.05rem;font-weight:400;color:var(--mint)">▼</span>
     </summary>
     <div class="fold-body">
@@ -430,7 +434,7 @@
 
   <!-- النسخ الاحتياطي والاستيراد -->
   <details class="fold">
-    <summary><span>💾 النسخ الاحتياطي واستيراد Money Manager</span><span>▼</span></summary>
+    <summary><span data-i18n="set_backup">💾 النسخ الاحتياطي</span><span>▼</span></summary>
     <div class="fold-body">
       <div class="c-list">
         <div class="c-row"><span class="c-lbl">حالة التخزين الآمن :</span><span class="tag" id="storageSafetyBadge" style="color:var(--mint);border-color:var(--mint)">IndexedDB + محلي نشط ✓</span></div>
@@ -459,10 +463,10 @@
 
   <!-- التحديثات -->
   <details class="fold">
-    <summary><span>⟳ التحديثات</span><span>▼</span></summary>
+    <summary><span data-i18n="set_updates">⟳ التحديثات</span><span>▼</span></summary>
     <div class="fold-body">
       <div class="c-list">
-        <div class="c-row"><span class="c-lbl">الإصدار الحالي :</span><span class="tag" id="appVersionTag">V12.2</span></div>
+        <div class="c-row"><span class="c-lbl">الإصدار الحالي :</span><span class="tag" id="appVersionTag">V12.3</span></div>
         <div class="c-row">
           <span class="c-lbl">التحديثات :</span>
           <div class="c-row-btns">
@@ -479,7 +483,7 @@
 
   <!-- مسح البيانات -->
   <details class="fold" style="border-color:#75404b66">
-    <summary><span style="color:#ffb3c0">⚠ مسح البيانات</span><span>▼</span></summary>
+    <summary><span style="color:#ffb3c0" data-i18n="set_wipe">⚠ مسح البيانات</span><span>▼</span></summary>
     <div class="fold-body">
       <div class="c-list">
         <div class="c-row"><span class="c-lbl" style="color:#ffbd69">تصفير المعاملات والأقسام :</span><button type="button" class="smallbtn" style="border-color:#ffbd69;color:#ffbd69" onclick="clearTransactionsAndCats()">تصفير</button></div>
@@ -514,7 +518,7 @@
   </button>
   <button class="nav" data-page="settings" onclick="go('settings',this)">
     <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" fill="#91a2b9" fill-opacity=".3" stroke="#91a2b9" stroke-width="1.8"/><path d="M12 3v2.2M12 18.8V21M3 12h2.2M18.8 12H21M5.6 5.6l1.6 1.6M16.8 16.8l1.6 1.6M18.4 5.6l-1.6 1.6M7.2 16.8l-1.6 1.6" stroke="#91a2b9" stroke-width="1.8" stroke-linecap="round"/></svg>
-    <span>المزيد</span>
+    <span data-i18n="tab_settings">الإعدادات</span>
   </button>
 </nav>
 
