@@ -1,4 +1,4 @@
-const APP_VERSION='13.0';
+const APP_VERSION='13.1';
 const APP_BUILD='2026-11-13';
 const KEY='raseed_mobile_v2';
 
@@ -21,10 +21,11 @@ state.accounts=state.accounts||[];
 state.ledger=state.ledger||[];
 state.importBatches=state.importBatches||[];
 state.reportDefaults=state.reportDefaults||{};
+state.annualPlanItems=Array.isArray(state.annualPlanItems)?state.annualPlanItems:[];
 state.categories=Array.isArray(state.categories)?state.categories:[];
 state.incomeCategories=Array.isArray(state.incomeCategories)?state.incomeCategories:[];
 state.categoryTree=state.categoryTree||{expense:{}, income:{}};
-state.prefs=state.prefs||{lang:'ar',fontSize:'1',theme:'mint',bgMode:'dark',userName:'',defaultAccount:'',privacy:false,homeDecimals:false};
+state.prefs=state.prefs||{lang:'ar',fontSize:'1',theme:'mint',bgMode:'dark',userName:'',defaultAccount:'',privacy:false,homeDecimals:false,secPin:'',bioEnabled:false,bioCredentialId:'',bioOnPrivacy:true,autoDriveFreq:'off',lastDriveBackup:''};
 
 function syncCategoryTrees(){
   state.categoryTree = state.categoryTree || {expense:{}, income:{}};
@@ -60,6 +61,9 @@ syncCategoryTrees();
 let activeYear = new Date().getFullYear();
 let activeMonth = new Date().getMonth() + 1;
 let forecastYear = activeYear;
+let activeInlineAccountId = null;
+let activeInlineCardId = null;
+let activeCatDrillState = null; // { catName, txType }
 
 const fmt=n=>(Math.round((Number(n)||0)*100)/100).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
 const fmtInt=n=>Math.round(Number(n)||0).toLocaleString('en-US');
@@ -80,7 +84,7 @@ function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&l
 function toast(s){let x=document.getElementById('toast');if(!x)return;x.textContent=s;x.style.display='block';setTimeout(()=>x.style.display='none',2300)}
 
 function formatYMArabic(ym){
-  if(!ym || !ym.includes('-')) return 'مفتوح';
+  if(!ym || !ym.includes('-')) return '—';
   const [y,m]=ym.split('-');
   const isEn = state.prefs?.lang === 'en';
   return `${(isEn ? monthNamesEn : monthNamesAr)[Number(m)-1]||m} ${y}`;
@@ -142,9 +146,17 @@ function recoverFromIndexedDBIfNeeded(){
 
 function updateBackupStatusUI(){
   const lbl = document.getElementById('lastBackupLabel');
-  if(!lbl) return;
-  const last = state.prefs?.lastBackupDate;
-  lbl.textContent = last ? ('آخر نسخة: ' + last) : 'لم يتم التصدير بعد';
+  if(lbl){
+    const last = state.prefs?.lastBackupDate;
+    lbl.textContent = last ? ('آخر نسخة: ' + last) : 'لم يتم التصدير بعد';
+  }
+  const drvLbl = document.getElementById('driveSyncStatusLbl');
+  if(drvLbl){
+    const freq = state.prefs?.autoDriveFreq || 'off';
+    const lastD = state.prefs?.lastDriveBackup || '';
+    const mapFreq = {off:'معطل', daily:'يومي', weekly:'أسبوعي', monthly:'شهري'};
+    drvLbl.textContent = freq === 'off' ? 'التلقائي: معطل' : `التلقائي: ${mapFreq[freq]||freq}${lastD?' ('+lastD+')':''}`;
+  }
 }
 
 function persist(){
@@ -178,7 +190,7 @@ function showAppConfirm(title, msg, onConfirm, isDanger){
   okBtn.style.color = isDanger ? '#fff' : '#06221e';
   document.getElementById('appDialogModal').classList.add('show');
 }
-function showAppPrompt(title, placeholder, initialValue, onSubmit, multiline){
+function showAppPrompt(title, placeholder, initialValue, onSubmit, multiline, inputType){
   _appDialogState = { mode: multiline ? 'textarea' : 'prompt', onSubmit };
   document.getElementById('appDialogTitle').textContent = title || 'إدخال';
   document.getElementById('appDialogMsg').style.display = 'none';
@@ -197,12 +209,13 @@ function showAppPrompt(title, placeholder, initialValue, onSubmit, multiline){
   } else {
     txt.style.display = 'none';
     inp.style.display = 'block';
+    inp.type = inputType || 'text';
     inp.placeholder = placeholder || '';
     inp.value = initialValue || '';
     setTimeout(()=>inp.focus(), 60);
   }
   const okBtn = document.getElementById('appDialogOkBtn');
-  okBtn.textContent = 'حفظ';
+  okBtn.textContent = 'تأكيد';
   okBtn.style.background = 'var(--mint)';
   okBtn.style.color = '#06221e';
   document.getElementById('appDialogModal').classList.add('show');
@@ -217,7 +230,7 @@ function showAppCustomForm(title, bodyHtml, onSubmit, hideDefaultActions){
   cb.style.display = 'block';
   document.getElementById('appDialogActionsBar').style.display = hideDefaultActions ? 'none' : 'flex';
   const okBtn = document.getElementById('appDialogOkBtn');
-  okBtn.textContent = 'حفظ التعديل';
+  okBtn.textContent = 'حفظ';
   okBtn.style.background = 'var(--mint)';
   okBtn.style.color = '#06221e';
   document.getElementById('appDialogModal').classList.add('show');
@@ -244,7 +257,7 @@ function submitAppDialog(){
   }
 }
 
-/* Exit Confirmation & Back-Button Handling */
+/* 2.2 Back-Button Handling: Deactivate Search Bar first before exiting app! */
 let _allowExit = false;
 function armBackGuard(){
   try{
@@ -271,6 +284,10 @@ document.addEventListener('pointerdown', function _onceArm(){
 }, {passive:true});
 window.addEventListener('popstate', function(){
   if(_allowExit) return;
+  const cs = document.getElementById('customSelectModal');
+  if(cs && cs.classList.contains('show')){ closeCustomSelectModal(); try{history.pushState({xwGuard:2},'');}catch(_){} return; }
+  const ad = document.getElementById('appDialogModal');
+  if(ad && ad.classList.contains('show')){ closeAppDialog(); try{history.pushState({xwGuard:2},'');}catch(_){} return; }
   const cd = document.getElementById('catDetailModal');
   if(cd && cd.classList.contains('show')){ closeCatDetailModal(); try{history.pushState({xwGuard:2},'');}catch(_){} return; }
   const qm = document.getElementById('quickModal');
@@ -279,10 +296,31 @@ window.addEventListener('popstate', function(){
   if(am && am.classList.contains('show')){ closeAccountModal(); try{history.pushState({xwGuard:2},'');}catch(_){} return; }
   const ym = document.getElementById('ymModal');
   if(ym && ym.classList.contains('show')){ ym.classList.remove('show'); try{history.pushState({xwGuard:2},'');}catch(_){} return; }
-  const cs = document.getElementById('customSelectModal');
-  if(cs && cs.classList.contains('show')){ closeCustomSelectModal(); try{history.pushState({xwGuard:2},'');}catch(_){} return; }
-  const ad = document.getElementById('appDialogModal');
-  if(ad && ad.classList.contains('show')){ closeAppDialog(); try{history.pushState({xwGuard:2},'');}catch(_){} return; }
+
+  // 2.2 If Search Bar is active/visible, Back button deactivates search instead of exiting!
+  const searchBox = document.getElementById('mmSearchBox');
+  const searchInp = document.getElementById('actSearch');
+  if((searchBox && searchBox.style.display !== 'none') || (searchInp && searchInp.value)){
+    if(searchBox) searchBox.style.display = 'none';
+    document.getElementById('btnToggleSearch')?.classList.remove('active');
+    clearTransactionsSearch();
+    toast('تم إلغاء البحث');
+    try{history.pushState({xwGuard:2},'');}catch(_){}
+    return;
+  }
+
+  // If inline account or card statement is open, close it first
+  if(activeInlineAccountId){
+    closeInlineAccountStatement();
+    try{history.pushState({xwGuard:2},'');}catch(_){}
+    return;
+  }
+  if(activeInlineCardId){
+    closeInlineCardStatement();
+    try{history.pushState({xwGuard:2},'');}catch(_){}
+    return;
+  }
+
   const activePage = document.querySelector('.screen.active')?.id;
   if(activePage && activePage !== 'trans'){
     go('trans', document.querySelector('.nav[data-page="trans"]'));
@@ -307,6 +345,49 @@ document.addEventListener('toggle', function(e){
     });
   }
 }, true);
+
+/* 2.1 Context-Aware Floating + Button (.fab) Across All Pages & Sub-Tabs */
+function handleFabClick(){
+  const activePage = document.querySelector('.screen.active')?.id || 'trans';
+  if(activePage === 'trans' || activePage === 'reports'){
+    openQuickAddModal(activePage === 'reports' && activeReportTab === 'inc' ? 'income' : 'expense');
+    return;
+  }
+  if(activePage === 'wallet'){
+    const isCardTab = document.getElementById('tabBtnCard')?.classList.contains('active');
+    const foldId = isCardTab ? 'addCardFold' : 'addAccountFold';
+    const inputId = isCardTab ? 'cardName' : 'accName';
+    const fold = document.getElementById(foldId);
+    if(fold){
+      fold.open = !fold.open;
+      if(fold.open){
+        fold.scrollIntoView({behavior:'smooth', block:'start'});
+        setTimeout(()=>document.getElementById(inputId)?.focus(), 120);
+      }
+    }
+    return;
+  }
+  if(activePage === 'plan'){
+    const isYrTab = document.getElementById('tabBtnYr')?.classList.contains('active');
+    const foldId = isYrTab ? 'addManualAnnualFold' : 'addCommitmentFold';
+    const fold = document.getElementById(foldId);
+    if(fold){
+      fold.open = !fold.open;
+      if(fold.open){
+        fold.scrollIntoView({behavior:'smooth', block:'start'});
+      }
+    }
+    return;
+  }
+  if(activePage === 'settings'){
+    const catsFold = document.getElementById('settingsCatsFold');
+    if(catsFold && catsFold.open){
+      addMainCategoryInSettings();
+      return;
+    }
+    openQuickAddModal('expense');
+  }
+}
 
 /* 8 Theme Colors + 4 Background Modes */
 const THEMES = {
@@ -357,6 +438,15 @@ function applyPreferences(){
   document.documentElement.lang = lang;
   document.documentElement.dir = 'ltr';
   setv('prefFontSize', p.fontSize || '1');
+  setv('prefAutoDriveFreq', p.autoDriveFreq || 'off');
+  setv('secPinInput', p.secPin || '');
+  setv('secBioOnPrivacy', p.bioOnPrivacy === false ? '0' : '1');
+
+  const bioBadge = document.getElementById('bioStatusBadge');
+  if(bioBadge){
+    bioBadge.textContent = p.bioEnabled ? 'مفعلة ✓' : 'غير مفعلة';
+    bioBadge.style.color = p.bioEnabled ? 'var(--mint)' : 'var(--muted)';
+  }
 
   document.querySelectorAll('.dec-toggle-btn').forEach(b=>{
     b.classList.toggle('active', !!p.homeDecimals);
@@ -395,16 +485,120 @@ function toggleDecimalsMode(){
   applyPreferences();
   persist();
 }
-function togglePrivacyMode(){
-  state.prefs.privacy = !state.prefs?.privacy;
+
+/* 8.2 Security: Biometric Fingerprint (WebAuthn) + PIN & Biometric Unhiding for Privacy Mode */
+function saveSecuritySettings(){
+  state.prefs = state.prefs || {};
+  state.prefs.secPin = val('secPinInput').trim();
+  state.prefs.bioOnPrivacy = val('secBioOnPrivacy') !== '0';
   applyPreferences();
   persist();
+  toast('تم حفظ إعدادات الخصوصية والأمان ✓');
 }
 
-/* Navigation & Page Title Card (10.1) */
+async function registerBiometricLock(){
+  try{
+    if(!window.PublicKeyCredential || !navigator.credentials){
+      toast('المتصفح الحالي لا يدعم البصمة المباشرة؛ يمكنك استخدام رمز المرور PIN');
+      return;
+    }
+    const challenge = new Uint8Array(32);
+    crypto.getRandomValues(challenge);
+    const userId = new Uint8Array(16);
+    crypto.getRandomValues(userId);
+    const cred = await navigator.credentials.create({
+      publicKey: {
+        challenge,
+        rp: { name: 'X-Wallet' },
+        user: { id: userId, name: 'xwallet-user', displayName: 'X-Wallet User' },
+        pubKeyCredParams: [{ type: 'public-key', alg: -7 }, { type: 'public-key', alg: -257 }],
+        authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required' },
+        timeout: 60000
+      }
+    });
+    if(cred && cred.rawId){
+      const b64 = btoa(String.fromCharCode(...new Uint8Array(cred.rawId)));
+      state.prefs.bioEnabled = true;
+      state.prefs.bioCredentialId = b64;
+      applyPreferences();
+      persist();
+      toast('تم تفعيل البصمة بنجاح 🫆✓');
+    }
+  }catch(err){
+    toast('تعذر تسجيل البصمة أو تم الإلغاء');
+  }
+}
+
+async function verifyBiometricOrPin(onSuccess){
+  const p = state.prefs || {};
+  const needLock = p.bioOnPrivacy !== false && (p.bioEnabled || p.secPin);
+  if(!needLock){
+    onSuccess();
+    return;
+  }
+  if(p.bioEnabled && window.PublicKeyCredential && navigator.credentials){
+    try{
+      const challenge = new Uint8Array(32);
+      crypto.getRandomValues(challenge);
+      const opts = {
+        publicKey: {
+          challenge,
+          userVerification: 'required',
+          timeout: 60000
+        }
+      };
+      if(p.bioCredentialId){
+        const bin = atob(p.bioCredentialId);
+        const raw = new Uint8Array(bin.length);
+        for(let i=0;i<bin.length;i++) raw[i] = bin.charCodeAt(i);
+        opts.publicKey.allowCredentials = [{ type: 'public-key', id: raw }];
+      }
+      const assertion = await navigator.credentials.get(opts);
+      if(assertion){
+        onSuccess();
+        return;
+      }
+    }catch(_){
+      if(!p.secPin){
+        toast('لم يتم التحقق من البصمة');
+        return;
+      }
+    }
+  }
+  if(p.secPin){
+    showAppPrompt('أدخل رمز المرور لإظهار الأرقام', 'رمز المرور (PIN)...', '', (entered)=>{
+      if(String(entered).trim() === String(p.secPin).trim()){
+        onSuccess();
+      } else {
+        toast('رمز المرور غير صحيح');
+      }
+    }, false, 'password');
+    return;
+  }
+  onSuccess();
+}
+
+function togglePrivacyMode(){
+  // If currently hidden (privacy = true), require Biometric/PIN to unhide!
+  if(state.prefs?.privacy){
+    verifyBiometricOrPin(()=>{
+      state.prefs.privacy = false;
+      applyPreferences();
+      persist();
+      toast('تم إظهار الأرقام ✓');
+    });
+  } else {
+    state.prefs.privacy = true;
+    applyPreferences();
+    persist();
+    toast('تم إخفاء الأرقام 🙈');
+  }
+}
+
+/* Navigation & Page Title Card */
 const TAB_TITLES = {
-  ar: { trans:'المعاملات', reports:'تحليل المعاملات', wallet:'الحسابات والبطاقات', plan:'الالتزامات', settings:'المزيد' },
-  en: { trans:'Transactions', reports:'Transactions Analysis', wallet:'Accounts & Cards', plan:'Commitments', settings:'More' }
+  ar: { trans:'المعاملات', reports:'تحليل المعاملات', wallet:'الحسابات', plan:'الالتزامات', settings:'المزيد' },
+  en: { trans:'Transactions', reports:'Analytics', wallet:'Accounts', plan:'Commitments', settings:'More' }
 };
 
 function updateTopTabTitle(pageId){
@@ -412,6 +606,16 @@ function updateTopTabTitle(pageId){
   if(!el) return;
   const curId = pageId || document.querySelector('.screen.active')?.id || 'trans';
   const lang = state.prefs?.lang || 'ar';
+  if(curId === 'wallet'){
+    const isCard = document.getElementById('tabBtnCard')?.classList.contains('active');
+    el.textContent = isCard ? (lang==='en'?'Cards':'البطاقات') : (lang==='en'?'Accounts':'الحسابات');
+    return;
+  }
+  if(curId === 'plan'){
+    const isYr = document.getElementById('tabBtnYr')?.classList.contains('active');
+    el.textContent = isYr ? (lang==='en'?'Yearly Report':'التقرير السنوي') : (lang==='en'?'Commitments':'الالتزامات');
+    return;
+  }
   el.textContent = (TAB_TITLES[lang] || TAB_TITLES.ar)[curId] || '';
 }
 
@@ -432,12 +636,14 @@ function switchWalletTab(which){
   document.getElementById('walletViewCard').style.display = which==='card' ? 'block' : 'none';
   document.getElementById('tabBtnAcc').classList.toggle('active', which==='acc');
   document.getElementById('tabBtnCard').classList.toggle('active', which==='card');
+  updateTopTabTitle('wallet');
 }
 function switchPlanTab(which){
   document.getElementById('planViewCom').style.display = which==='com' ? 'block' : 'none';
   document.getElementById('planViewYr').style.display = which==='yr' ? 'block' : 'none';
   document.getElementById('tabBtnCom').classList.toggle('active', which==='com');
   document.getElementById('tabBtnYr').classList.toggle('active', which==='yr');
+  updateTopTabTitle('plan');
   if(which === 'yr') renderYearlyExcelReport();
 }
 function switchSalarySubView(which){
@@ -565,9 +771,6 @@ function commitmentDue(c,month){
   return month >= st && (!en || month <= en);
 }
 
-/* 7.5 Bank Installment Start Rule:
-   - Suez Canal Bank (بنك قناة السويس): Month after purchase is for admin fee; first installment starts 2 months after purchase.
-   - Regular Banks: First installment starts 1 month after purchase (along with admin fee). */
 function isSuezCanalBankCard(card){
   const nm = String(card?.name||'').toLowerCase();
   return nm.includes('قناة السويس') || nm.includes('قناه السويس') || nm.includes('suez');
@@ -586,7 +789,8 @@ function buildInstallmentSchedulesForCard(card, purchaseYM, months, baseInstallm
 }
 
 /* =========================================================
-   SECTION 1 & 2 & 3: TRANSACTIONS SCREEN (DAILY & MONTHLY)
+   REUSABLE DAILY GROUPED TRANSACTIONS BUILDER
+   (Used in Daily Transactions, Category Analysis 3.3.5, Account Statement 4.4, and Card Statement 5.4)
    ========================================================= */
 let activeTransSubTab = 'daily';
 
@@ -619,7 +823,6 @@ function selectMonthFromMonthlyTab(yr, mn){
   renderAll();
 }
 
-/* Helper to extract timestamp/order so newest transaction is always on top (2.5.8) */
 function getItemTimestampOrder(it, idx){
   if(it.createdAt) return Number(it.createdAt)||0;
   const m = String(it.id||'').match(/(\d{10,15})/);
@@ -648,143 +851,17 @@ function resolveAccountDisplayLabel(it, isEn){
   return isEn ? 'Cash' : 'كاش';
 }
 
-function renderTransactionsScreen(){
-  const lang = state.prefs?.lang || 'ar';
-  const isEn = lang === 'en';
-  const m = selected();
-
-  document.getElementById('transTabDaily')?.classList.toggle('active', activeTransSubTab === 'daily');
-  document.getElementById('transTabMonthly')?.classList.toggle('active', activeTransSubTab === 'monthly');
-
-  const af = document.getElementById('actAccountFilter');
-  if(af){
-    const cur = af.value;
-    af.innerHTML = `<option value="">${isEn ? 'All Accounts' : 'كل الحسابات'}</option>` + state.accounts.map(a=>`<option value="${a.id}">${esc(a.name)}</option>`).join('');
-    if([...af.options].some(o=>o.value===cur)) af.value = cur;
+function buildDailyGroupedFeedHtml(itemsList, emptyMsg){
+  const isEn = (state.prefs?.lang === 'en');
+  if(!itemsList || !itemsList.length){
+    return `<div class="panel"><div class="empty">${emptyMsg || (isEn ? 'No transactions found.' : 'لا توجد معاملات مسجلة.')}</div></div>`;
   }
-
-  const searchInputEl = document.getElementById('actSearch');
-  if(searchInputEl && !searchInputEl.value && state.prefs?.savedSearch){
-    searchInputEl.value = state.prefs.savedSearch;
-    const box = document.getElementById('mmSearchBox');
-    const btn = document.getElementById('btnToggleSearch');
-    if(box) box.style.display = 'block';
-    if(btn) btn.classList.add('active');
-  }
-  const rawQ = (searchInputEl?.value||'').trim();
-  const q = rawQ.toLowerCase();
-  const clrBtn = document.getElementById('btnClearSearch');
-  if(clrBtn) clrBtn.style.display = rawQ ? 'block' : 'none';
-  const accFilter = af?.value || '';
-
-  const feed = document.getElementById('dailyTransactionsFeed');
-
-  // === SECTION 3: MONTHLY SUMMARY TAB (4 Columns: الشهر | الدخل | المصروفات | الصافي, with Header Row & No Day Range) ===
-  if(activeTransSubTab === 'monthly'){
-    document.getElementById('homePeriodLabel').textContent = String(activeYear);
-    let yrInc = 0, yrExp = 0;
-    const monthRows = [];
-    for(let mn = 12; mn >= 1; mn--){
-      const ym = String(activeYear) + '-' + String(mn).padStart(2, '0');
-      const mt = totals(ym);
-      yrInc = round2(yrInc + mt.inc);
-      yrExp = round2(yrExp + mt.exp);
-      const mLabel = isEn ? monthNamesEn[mn-1] : monthNamesAr[mn-1];
-      monthRows.push({ mn, ym, mLabel, inc: mt.inc, exp: mt.exp, net: mt.net });
-    }
-    const yrNet = round2(yrInc - yrExp);
-    document.getElementById('incomeHero').textContent = maskable(fmtNum(yrInc));
-    document.getElementById('expenseHero').textContent = maskable(fmtNum(yrExp));
-    const remEl = document.getElementById('remaining');
-    remEl.textContent = maskable(fmtNum(yrNet));
-    remEl.className = yrNet >= 0 ? 'mint' : 'red';
-
-    const headHtml = `
-      <div class="mm-monthly-head">
-        <div>${isEn ? 'Month' : 'الشهر'}</div>
-        <div class="num">${isEn ? 'Income' : 'الدخل'}</div>
-        <div class="num">${isEn ? 'Expenses' : 'المصروفات'}</div>
-        <div class="num">${isEn ? 'Net' : 'الصافي'}</div>
-      </div>
-    `;
-
-    feed.innerHTML = `<div class="day-group">` + headHtml + monthRows.map(r => `
-      <div class="mm-month-row ${r.mn === activeMonth ? 'cur-month' : ''}" onclick="selectMonthFromMonthlyTab(${activeYear}, ${r.mn})">
-        <div><b>${esc(r.mLabel)}</b></div>
-        <div class="num blue">${maskable(fmtNum(r.inc))}</div>
-        <div class="num red">${maskable(fmtNum(r.exp))}</div>
-        <div class="num ${r.net >= 0 ? 'mint' : 'red'}">${maskable(fmtNum(r.net))}</div>
-      </div>
-    `).join('') + `</div>`;
-    return;
-  }
-
-  // === SECTION 2: DAILY TRANSACTIONS TAB ===
-  const t = totals(m);
-  document.getElementById('homePeriodLabel').textContent = isEn ? `${monthNamesEn[activeMonth-1]} ${activeYear}` : formatYMArabic(m);
-  document.getElementById('incomeHero').textContent = maskable(fmtNum(t.inc));
-  document.getElementById('expenseHero').textContent = maskable(fmtNum(t.exp));
-  const remEl = document.getElementById('remaining');
-  remEl.textContent = maskable(fmtNum(t.net));
-  remEl.className = t.net >= 0 ? 'mint' : 'red';
-
-  const txList = monthTx(m).map((x, idx)=>({...x, _kind:'tx', _order: getItemTimestampOrder(x, idx)}));
-  const ledList = (state.ledger||[]).filter(l=>monthKey(l.date)===m).map((l, idx)=>{
-    const fromA = state.accounts.find(a=>a.id===l.from)?.name || (isEn?'Cash':'كاش');
-    const toA = state.accounts.find(a=>a.id===l.to)?.name || (isEn?'Cash':'كاش');
-    const feeTxt = (Number(l.fee)||0) > 0 ? ` (${isEn?'Fee':'رسوم'}: ${fmt(l.fee)})` : '';
-    return {
-      id: l.id,
-      type: l.type,
-      category: l.type==='transfer' ? (isEn?'Transfer':'تحويل') : (isEn?'Adjustment':'تسوية'),
-      subCategory: '',
-      title: (l.note && l.note !== 'تحويل بين الحسابات') ? (l.note + feeTxt) : feeTxt.trim(),
-      note: l.note || '',
-      accountLabel: l.type==='transfer' ? `${fromA} → ${toA}` : fromA,
-      accountId: l.from,
-      toAccountId: l.to,
-      amount: l.type==='transfer' ? Number(l.amount)||0 : Number(l.delta??l.amount)||0,
-      fee: Number(l.fee)||0,
-      date: l.date,
-      _kind: 'ledger',
-      _order: getItemTimestampOrder(l, 100000 + idx)
-    };
-  });
-
-  // 2.1.1 Search includes notes, title, category, subCategory, account name, and amount
-  let combined = [...txList, ...ledList].filter(it=>{
-    if(accFilter && it.accountId !== accFilter && it.toAccountId !== accFilter) return false;
-    if(q){
-      const accDisp = resolveAccountDisplayLabel(it, isEn).toLowerCase();
-      const hay = [
-        it.title,
-        it.note,
-        it.category,
-        it.subCategory,
-        accDisp,
-        String(it.amount||'')
-      ].map(s=>String(s||'').toLowerCase()).join(' ');
-      if(!hay.includes(q)) return false;
-    }
-    return true;
-  }).sort((a,b)=>{
-    const dc = String(b.date||'').localeCompare(String(a.date||''));
-    if(dc !== 0) return dc;
-    return (b._order || 0) - (a._order || 0);
-  });
-
-  if(!combined.length){
-    feed.innerHTML = `<div class="panel"><div class="empty">${isEn ? 'No transactions in this period.<br>Tap <b>＋</b> to add one.' : `لا توجد معاملات مسجلة في ${formatYMArabic(m)}.<br>اضغط على زر <b>＋</b> لإضافة معاملة جديدة.`}</div></div>`;
-    return;
-  }
-
   const byDay = {};
-  for(const it of combined){
+  for(const it of itemsList){
     const dStr = String(it.date||'').slice(0,10);
     if(!byDay[dStr]) byDay[dStr] = [];
     byDay[dStr].push(it);
   }
-
   let html = '';
   for(const [dStr, items] of Object.entries(byDay)){
     const dtObj = new Date(dStr + 'T12:00:00');
@@ -792,13 +869,12 @@ function renderTransactionsScreen(){
     const monNum = dStr.slice(5,7);
     const yrNum = dStr.slice(0,4);
     const dayName = !isNaN(dtObj) ? (isEn ? dayNamesEn[dtObj.getDay()] : dayNamesAr[dtObj.getDay()]) : '';
-    // 2.2.4 Date format: 23-10-2026 | السبت (Left-to-Right: DD-MM-YYYY | DayName)
     const formattedDayHeader = `${dayNum}-${monNum}-${yrNum} &nbsp;|&nbsp; ${dayName}`;
 
     let dayInc = 0, dayExp = 0;
     for(const it of items){
       if(it.type === 'income') dayInc += Number(it.amount)||0;
-      else if(isActualExpenseTx(it)) dayExp += Number(it.amount)||0;
+      else if(isActualExpenseTx(it) || isCardPurchaseTx(it)) dayExp += Number(it.amount)||0;
     }
 
     const rowsHtml = items.map(it=>{
@@ -806,7 +882,7 @@ function renderTransactionsScreen(){
       let amtClass = it.type==='income' ? 'blue' : (it.type==='transfer' ? 'mint' : (isCardPurchaseTx(it) ? 'orange' : 'red'));
       let amtPrefix = it.type==='income' ? '+' : (it.type==='transfer' ? '⇄ ' : '−');
 
-      // 2.2.3 Prevent duplicate text in the middle column
+      // 1.4 Note (title) shows in daily list; Description (it.description) stays hidden from the daily row!
       let rawTitle = String(it.title || it.note || '').trim();
       rawTitle = rawTitle.replace(/^شراء بالبطاقة\s*-\s*/,'');
       const catClean = String(it.category||'').trim();
@@ -817,8 +893,7 @@ function renderTransactionsScreen(){
                          rawTitle.toLowerCase() === accName.toLowerCase();
       const memoLine = isDupTitle ? '' : rawTitle;
 
-      // 2.3.5 & 2.3.6 All transactions show 3 equal-width buttons: نسخ (Left) | تعديل (Middle) | حذف (Right)
-      const itemKind = it._kind;
+      const itemKind = it._kind || 'tx';
       const actions = `
         <div class="tap-actions">
           <button type="button" class="smallbtn" style="border-color:var(--mint);color:var(--mint)" onclick="duplicateItemToday('${esc(it.id)}','${itemKind}')">${isEn?'Copy':'نسخ'}</button>
@@ -859,10 +934,141 @@ function renderTransactionsScreen(){
       </div>
     `;
   }
-  feed.innerHTML = html;
+  return html;
 }
 
-/* 2.3.5, 2.3.6 & 6.6.1 Copy / Edit / Delete for ALL Transactions (including Card Purchases & Transfers) */
+function renderTransactionsScreen(){
+  const lang = state.prefs?.lang || 'ar';
+  const isEn = lang === 'en';
+  const m = selected();
+
+  document.getElementById('transTabDaily')?.classList.toggle('active', activeTransSubTab === 'daily');
+  document.getElementById('transTabMonthly')?.classList.toggle('active', activeTransSubTab === 'monthly');
+
+  const af = document.getElementById('actAccountFilter');
+  if(af){
+    const cur = af.value;
+    af.innerHTML = `<option value="">${isEn ? 'All Accounts' : 'كل الحسابات'}</option>` + state.accounts.map(a=>`<option value="${a.id}">${esc(a.name)}</option>`).join('');
+    if([...af.options].some(o=>o.value===cur)) af.value = cur;
+  }
+
+  const searchInputEl = document.getElementById('actSearch');
+  if(searchInputEl && !searchInputEl.value && state.prefs?.savedSearch){
+    searchInputEl.value = state.prefs.savedSearch;
+    const box = document.getElementById('mmSearchBox');
+    const btn = document.getElementById('btnToggleSearch');
+    if(box) box.style.display = 'block';
+    if(btn) btn.classList.add('active');
+  }
+  const rawQ = (searchInputEl?.value||'').trim();
+  const q = rawQ.toLowerCase();
+  const clrBtn = document.getElementById('btnClearSearch');
+  if(clrBtn) clrBtn.style.display = rawQ ? 'block' : 'none';
+  const accFilter = af?.value || '';
+
+  const feed = document.getElementById('dailyTransactionsFeed');
+
+  // === MONTHLY SUMMARY TAB ===
+  if(activeTransSubTab === 'monthly'){
+    document.getElementById('homePeriodLabel').textContent = String(activeYear);
+    let yrInc = 0, yrExp = 0;
+    const monthRows = [];
+    for(let mn = 12; mn >= 1; mn--){
+      const ym = String(activeYear) + '-' + String(mn).padStart(2, '0');
+      const mt = totals(ym);
+      yrInc = round2(yrInc + mt.inc);
+      yrExp = round2(yrExp + mt.exp);
+      const mLabel = isEn ? monthNamesEn[mn-1] : monthNamesAr[mn-1];
+      monthRows.push({ mn, ym, mLabel, inc: mt.inc, exp: mt.exp, net: mt.net });
+    }
+    const yrNet = round2(yrInc - yrExp);
+    document.getElementById('incomeHero').textContent = maskable(fmtNum(yrInc));
+    document.getElementById('expenseHero').textContent = maskable(fmtNum(yrExp));
+    const remEl = document.getElementById('remaining');
+    remEl.textContent = maskable(fmtNum(yrNet));
+    remEl.className = yrNet >= 0 ? 'mint' : 'red';
+
+    const headHtml = `
+      <div class="mm-monthly-head">
+        <div>${isEn ? 'Month' : 'الشهر'}</div>
+        <div class="num">${isEn ? 'Income' : 'الدخل'}</div>
+        <div class="num">${isEn ? 'Expenses' : 'المصروفات'}</div>
+        <div class="num">${isEn ? 'Net' : 'الصافي'}</div>
+      </div>
+    `;
+
+    feed.innerHTML = `<div class="day-group">` + headHtml + monthRows.map(r => `
+      <div class="mm-month-row ${r.mn === activeMonth ? 'cur-month' : ''}" onclick="selectMonthFromMonthlyTab(${activeYear}, ${r.mn})">
+        <div><b>${esc(r.mLabel)}</b></div>
+        <div class="num blue">${maskable(fmtNum(r.inc))}</div>
+        <div class="num red">${maskable(fmtNum(r.exp))}</div>
+        <div class="num ${r.net >= 0 ? 'mint' : 'red'}">${maskable(fmtNum(r.net))}</div>
+      </div>
+    `).join('') + `</div>`;
+    return;
+  }
+
+  // === DAILY TRANSACTIONS TAB ===
+  const t = totals(m);
+  document.getElementById('homePeriodLabel').textContent = isEn ? `${monthNamesEn[activeMonth-1]} ${activeYear}` : formatYMArabic(m);
+  document.getElementById('incomeHero').textContent = maskable(fmtNum(t.inc));
+  document.getElementById('expenseHero').textContent = maskable(fmtNum(t.exp));
+  const remEl = document.getElementById('remaining');
+  remEl.textContent = maskable(fmtNum(t.net));
+  remEl.className = t.net >= 0 ? 'mint' : 'red';
+
+  const txList = monthTx(m).map((x, idx)=>({...x, _kind:'tx', _order: getItemTimestampOrder(x, idx)}));
+  const ledList = (state.ledger||[]).filter(l=>monthKey(l.date)===m).map((l, idx)=>{
+    const fromA = state.accounts.find(a=>a.id===l.from)?.name || (isEn?'Cash':'كاش');
+    const toA = state.accounts.find(a=>a.id===l.to)?.name || (isEn?'Cash':'كاش');
+    const feeTxt = (Number(l.fee)||0) > 0 ? ` (${isEn?'Fee':'رسوم'}: ${fmt(l.fee)})` : '';
+    return {
+      id: l.id,
+      type: l.type,
+      category: l.type==='transfer' ? (isEn?'Transfer':'تحويل') : (isEn?'Adjustment':'تسوية'),
+      subCategory: '',
+      title: (l.note && l.note !== 'تحويل بين الحسابات') ? (l.note + feeTxt) : feeTxt.trim(),
+      note: l.note || '',
+      description: l.description || '',
+      accountLabel: l.type==='transfer' ? `${fromA} → ${toA}` : fromA,
+      accountId: l.from,
+      toAccountId: l.to,
+      amount: l.type==='transfer' ? Number(l.amount)||0 : Number(l.delta??l.amount)||0,
+      fee: Number(l.fee)||0,
+      date: l.date,
+      _kind: 'ledger',
+      _order: getItemTimestampOrder(l, 100000 + idx)
+    };
+  });
+
+  // 2.3 Search includes description (الوصف), notes, title, category, subCategory, account, and amount
+  let combined = [...txList, ...ledList].filter(it=>{
+    if(accFilter && it.accountId !== accFilter && it.toAccountId !== accFilter) return false;
+    if(q){
+      const accDisp = resolveAccountDisplayLabel(it, isEn).toLowerCase();
+      const hay = [
+        it.title,
+        it.note,
+        it.description,
+        it.category,
+        it.subCategory,
+        accDisp,
+        String(it.amount||'')
+      ].map(s=>String(s||'').toLowerCase()).join(' ');
+      if(!hay.includes(q)) return false;
+    }
+    return true;
+  }).sort((a,b)=>{
+    const dc = String(b.date||'').localeCompare(String(a.date||''));
+    if(dc !== 0) return dc;
+    return (b._order || 0) - (a._order || 0);
+  });
+
+  const emptyMsg = isEn ? 'No transactions in this period.<br>Tap <b>＋</b> to add one.' : `لا توجد معاملات مسجلة في ${formatYMArabic(m)}.<br>اضغط على زر <b>＋</b> لإضافة معاملة جديدة.`;
+  feed.innerHTML = buildDailyGroupedFeedHtml(combined, emptyMsg);
+}
+
+/* Copy / Edit / Delete for ALL Transactions (with Reversible Commitment/Card Payment Deletion!) */
 function duplicateItemToday(id, kind){
   const nowTs = Date.now();
   if(kind === 'ledger'){
@@ -875,13 +1081,13 @@ function duplicateItemToday(id, kind){
       createdAt: nowTs
     });
     persist();
+    refreshSecondaryFeeds();
     toast('تم نسخ التحويل بتاريخ اليوم ✓');
     return;
   }
   const orig = state.transactions.find(x=>String(x.id)===String(id));
   if(!orig) return;
 
-  // 6.6.1 If duplicating a card-linked transaction, also duplicate its cardOp in state.cardOps so it appears in "كل عمليات البطاقة"
   if(isCardPurchaseTx(orig)){
     const oldOpId = String(orig.source||'').replace('card-purchase:','');
     const origOp = state.cardOps.find(o=>o.id===oldOpId);
@@ -926,6 +1132,7 @@ function duplicateItemToday(id, kind){
       createdAt: nowTs
     });
     persist();
+    refreshSecondaryFeeds();
     toast('تم نسخ عملية البطاقة بتاريخ اليوم ✓');
     return;
   }
@@ -937,6 +1144,7 @@ function duplicateItemToday(id, kind){
     createdAt: nowTs
   });
   persist();
+  refreshSecondaryFeeds();
   toast('تم نسخ الحركة بتاريخ اليوم ✓');
 }
 
@@ -952,11 +1160,42 @@ function openEditAnyItem(id, kind){
   openEditQuickTx(t.id);
 }
 
+/* 6.2 Reversible Payment Logic: If a payment transaction is deleted from transactions, revert its paid status in Commitments / Card Dues! */
+function revertLinkedPaymentOnTxDelete(txObj){
+  if(!txObj) return;
+  // 1) Commitment Payment link
+  if(txObj.linkedCommitmentPaymentId){
+    state.commitmentPayments = (state.commitmentPayments||[]).filter(p=>p.id !== txObj.linkedCommitmentPaymentId);
+  } else if(txObj.source === 'commitment-payment'){
+    // Fallback match by amount & date
+    const idx = (state.commitmentPayments||[]).findIndex(p=>p.date===txObj.date && Math.abs((Number(p.amount)||0)-(Number(txObj.amount)||0))<0.01);
+    if(idx !== -1) state.commitmentPayments.splice(idx, 1);
+  }
+  // 2) Card Due Payment link
+  if(txObj.linkedCardOpId){
+    const op = (state.cardOps||[]).find(o=>o.id === txObj.linkedCardOpId);
+    const amt = Number(txObj.amount)||0;
+    if(op && amt > 0){
+      if(txObj.linkedCardPayKind === 'card_swipe'){
+        op.paid = round2(Math.max(0, (Number(op.paid)||0) - amt));
+      } else if(txObj.linkedCardPayKind === 'card_fee'){
+        op.feePaid = round2(Math.max(0, (Number(op.feePaid)||0) - amt));
+      } else if(txObj.linkedCardPayKind === 'card_inst'){
+        const sc = (op.schedules||[]).find(s=>s.month === txObj.linkedCardPayMonth);
+        if(sc) sc.paid = round2(Math.max(0, (Number(sc.paid)||0) - amt));
+      }
+    }
+    if(txObj.linkedCardPaymentRecordId){
+      state.cardPayments = (state.cardPayments||[]).filter(p=>p.id !== txObj.linkedCardPaymentRecordId);
+    }
+  }
+}
+
 function deleteAnyItem(id, kind){
   if(kind === 'ledger'){
     showAppConfirm('حذف التحويل', 'هل تريد حذف عملية التحويل هذه؟', ()=>{
       state.ledger = state.ledger.filter(x=>String(x.id)!==String(id));
-      persist(); toast('تم الحذف ✓');
+      persist(); refreshSecondaryFeeds(); toast('تم الحذف ✓');
     }, true);
     return;
   }
@@ -967,11 +1206,30 @@ function deleteAnyItem(id, kind){
       state.transactions = state.transactions.filter(x=>String(x.id)!==String(id));
       if(opId) state.cardOps = state.cardOps.filter(o=>o.id!==opId);
       syncCardInstallmentsToCommitments();
-      persist(); toast('تم الحذف ✓');
+      persist(); refreshSecondaryFeeds(); toast('تم الحذف ✓');
     }, true);
     return;
   }
   deleteTransaction(id);
+}
+
+function deleteTransaction(id){
+  showAppConfirm('حذف الحركة', 'هل تريد حذف هذه الحركة نهائياً؟', ()=>{
+    const txObj = state.transactions.find(x=>String(x.id)===String(id));
+    if(txObj) revertLinkedPaymentOnTxDelete(txObj);
+    state.transactions = state.transactions.filter(x=>String(x.id)!==String(id));
+    persist();
+    refreshSecondaryFeeds();
+    toast('تم الحذف ✓');
+  }, true);
+}
+
+function refreshSecondaryFeeds(){
+  if(activeInlineAccountId) openAccountStatement(activeInlineAccountId);
+  if(activeInlineCardId) openCardStatement(activeInlineCardId);
+  if(activeCatDrillState && document.getElementById('catDetailModal')?.classList.contains('show')){
+    openCategoryDrillDown(activeCatDrillState.catName, activeCatDrillState.txType);
+  }
 }
 
 function openEditLedgerModal(l){
@@ -992,6 +1250,7 @@ function openEditLedgerModal(l){
   setv('qmAmount', l.amount || '');
   setv('qmFee', l.fee || '');
   setv('qmNote', l.note || '');
+  setv('qmDesc', l.description || '');
   setQuickTxType('transfer');
   const feeRow = document.getElementById('qmFeeRow');
   const feeBtn = document.getElementById('qmFeeToggleBtn');
@@ -1006,16 +1265,18 @@ function openEditLedgerModal(l){
 
 
 /* =========================================================
-   SECTION 4: REPORTS ("تحليل المعاملات")
-   - 2 Sub-tabs only: الدخل (left) | المصروفات (right)
-   - Period Selector: شهري | سنوي | الكل | فترة محددة
-   - Category Drill-Down Page (#catDetailModal) with 3 sections:
-     1) Subcategory Breakdown descending
-     2) Monthly Trend Bar Chart
-     3) Daily Detailed Transactions List
+   #3. REPORTS PAGE ("تحليل المعاملات")
+   - 3.1 Dual Total Boxes (إجمالي الدخل under الدخل, إجمالي المصروفات under المصروفات)
+   - 3.2 Custom App Select Modal for Period Mode
+   - 3.3 Category Drill-Down Page:
+     1) No green card
+     2) Unnumbered section titles in framed cards (.sec-title-card)
+     3) 3-column table: الصنف | النسبة | المبلغ (starting with الإجمالي | 100% | XXX)
+     4) SVG Line Chart with Vertical Y-Axis
+     5) Interactive Daily Transactions Feed with Copy / Edit / Delete
    ========================================================= */
-let activeReportTab = 'exp'; // 'inc' | 'exp'
-let reportPeriodMode = 'monthly'; // 'monthly' | 'yearly' | 'all' | 'custom'
+let activeReportTab = 'exp';
+let reportPeriodMode = 'monthly';
 let reportYear = activeYear;
 const CHART_COLORS = ['#ff6b6b','#ff9f43','#feca57','#1dd1a1','#48dbfb','#54a0ff','#5f27cd','#ff9ff3','#00d2d3','#c8d6e5','#ee5253','#10ac84'];
 
@@ -1023,6 +1284,8 @@ function switchReportTab(tab){
   activeReportTab = (tab === 'inc') ? 'inc' : 'exp';
   document.getElementById('repTabInc')?.classList.toggle('active', activeReportTab==='inc');
   document.getElementById('repTabExp')?.classList.toggle('active', activeReportTab==='exp');
+  document.getElementById('repCardTotalInc')?.classList.toggle('active-inc', activeReportTab==='inc');
+  document.getElementById('repCardTotalExp')?.classList.toggle('active-exp', activeReportTab==='exp');
   renderReportsScreen();
 }
 
@@ -1085,7 +1348,6 @@ function getReportFilteredTransactions(isInc){
       })
     };
   }
-  // 'all'
   return {
     periodLabel: 'كل الفترات',
     yearForChart: activeYear,
@@ -1097,8 +1359,20 @@ function renderReportsScreen(){
   const isInc = (activeReportTab === 'inc');
   document.getElementById('repTabInc')?.classList.toggle('active', isInc);
   document.getElementById('repTabExp')?.classList.toggle('active', !isInc);
+  document.getElementById('repCardTotalInc')?.classList.toggle('active-inc', isInc);
+  document.getElementById('repCardTotalExp')?.classList.toggle('active-exp', !isInc);
 
-  const { periodLabel, list } = getReportFilteredTransactions(isInc);
+  // 3.1 Compute both Income Total and Expense Total for the active period to show under their respective tabs
+  const incData = getReportFilteredTransactions(true);
+  const expData = getReportFilteredTransactions(false);
+  const totIncPeriod = round2(incData.list.reduce((s,t)=>s+(Number(t.amount)||0), 0));
+  const totExpPeriod = round2(expData.list.reduce((s,t)=>s+(Number(t.amount)||0), 0));
+  const boxInc = document.getElementById('repBoxTotalInc');
+  const boxExp = document.getElementById('repBoxTotalExp');
+  if(boxInc) boxInc.textContent = maskable(egpSmart(totIncPeriod));
+  if(boxExp) boxExp.textContent = maskable(egpSmart(totExpPeriod));
+
+  const { periodLabel, list } = isInc ? incData : expData;
   const repLblEl = document.getElementById('repPeriodLabel');
   if(repLblEl) repLblEl.textContent = (reportPeriodMode === 'yearly') ? String(reportYear) : formatYMArabic(selected());
 
@@ -1111,12 +1385,6 @@ function renderReportsScreen(){
     byMain[cat] = round2((byMain[cat]||0) + amt);
     grandTotal = round2(grandTotal + amt);
   }
-
-  const lblEl = document.getElementById('repMonthlyTotalLabel');
-  const valEl = document.getElementById('repMonthlyTotalVal');
-  lblEl.textContent = isInc ? 'إجمالي الدخل' : 'إجمالي المصروفات';
-  valEl.textContent = maskable(egp(grandTotal));
-  valEl.className = isInc ? 'blue' : 'red';
 
   const entries = Object.entries(byMain).sort((a,b)=>b[1]-a[1]);
   const donutWrap = document.getElementById('repDonutWrap');
@@ -1169,40 +1437,120 @@ function renderReportsScreen(){
   }).join('');
 }
 
-/* 4.3 Dedicated Category Drill-Down Analysis Page (#catDetailModal) */
+/* 3.3 Dedicated Category Drill-Down Analysis Page (#catDetailModal) */
+function buildSvgLineChartWithYAxis(monthTotals, isInc){
+  const maxVal = Math.max(...monthTotals, 100);
+  const niceMax = Math.ceil(maxVal / 100) * 100;
+  const w = 360, h = 165;
+  const padL = 48, padR = 14, padT = 16, padB = 26;
+  const plotW = w - padL - padR;
+  const plotH = h - padT - padB;
+  const strokeColor = isInc ? '#73a7ff' : '#43d6b2';
+
+  // 4 Y-axis ticks (0%, 33%, 66%, 100%)
+  const ticks = [0, Math.round(niceMax * 0.33), Math.round(niceMax * 0.66), niceMax];
+  const gridHtml = ticks.map(tv => {
+    const y = padT + plotH - ((tv / niceMax) * plotH);
+    return `
+      <line x1="${padL}" y1="${y.toFixed(1)}" x2="${w - padR}" y2="${y.toFixed(1)}" stroke="var(--line)" stroke-dasharray="3,3" stroke-width="1"/>
+      <text x="${padL - 6}" y="${(y + 3).toFixed(1)}" fill="var(--muted)" font-size="9" text-anchor="end">${fmtInt(tv)}</text>
+    `;
+  }).join('');
+
+  // Y-axis vertical line & X-axis horizontal line
+  const axesHtml = `
+    <line x1="${padL}" y1="${padT}" x2="${padL}" y2="${padT + plotH}" stroke="var(--line2)" stroke-width="1.5"/>
+    <line x1="${padL}" y1="${padT + plotH}" x2="${w - padR}" y2="${padT + plotH}" stroke="var(--line2)" stroke-width="1.5"/>
+  `;
+
+  const pts = monthTotals.map((val, idx)=>{
+    const x = padL + (idx * (plotW / 11));
+    const y = padT + plotH - ((val / niceMax) * plotH);
+    return { x, y, val, m: idx + 1 };
+  });
+
+  const polyPoints = pts.map(p => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+  const areaPoints = `${pts[0].x.toFixed(1)},${(padT+plotH).toFixed(1)} ${polyPoints} ${pts[11].x.toFixed(1)},${(padT+plotH).toFixed(1)}`;
+
+  const dotsAndLabelsHtml = pts.map(p => `
+    <circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.4" fill="${strokeColor}" stroke="var(--panel)" stroke-width="1.5"/>
+    ${p.val > 0 ? `<text x="${p.x.toFixed(1)}" y="${Math.max(10, p.y - 6).toFixed(1)}" fill="var(--text)" font-size="8.5" text-anchor="middle">${fmtInt(p.val)}</text>` : ''}
+    <text x="${p.x.toFixed(1)}" y="${h - 7}" fill="var(--muted)" font-size="9" text-anchor="middle">${p.m}</text>
+  `).join('');
+
+  return `
+    <svg viewBox="0 0 ${w} ${h}" style="width:100%;height:auto;display:block;overflow:visible">
+      <defs>
+        <linearGradient id="lineAreaGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="${strokeColor}" stop-opacity="0.32"/>
+          <stop offset="100%" stop-color="${strokeColor}" stop-opacity="0.0"/>
+        </linearGradient>
+      </defs>
+      ${gridHtml}
+      ${axesHtml}
+      <polygon points="${areaPoints}" fill="url(#lineAreaGrad)"/>
+      <polyline fill="none" stroke="${strokeColor}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" points="${polyPoints}"/>
+      ${dotsAndLabelsHtml}
+    </svg>
+  `;
+}
+
 function openCategoryDrillDown(catName, txType){
+  activeCatDrillState = { catName, txType };
   const isInc = (txType === 'income');
   const { periodLabel, yearForChart, list } = getReportFilteredTransactions(isInc);
-  const catTxs = list.filter(t => (String(t.category||'أخرى').trim() || 'أخرى') === catName);
+  const catTxs = list
+    .filter(t => (String(t.category||'أخرى').trim() || 'أخرى') === catName)
+    .map((x, idx)=>({...x, _kind:'tx', _order: getItemTimestampOrder(x, idx)}))
+    .sort((a,b)=>{
+      const dc = String(b.date||'').localeCompare(String(a.date||''));
+      if(dc !== 0) return dc;
+      return (b._order||0) - (a._order||0);
+    });
   const totalCatAmt = round2(catTxs.reduce((s,t)=>s+(Number(t.amount)||0), 0));
 
   document.getElementById('catDetailTitle').textContent = catName;
   document.getElementById('catDetailPeriodBadge').textContent = periodLabel;
 
-  // 1) أولًا: ملخص توزيع البند إلى البنود الفرعية تنازلياً من الأكبر للأصغر
+  // 3.3.3 Subcategory Breakdown Table: الصنف | النسبة | المبلغ (Starts with الإجمالي | 100% | Total)
   const bySub = {};
   for(const t of catTxs){
-    const sub = String(t.subCategory||'').trim() || 'عام (بدون فرعي)';
+    const sub = String(t.subCategory||'').trim() || catName;
     bySub[sub] = round2((bySub[sub]||0) + (Number(t.amount)||0));
   }
   const subEntries = Object.entries(bySub).sort((a,b)=>b[1]-a[1]);
-  const subBreakdownHtml = subEntries.length ? subEntries.map(([sub, amt], idx)=>{
+  const subRowsHtml = subEntries.map(([sub, amt])=>{
     const pct = totalCatAmt > 0 ? Math.round((amt / totalCatAmt) * 100) : 0;
-    const color = CHART_COLORS[idx % CHART_COLORS.length];
     return `
-      <div style="padding:9px 4px;border-bottom:1px solid var(--line)">
-        <div style="display:flex;justify-content:space-between;align-items:center;font-size:.8rem;margin-bottom:5px">
-          <b>${esc(sub)} <span class="tag" style="margin-left:6px">${pct}%</span></b>
-          <strong class="${isInc?'blue':'red'}" style="direction:ltr">${maskable(egp(amt))}</strong>
-        </div>
-        <div style="width:100%;height:6px;background:var(--surface);border-radius:4px;overflow:hidden">
-          <div style="width:${Math.max(3, pct)}%;height:100%;background:${color};border-radius:4px"></div>
-        </div>
-      </div>
+      <tr>
+        <td><b>${esc(sub)}</b></td>
+        <td>${pct}%</td>
+        <td class="num ${isInc?'blue':'red'}"><b>${maskable(fmtNum(amt))}</b></td>
+      </tr>
     `;
-  }).join('') : '<div class="empty">لا توجد بنود فرعية مسجلة.</div>';
+  }).join('');
 
-  // 2) ثانيًا: الرسم البياني لتطور قيمة البند خلال شهور السنة
+  const subTableHtml = `
+    <table class="subcat-table">
+      <thead>
+        <tr>
+          <th>الصنف</th>
+          <th>النسبة</th>
+          <th class="num">المبلغ</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="total-row">
+          <td><b>الإجمالي</b></td>
+          <td><b>100%</b></td>
+          <td class="num"><b>${maskable(fmtNum(totalCatAmt))}</b></td>
+        </tr>
+        ${subRowsHtml}
+      </tbody>
+    </table>
+  `;
+
+  // 3.3.4 Line Chart with Vertical Y-Axis across 12 months
   const allYearMatching = (state.transactions||[]).filter(t => {
     if(isInc ? t.type!=='income' : !isActualExpenseTx(t)) return false;
     if((String(t.category||'أخرى').trim()||'أخرى') !== catName) return false;
@@ -1213,68 +1561,35 @@ function openCategoryDrillDown(catName, txType){
     const mn = Number(String(t.date||'').slice(5,7));
     if(mn >= 1 && mn <= 12) monthTotals[mn-1] = round2(monthTotals[mn-1] + (Number(t.amount)||0));
   }
-  const maxMonthVal = Math.max(...monthTotals, 1);
-  const barsHtml = monthTotals.map((val, idx)=>{
-    const hPct = Math.round((val / maxMonthVal) * 100);
-    return `
-      <div class="cat-bar-col">
-        <span class="cat-bar-val">${val > 0 ? fmtInt(val) : ''}</span>
-        <div class="cat-bar-fill" style="height:${val > 0 ? Math.max(8, hPct) : 3}%;background:${val > 0 ? (isInc?'var(--blue)':'var(--mint)') : 'var(--line)'}"></div>
-        <span class="cat-bar-lbl">${idx+1}</span>
-      </div>
-    `;
-  }).join('');
+  const lineChartHtml = buildSvgLineChartWithYAxis(monthTotals, isInc);
 
-  // 3) ثالثًا: التقرير اليومي التفصيلي (جميع معاملات البند مرتبة من الأحدث للأقدم)
-  const sortedTxs = [...catTxs].sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
-  const dailyListHtml = sortedTxs.length ? sortedTxs.map(t=>{
-    const dStr = String(t.date||'').slice(0,10);
-    const dtObj = new Date(dStr + 'T12:00:00');
-    const dayName = !isNaN(dtObj) ? dayNamesAr[dtObj.getDay()] : '';
-    const dateDisp = `${dStr.slice(8,10)}-${dStr.slice(5,7)}-${dStr.slice(0,4)} | ${dayName}`;
-    const subOrTitle = [t.subCategory, t.title].filter(Boolean).filter((v,i,a)=>a.indexOf(v)===i).join(' – ') || catName;
-    const accName = resolveAccountDisplayLabel(t, false);
-    return `
-      <div class="listitem" style="padding:10px 4px">
-        <div class="info">
-          <b>${esc(subOrTitle)}</b>
-          <small>${esc(dateDisp)} · ${esc(accName)}</small>
-        </div>
-        <strong class="${isInc?'blue':'red'}" style="direction:ltr">${maskable(egp(t.amount))}</strong>
-      </div>
-    `;
-  }).join('') : '<div class="empty">لا توجد معاملات مسجلة لهذا البند.</div>';
+  // 3.3.5 Interactive Daily Transactions Feed (same as Daily Transactions with Copy / Edit / Delete!)
+  const dailyFeedHtml = buildDailyGroupedFeedHtml(catTxs, 'لا توجد معاملات مسجلة لهذا البند.');
 
+  // 3.3.1 & 3.3.2 No green card, unnumbered section titles inside framed .sec-title-card
   document.getElementById('catDetailBody').innerHTML = `
-    <div class="hero" style="margin-bottom:12px">
-      <label>إجمالي بند «${esc(catName)}» (${esc(periodLabel)})</label>
-      <div class="amount">${maskable(egp(totalCatAmt))}</div>
-    </div>
+    <div class="sec-title-card" style="margin-top:4px"><h2>توزيع البنود الفرعية</h2></div>
+    <div class="panel" style="padding:0;overflow:hidden">${subTableHtml}</div>
 
-    <div class="section-head" style="margin-top:8px"><h2>1. ملخص توزيع البنود الفرعية</h2><span>مرتبة تنازلياً</span></div>
-    <div class="panel">${subBreakdownHtml}</div>
+    <div class="sec-title-card"><h2>الرسم البياني الشهري (${yearForChart})</h2></div>
+    <div class="panel" style="padding:12px 10px">${lineChartHtml}</div>
 
-    <div class="section-head"><h2>2. تطور البند خلال شهور ${yearForChart}</h2><span>رسم بياني شهري</span></div>
-    <div class="panel">
-      <div class="cat-trend-bars">${barsHtml}</div>
-    </div>
-
-    <div class="section-head"><h2>3. التقرير اليومي التفصيلي (${sortedTxs.length})</h2><span>جميع المعاملات</span></div>
-    <div class="panel">${dailyListHtml}</div>
+    <div class="sec-title-card"><h2>التقرير اليومي التفصيلي</h2><span class="tag">${catTxs.length} معاملة</span></div>
+    <div>${dailyFeedHtml}</div>
   `;
   document.getElementById('catDetailModal').classList.add('show');
 }
 
 function closeCatDetailModal(){
   document.getElementById('catDetailModal')?.classList.remove('show');
+  activeCatDrillState = null;
 }
 
 
 /* =========================================================
-   SECTION 1: QUICK TRANSACTION ENTRY MODAL (#quickModal)
-   - Order: دخل – مصروف – تحويل
-   - No (:), no "اختيار", no "EGP"
-   - Transfer Fee toggle button & fee row + Swap accounts button (⇅)
+   #1. QUICK TRANSACTION ENTRY MODAL (#quickModal)
+   - 1.1 No "عام (بدون فرعي)" item in subcategory list; default subCategory is '' automatically!
+   - 1.3 "ملاحظات" + 1.4 multi-line "الوصف" (saved on t.description, hidden from daily row, searchable)
    ========================================================= */
 let qmState = { type:'expense', accountId:'', toAccountId:'', category:'', subCategory:'', isCard:false, cardMode:'swipe', editId:null, editKind:'tx', dock:'acc' };
 
@@ -1349,6 +1664,7 @@ function openQuickAddModal(defaultType){
   setv('qmAmount', '');
   setv('qmFee', '');
   setv('qmNote', '');
+  setv('qmDesc', '');
   document.getElementById('qmFeeRow').style.display = 'none';
   document.getElementById('qmFeeToggleBtn')?.classList.remove('active');
   setQuickTxType(qmState.type);
@@ -1389,6 +1705,7 @@ function openEditQuickTx(id){
   setv('qmAmount', t.amount || '');
   setv('qmFee', '');
   setv('qmNote', String(t.title||'').replace(/^شراء بالبطاقة\s*-\s*/,''));
+  setv('qmDesc', t.description || '');
   document.getElementById('qmFeeRow').style.display = 'none';
   setQuickTxType(qmState.type);
   renderQuickPickers();
@@ -1502,12 +1819,15 @@ function renderQuickPickers(){
         </button>`;
       }).join('');
 
+      // 1.1 No "عام (بدون فرعي)" item; subCategory defaults to '' automatically if user doesn't pick one!
       const subs = tree[qmState.category] || [];
-      let subHtml = `<button type="button" class="mm-cat-item ${!qmState.subCategory?'active':''}" onclick="selectQuickSubCat('')"><span>عام (بدون فرعي)</span></button>`;
-      subHtml += subs.map(sc=>`
-        <button type="button" class="mm-cat-item ${sc===qmState.subCategory?'active':''}" onclick="selectQuickSubCat('${esc(sc)}')"><span>${esc(sc)}</span></button>
-      `).join('');
-      subColEl.innerHTML = subHtml;
+      if(!subs.length){
+        subColEl.innerHTML = '<div class="empty" style="padding:14px 6px;font-size:.68rem">بدون أقسام فرعية (القسم الرئيسي هو الافتراضي)</div>';
+      } else {
+        subColEl.innerHTML = subs.map(sc=>`
+          <button type="button" class="mm-cat-item ${sc===qmState.subCategory?'active':''}" onclick="selectQuickSubCat('${esc(sc)}')"><span>${esc(sc)}</span></button>
+        `).join('');
+      }
     }
   }
 }
@@ -1530,7 +1850,7 @@ function selectQuickToAcc(id){
 }
 function selectQuickMainCat(mc){
   qmState.category = mc;
-  qmState.subCategory = '';
+  qmState.subCategory = ''; // Default is general (no subcategory) unless user taps a subcategory
   renderQuickPickers();
   const subs = getActiveCatTree()[mc] || [];
   if(!subs.length){
@@ -1539,7 +1859,7 @@ function selectQuickMainCat(mc){
   }
 }
 function selectQuickSubCat(sc){
-  qmState.subCategory = sc;
+  qmState.subCategory = (qmState.subCategory === sc) ? '' : sc;
   renderQuickPickers();
   setQmDockMode('none');
   document.getElementById('qmAmount')?.focus();
@@ -1573,10 +1893,10 @@ function saveQuickModal(){
   const fee = num('qmFee');
   const date = val('qmDate') || today();
   const note = val('qmNote').trim();
+  const description = val('qmDesc').trim();
   const nowTs = Date.now();
   if(amount <= 0) return toast('أدخل المبلغ بشكل صحيح');
 
-  // Transfer Save / Edit (with optional Transfer Fee)
   if(qmState.type === 'transfer'){
     if(!qmState.accountId || !qmState.toAccountId || qmState.accountId === qmState.toAccountId){
       return toast('اختر حسابين مختلفين للتحويل');
@@ -1589,9 +1909,10 @@ function saveQuickModal(){
         l.amount = amount;
         l.fee = Math.max(0, fee);
         l.note = note || 'تحويل بين الحسابات';
+        l.description = description;
         l.date = date;
       }
-      persist(); closeQuickModal(); toast('تم تعديل التحويل ✓');
+      persist(); refreshSecondaryFeeds(); closeQuickModal(); toast('تم تعديل التحويل ✓');
       return;
     }
     state.ledger.push({
@@ -1602,17 +1923,18 @@ function saveQuickModal(){
       amount,
       fee: Math.max(0, fee),
       note: note || 'تحويل بين الحسابات',
+      description,
       date,
       createdAt: nowTs
     });
-    persist(); closeQuickModal(); toast('تم تسجيل التحويل ✓');
+    persist(); refreshSecondaryFeeds(); closeQuickModal(); toast('تم تسجيل التحويل ✓');
     return;
   }
 
-  // Editing an existing Transaction (including card-linked transactions)
   if(qmState.editId){
     const t = state.transactions.find(x=>String(x.id)===String(qmState.editId));
     if(t){
+      t.description = description;
       if(isCardPurchaseTx(t)){
         const opId = String(t.source||'').replace('card-purchase:','');
         const op = state.cardOps.find(o=>o.id===opId);
@@ -1654,11 +1976,10 @@ function saveQuickModal(){
         t.accountId = qmState.accountId || null;
       }
     }
-    persist(); closeQuickModal(); toast('تم تعديل الحركة ✓');
+    persist(); refreshSecondaryFeeds(); closeQuickModal(); toast('تم تعديل الحركة ✓');
     return;
   }
 
-  // New Card Purchase / Installment from Quick Entry
   if(qmState.isCard && qmState.type === 'expense'){
     const card = state.cards.find(c=>c.id===qmState.accountId);
     if(!card) return toast('اختر البطاقة');
@@ -1679,9 +2000,9 @@ function saveQuickModal(){
       op.schedules = built.schedules;
     }
     state.cardOps.push(op);
-    state.transactions.push({id:'card-purchase-'+op.id, type:'card_purchase', title:'شراء بالبطاقة - '+title, category:qmState.category||'مشتريات بطاقة', subCategory:qmState.subCategory||'', amount, date, accountId:null, source:'card-purchase:'+op.id, createdAt:nowTs});
+    state.transactions.push({id:'card-purchase-'+op.id, type:'card_purchase', title:'شراء بالبطاقة - '+title, description, category:qmState.category||'مشتريات بطاقة', subCategory:qmState.subCategory||'', amount, date, accountId:null, source:'card-purchase:'+op.id, createdAt:nowTs});
     if(opType === 'installment') syncCardInstallmentsToCommitments();
-    persist(); closeQuickModal(); toast(opType==='installment'?'تم تسجيل التقسيط وإضافة أقساطه ✓':'تم تسجيل الشراء على البطاقة ✓');
+    persist(); refreshSecondaryFeeds(); closeQuickModal(); toast(opType==='installment'?'تم تسجيل التقسيط وإضافة أقساطه ✓':'تم تسجيل الشراء على البطاقة ✓');
     return;
   }
 
@@ -1691,24 +2012,18 @@ function saveQuickModal(){
     category: qmState.category,
     subCategory: qmState.subCategory || '',
     title: note,
+    description,
     amount,
     date,
     accountId: qmState.accountId || null,
     createdAt: nowTs
   });
-  persist(); closeQuickModal(); toast('تم الحفظ ✓');
-}
-
-function deleteTransaction(id){
-  showAppConfirm('حذف الحركة', 'هل تريد حذف هذه الحركة نهائياً؟', ()=>{
-    state.transactions = state.transactions.filter(x=>String(x.id)!==String(id));
-    persist(); toast('تم الحذف');
-  }, true);
+  persist(); refreshSecondaryFeeds(); closeQuickModal(); toast('تم الحفظ ✓');
 }
 
 
 /* =========================================================
-   SECTION 9: MONEY MANAGER (.mmbak) IMPORTER WITH USD & CNY EXCHANGE RATES
+   MONEY MANAGER (.mmbak) IMPORTER WITH USD & CNY EXCHANGE RATES
    ========================================================= */
 let mmPending = null;
 function mmDefaultType(name, currency){
@@ -1725,17 +2040,11 @@ function mmTypeSelect(i, selected){
 function detectCurrencyCodeAndRate(rawCurUid, currencyMap){
   const key = String(rawCurUid||'').trim();
   if(!key) return { code:'EGP', rate:1, supported:true };
-  if(currencyMap[key]){
-    return currencyMap[key];
-  }
+  if(currencyMap[key]) return currencyMap[key];
   const up = key.toUpperCase();
   if(up.includes('EGP')) return { code:'EGP', rate:1, supported:true };
-  if(up.includes('USD')){
-    return currencyMap['__ISO_USD__'] || { code:'USD', rate:1, supported:true };
-  }
-  if(up.includes('CNY') || up.includes('RMB')){
-    return currencyMap['__ISO_CNY__'] || { code:'CNY', rate:1, supported:true };
-  }
+  if(up.includes('USD')) return currencyMap['__ISO_USD__'] || { code:'USD', rate:1, supported:true };
+  if(up.includes('CNY') || up.includes('RMB')) return currencyMap['__ISO_CNY__'] || { code:'CNY', rate:1, supported:true };
   return { code:up, rate:1, supported:false };
 }
 
@@ -1749,7 +2058,6 @@ function readMmbak(ev){
       let SQL = await initSqlJs({locateFile:f=>'https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/'+f});
       let db = new SQL.Database(new Uint8Array(e.target.result));
 
-      // 9.1 Extract Exchange Rates from CURRENCY table inside Money Manager DB
       let currencyMap = {};
       let fxSummary = [];
       try{
@@ -1796,7 +2104,6 @@ function readMmbak(ev){
         assets = (db.exec("SELECT uid,NIC_NAME,currencyUid FROM ASSETS")[0]?.values||[]).map(r=>[r[0],r[1],r[2],0]);
       }
 
-      // Filter or mark supported currencies (EGP, USD, CNY)
       let catInfoMap = {};
       let expTree = {};
       let incTree = {};
@@ -1939,7 +2246,6 @@ function commitMmbakDirect(){
     const rawMoney = Math.abs(Number(money)||0);
     if(!rawMoney) continue;
 
-    // 9.1 Check transaction currency (EGP, USD, CNY) and convert using DB rate
     const txCurInfo = detectCurrencyCodeAndRate(currency, mmPending.currencyMap||{});
     const assetCurInfo = assetCurMap.get(asset) || {code:'EGP', rate:1, supported:true};
     const effCur = txCurInfo.supported ? txCurInfo : assetCurInfo;
@@ -2065,12 +2371,10 @@ function commitMmbakDirect(){
 
 
 /* =========================================================
-   SECTION 5 & 6: ACCOUNTS TAB & CREDIT CARDS TAB
-   - 5.3 Spacious 3-button row on accounts: كشف حساب | تعديل | حذف
-   - 6.2 & 6.3 Credit Cards: Green hero card, Add Card button, Registered Cards (hide details until tapped; show Limit/Available/Due row + Statement/Edit/Delete row)
-   - 6.3.5 Card Statement (كشف حساب البطاقة)
-   - 6.4 & 6.6.2 Edit Card & Card Op Installment System with prompt:
-     (المعاملات الجديدة فقط vs المعاملات الجديدة والحالية)
+   #4 & #5: ACCOUNTS TAB & CREDIT CARDS TAB
+   - 4.4 Inline Account Statement inside Accounts Tab (Daily Transactions layout filtered by Account, no green card, with Copy / Edit / Delete!)
+   - 5.3 Registered Cards: Hide system & payday, show Available Balance on the right
+   - 5.4 Inline Card Statement inside Cards Tab (Daily Transactions layout filtered by Card, no green card, with Copy / Edit / Delete!)
    ========================================================= */
 function addAccount(){
   let name = val('accName').trim(), opening = num('accOpening');
@@ -2083,132 +2387,130 @@ function addAccount(){
 function deleteAccount(id){
   showAppConfirm('حذف الحساب', 'هل تريد حذف هذا الحساب؟', ()=>{
     state.accounts = state.accounts.filter(a=>a.id!==id);
+    if(activeInlineAccountId === id) closeInlineAccountStatement();
     persist(); toast('تم حذف الحساب');
   }, true);
 }
 function closeAccountModal(){
   document.getElementById('accountModal').classList.remove('show');
 }
-function openAccountStatement(id, filterYM){
+
+/* 4.4 Inline Account Statement inside Accounts Tab (Same as Daily Transactions with Filter) */
+function openAccountStatement(id){
   const acc = state.accounts.find(a=>a.id===id);
   if(!acc) return;
-  const ym = filterYM || '';
-  document.getElementById('accModalTitle').textContent = 'كشف حساب: ' + acc.name;
-  const rows = [];
-  if(Number(acc.opening) && !ym){
-    rows.push({date:'', title:'الرصيد الافتتاحي', cat:'', delta:Number(acc.opening)});
-  }
-  state.transactions.filter(t=>t.accountId===id && (!ym || monthKey(t.date)===ym)).forEach(t=>{
-    const d = (t.type==='income'||t.type==='fund') ? (Number(t.amount)||0) : -(Number(t.amount)||0);
-    const cLbl = t.subCategory ? `${t.category} / ${t.subCategory}` : (t.category||'');
-    rows.push({date:t.date, title:t.title||cLbl, cat:cLbl, delta:d});
+  activeInlineAccountId = id;
+  const wrap = document.getElementById('accInlineStatementWrap');
+  const titleEl = document.getElementById('accInlineStatementTitle');
+  const feedEl = document.getElementById('accInlineStatementFeed');
+  if(!wrap || !feedEl) return;
+
+  titleEl.textContent = `كشف حساب: ${acc.name}`;
+  const isEn = (state.prefs?.lang === 'en');
+
+  const txItems = (state.transactions||[]).filter(t=>t.accountId===id).map((x, idx)=>({...x, _kind:'tx', _order:getItemTimestampOrder(x, idx)}));
+  const ledItems = (state.ledger||[]).filter(l=>l.from===id || l.to===id).map((l, idx)=>{
+    const fromA = state.accounts.find(a=>a.id===l.from)?.name || (isEn?'Cash':'كاش');
+    const toA = state.accounts.find(a=>a.id===l.to)?.name || (isEn?'Cash':'كاش');
+    const feeTxt = (Number(l.fee)||0) > 0 ? ` (${isEn?'Fee':'رسوم'}: ${fmt(l.fee)})` : '';
+    return {
+      id: l.id,
+      type: l.type,
+      category: l.type==='transfer' ? (isEn?'Transfer':'تحويل') : (isEn?'Adjustment':'تسوية'),
+      subCategory: '',
+      title: (l.note && l.note !== 'تحويل بين الحسابات') ? (l.note + feeTxt) : feeTxt.trim(),
+      note: l.note || '',
+      accountLabel: l.type==='transfer' ? `${fromA} → ${toA}` : fromA,
+      accountId: l.from,
+      toAccountId: l.to,
+      amount: l.type==='transfer' ? Number(l.amount)||0 : Number(l.delta??l.amount)||0,
+      date: l.date,
+      _kind: 'ledger',
+      _order: getItemTimestampOrder(l, 100000 + idx)
+    };
   });
-  state.ledger.forEach(l=>{
-    if(ym && monthKey(l.date)!==ym) return;
-    if(l.type==='adjust' && l.from===id){
-      rows.push({date:l.date, title:l.note||'تسوية رصيد', cat:'تسوية', delta:Number(l.delta??l.amount)||0});
-    } else if(l.from===id){
-      const toN = state.accounts.find(x=>x.id===l.to)?.name || 'حساب';
-      const totOut = (Number(l.amount)||0) + (Number(l.fee)||0);
-      rows.push({date:l.date, title:'تحويل إلى ' + toN + ((Number(l.fee)||0)>0 ? ` (شامل رسوم ${fmt(l.fee)})` : ''), cat:'تحويل', delta:-totOut});
-    } else if(l.to===id){
-      const fromN = state.accounts.find(x=>x.id===l.from)?.name || 'حساب';
-      rows.push({date:l.date, title:'تحويل من ' + fromN, cat:'تحويل', delta:Number(l.amount)||0});
-    }
+
+  const combined = [...txItems, ...ledItems].sort((a,b)=>{
+    const dc = String(b.date||'').localeCompare(String(a.date||''));
+    if(dc !== 0) return dc;
+    return (b._order||0) - (a._order||0);
   });
-  rows.sort((a,b)=>String(b.date).localeCompare(String(a.date)));
-  const bal = accountBalance(acc);
 
-  const allMonths = [...new Set([
-    ...state.transactions.filter(t=>t.accountId===id).map(t=>monthKey(t.date)),
-    ...state.ledger.filter(l=>l.from===id||l.to===id).map(l=>monthKey(l.date))
-  ].filter(Boolean))].sort().reverse();
-
-  const filterOpts = `<option value="">كل الحركات (${rows.length})</option>` + allMonths.map(m=>`<option value="${m}" ${ym===m?'selected':''}>${formatYMArabic(m)}</option>`).join('');
-
-  const listHtml = rows.length ? rows.map(r=>`
-    <div class="rowline" style="padding:8px 0;border-bottom:1px solid var(--line)">
-      <div style="min-width:0;flex:1">
-        <b style="display:block;font-size:.76rem;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(r.title)}</b>
-        <small style="color:var(--muted)">${esc(r.date||'افتتاحي')}${r.cat?' · '+esc(r.cat):''}</small>
-      </div>
-      <strong class="${r.delta>=0?'blue':'red'}" style="direction:ltr;margin-left:8px">${r.delta>=0?'+':''}${fmt(r.delta)}</strong>
-    </div>
-  `).join('') : '<div class="empty">لا توجد حركات مسجلة في هذه الفترة.</div>';
-
-  document.getElementById('accModalBody').innerHTML = `
-    <div class="hero" style="padding:13px;margin-bottom:10px;min-height:74px">
-      <label>الرصيد الحالي الكلي</label>
-      <div class="amount" style="font-size:1.4rem">${egp(bal)}</div>
-    </div>
-    <div class="c-row" style="margin-bottom:8px;min-height:40px">
-      <label>فلترة الفترة</label>
-      <select onchange="openAccountStatement('${acc.id}', this.value)">${filterOpts}</select>
-    </div>
-    <div style="max-height:330px;overflow-y:auto;padding-left:2px">${listHtml}</div>
-    <div class="actions"><button type="button" class="secondary" onclick="closeAccountModal()">إغلاق</button></div>
-  `;
-  document.getElementById('accountModal').classList.add('show');
+  feedEl.innerHTML = buildDailyGroupedFeedHtml(combined, `لا توجد معاملات مسجلة لحساب «${esc(acc.name)}».`);
+  wrap.style.display = 'block';
+  setTimeout(()=>wrap.scrollIntoView({behavior:'smooth', block:'start'}), 60);
 }
 
-/* 6.3.5 Card Statement Modal (كشف حساب البطاقة) */
-function openCardStatement(cardId, filterYM){
+function closeInlineAccountStatement(){
+  activeInlineAccountId = null;
+  const wrap = document.getElementById('accInlineStatementWrap');
+  if(wrap) wrap.style.display = 'none';
+}
+
+/* 5.4 Inline Card Statement inside Cards Tab (Same as Daily Transactions with Filter) */
+function openCardStatement(cardId){
   const card = state.cards.find(c=>c.id===cardId);
   if(!card) return;
-  const ym = filterYM || '';
-  document.getElementById('accModalTitle').textContent = 'كشف حساب بطاقة: ' + card.name;
+  activeInlineCardId = cardId;
+  const wrap = document.getElementById('cardInlineStatementWrap');
+  const titleEl = document.getElementById('cardInlineStatementTitle');
+  const feedEl = document.getElementById('cardInlineStatementFeed');
+  if(!wrap || !feedEl) return;
 
-  const ops = (state.cardOps||[]).filter(o=>o.cardId===cardId && (!ym || monthKey(o.date)===ym || o.purchaseMonth===ym));
-  const pays = (state.cardPayments||[]).filter(p=>p.cardId===cardId && (!ym || monthKey(p.date)===ym));
+  titleEl.textContent = `كشف حساب بطاقة: ${card.name}`;
+  const cardOpIds = new Set((state.cardOps||[]).filter(o=>o.cardId===cardId).map(o=>o.id));
+  const cardPayIds = new Set((state.cardPayments||[]).filter(p=>p.cardId===cardId).map(p=>p.id));
 
-  const rows = [
-    ...ops.map(o=>({
-      date: o.date || (o.purchaseMonth ? o.purchaseMonth+'-01' : ''),
-      title: o.title,
-      cat: o.type==='installment' ? `تقسيط ${o.months} شهر (القسط: ${fmt(o.installment)})` : 'شراء بالبطاقة',
-      delta: -(Number(o.total||o.amount)||0)
-    })),
-    ...pays.map(p=>({
-      date: p.date || '',
-      title: 'سداد بطاقة',
-      cat: 'سداد',
-      delta: +(Number(p.amount)||0)
-    }))
-  ].sort((a,b)=>String(b.date).localeCompare(String(a.date)));
+  // Find all transactions linked to this card (purchases, installments, or payments)
+  const cardTxs = (state.transactions||[]).filter(t=>{
+    if(t.source && String(t.source).startsWith('card-purchase:')){
+      const opId = String(t.source).replace('card-purchase:','');
+      if(cardOpIds.has(opId)) return true;
+    }
+    if(t.linkedCardOpId && cardOpIds.has(t.linkedCardOpId)) return true;
+    if(t.linkedCardPaymentRecordId && cardPayIds.has(t.linkedCardPaymentRecordId)) return true;
+    if(t.source === 'card-payment' && String(t.title||'').includes(card.name)) return true;
+    return false;
+  }).map((x, idx)=>({...x, accountLabel: card.name, _kind:'tx', _order:getItemTimestampOrder(x, idx)}));
 
-  const usedDebt = cardTotalOutstanding(card);
-  const avail = cardCurrentAvailable(card);
+  // Also synthesize any cardOp that doesn't have a corresponding transaction row yet
+  const coveredOpIds = new Set(cardTxs.map(t=>String(t.source||'').replace('card-purchase:','')));
+  for(const o of (state.cardOps||[]).filter(op=>op.cardId===cardId)){
+    if(!coveredOpIds.has(o.id)){
+      const synthTxId = 'card-purchase-' + o.id;
+      const newTx = {
+        id: synthTxId,
+        type: 'card_purchase',
+        title: o.title,
+        category: o.type==='installment' ? `تقسيط ${o.months} شهر` : 'مشتريات بطاقة',
+        subCategory: '',
+        amount: Number(o.amount)||0,
+        date: o.date || (o.purchaseMonth ? o.purchaseMonth+'-01' : today()),
+        accountId: null,
+        accountLabel: card.name,
+        source: 'card-purchase:' + o.id,
+        createdAt: o.createdAt || Date.now()
+      };
+      state.transactions.push(newTx);
+      cardTxs.push({...newTx, _kind:'tx', _order: newTx.createdAt});
+    }
+  }
 
-  const allMonths = [...new Set([
-    ...(state.cardOps||[]).filter(o=>o.cardId===cardId).map(o=>monthKey(o.date)||o.purchaseMonth),
-    ...(state.cardPayments||[]).filter(p=>p.cardId===cardId).map(p=>monthKey(p.date))
-  ].filter(Boolean))].sort().reverse();
+  const sorted = cardTxs.sort((a,b)=>{
+    const dc = String(b.date||'').localeCompare(String(a.date||''));
+    if(dc !== 0) return dc;
+    return (b._order||0) - (a._order||0);
+  });
 
-  const filterOpts = `<option value="">كل العمليات (${rows.length})</option>` + allMonths.map(m=>`<option value="${m}" ${ym===m?'selected':''}>${formatYMArabic(m)}</option>`).join('');
+  feedEl.innerHTML = buildDailyGroupedFeedHtml(sorted, `لا توجد معاملات مسجلة لبطاقة «${esc(card.name)}».`);
+  wrap.style.display = 'block';
+  setTimeout(()=>wrap.scrollIntoView({behavior:'smooth', block:'start'}), 60);
+}
 
-  const listHtml = rows.length ? rows.map(r=>`
-    <div class="rowline" style="padding:8px 0;border-bottom:1px solid var(--line)">
-      <div style="min-width:0;flex:1">
-        <b style="display:block;font-size:.76rem;color:var(--text)">${esc(r.title)}</b>
-        <small style="color:var(--muted)">${esc(r.date)} · ${esc(r.cat)}</small>
-      </div>
-      <strong class="${r.delta>=0?'mint':'orange'}" style="direction:ltr;margin-left:8px">${r.delta>=0?'+':''}${fmt(r.delta)} EGP</strong>
-    </div>
-  `).join('') : '<div class="empty">لا توجد عمليات مسجلة على هذه البطاقة.</div>';
-
-  document.getElementById('accModalBody').innerHTML = `
-    <div class="hero" style="padding:13px;margin-bottom:10px;min-height:74px">
-      <label>المستخدم حالياً: ${egp(usedDebt)} | المتاح: ${egp(avail)}</label>
-      <div class="amount" style="font-size:1.3rem">الحد الائتماني: ${egp(card.limit||0)}</div>
-    </div>
-    <div class="c-row" style="margin-bottom:8px;min-height:40px">
-      <label>فلترة الفترة</label>
-      <select onchange="openCardStatement('${card.id}', this.value)">${filterOpts}</select>
-    </div>
-    <div style="max-height:330px;overflow-y:auto;padding-left:2px">${listHtml}</div>
-    <div class="actions"><button type="button" class="secondary" onclick="closeAccountModal()">إغلاق</button></div>
-  `;
-  document.getElementById('accountModal').classList.add('show');
+function closeInlineCardStatement(){
+  activeInlineCardId = null;
+  const wrap = document.getElementById('cardInlineStatementWrap');
+  if(wrap) wrap.style.display = 'none';
 }
 
 function openEditAccountModal(id){
@@ -2235,6 +2537,7 @@ function openEditAccountModal(id){
       <button type="button" class="secondary" onclick="closeAccountModal()">إلغاء</button>
     </div>
   `;
+  syncCustomSelectTriggers();
   document.getElementById('accountModal').classList.add('show');
 }
 function saveEditedAccount(id){
@@ -2281,7 +2584,7 @@ function renderAccountsAndCards(){
     </div>
   `).join('') : '<div class="empty">لا توجد حسابات مسجلة.</div>';
 
-  // 6.2 & 6.3 Credit Cards Tab
+  // 5.1 & 5.3 Credit Cards Tab
   const debt = allCardsOutstanding();
   document.getElementById('cardDebtTotal').textContent = maskable(egpSmart(debt));
 
@@ -2289,18 +2592,16 @@ function renderAccountsAndCards(){
   const opCardEl = document.getElementById('opCard');
   if(opCardEl) opCardEl.innerHTML = cardOpts;
 
-  // 6.3.1 Hide Limit, Available, and Due Amount from primary collapsed view; show on tap in .card-detail-strip + .tap-actions
+  // 5.3.2 & 5.3.3 Remove system & payday from collapsed row, and replace "اضغط للتفاصيل" with Available Balance (الرصيد المتاح)
   document.getElementById('cardsList').innerHTML = state.cards.length ? state.cards.map(c=>{
     const d = cardTotalOutstanding(c);
     const av = cardCurrentAvailable(c);
     const lim = Number(c.limit)||0;
-    const bankRuleLabel = isSuezCanalBankCard(c) ? 'نظام قناة السويس' : 'نظام عادي';
     return `<div class="listitem" onclick="toggleItemActions(this,event)">
       <div class="info">
         <b>${esc(c.name)}</b>
-        <small>يوم السداد: يوم ${c.payDay||3} · ${bankRuleLabel}</small>
       </div>
-      <span class="tag" style="margin-left:auto">اضغط للتفاصيل ▾</span>
+      <strong class="mint" style="font-size:.82rem"><small style="color:var(--muted);font-size:.66rem;margin-right:4px">المتاح:</small>${maskable(egpSmart(av))}</strong>
       <div class="card-detail-strip">
         <div><small>الحد الائتماني</small><b class="blue">${maskable(egp(lim))}</b></div>
         <div><small>المتاح</small><b class="mint">${maskable(egp(av))}</b></div>
@@ -2313,25 +2614,6 @@ function renderAccountsAndCards(){
       </div>
     </div>`;
   }).join('') : '<div class="empty">لا توجد بطاقات مسجلة.</div>';
-
-  // 6.6 All Card Operations (Original & Copied)
-  const sortedOps = [...(state.cardOps||[])].sort((a,b)=>String(b.date||b.purchaseMonth||'').localeCompare(String(a.date||a.purchaseMonth||'')));
-  document.getElementById('cardOpsList').innerHTML = sortedOps.length ? sortedOps.map(o=>{
-    const cName = state.cards.find(x=>x.id===o.cardId)?.name || 'بطاقة';
-    const rem = opOutstanding(o);
-    const firstM = o.schedules?.[0]?.month || '';
-    return `<div class="listitem" onclick="toggleItemActions(this,event)">
-      <div class="info">
-        <b>${esc(o.title)} <span class="tag">${esc(cName)} · ${o.type==='installment'?'تقسيط '+o.months+'ش':'شراء'}</span></b>
-        <small>الشراء: ${esc(o.purchaseMonth||monthKey(o.date))} ${firstM?`· أول قسط: ${formatYMArabic(firstM)}`:''} · الإجمالي: ${egp(o.total||o.amount||0)}</small>
-      </div>
-      <strong class="${rem>0?'orange':'mint'}">${maskable(egp(rem))}</strong>
-      <div class="tap-actions" style="grid-template-columns:1fr 1fr">
-        <button type="button" class="smallbtn" style="border-color:var(--blue);color:var(--blue)" onclick="openEditCardOpModal('${o.id}')">تعديل</button>
-        <button type="button" class="smallbtn danger" onclick="deleteCardOp('${o.id}')">حذف</button>
-      </div>
-    </div>`;
-  }).join('') : '<div class="empty">لا توجد عمليات مسجلة للبطاقات.</div>';
 }
 
 function recalculateInstallmentOpWithTerms(op, card, monthlyRateDecimal, adminRateDecimal){
@@ -2358,22 +2640,22 @@ function recalculateInstallmentOpWithTerms(op, card, monthlyRateDecimal, adminRa
   }));
 }
 
-/* 6.4 Edit Card + Installment System with Prompt: الجديدة فقط vs الجديدة والحالية */
+/* 5.2 & 6.2 Edit Card (Includes 15 months + Clear Column Headers + Prompt: الجديدة فقط vs الجديدة والحالية) */
 function openEditCardModal(cardId){
   const card = state.cards.find(c=>c.id===cardId);
   if(!card) return;
   const curAvail = cardCurrentAvailable(card);
   const terms = card.terms || {};
-  const termMonths = [3,6,9,12,18,24];
+  const termMonths = [3,6,9,12,15,18,24];
   const termsRowsHtml = termMonths.map(m=>{
     const t = terms[m] || {monthlyRate:0, adminRate:0};
     const irPct = round2((Number(t.monthlyRate)||0) * 100);
     const feePct = round2((Number(t.adminRate)||0) * 100);
     return `<div class="c-row" style="min-height:38px;padding:4px 8px">
-      <label>${m} شهر (فائدة / رسوم %)</label>
-      <div style="display:flex;gap:5px;width:60%">
-        <input id="edIr${m}" type="number" step="0.01" value="${irPct}" style="width:50%">
-        <input id="edFee${m}" type="number" step="0.01" value="${feePct}" style="width:50%">
+      <label>${m} شهر</label>
+      <div style="display:flex;gap:6px;width:62%">
+        <input id="edIr${m}" type="number" step="0.01" value="${irPct}" placeholder="فائدة %" style="width:50%">
+        <input id="edFee${m}" type="number" step="0.01" value="${feePct}" placeholder="رسوم %" style="width:50%">
       </div>
     </div>`;
   }).join('');
@@ -2386,8 +2668,15 @@ function openEditCardModal(cardId){
       <div class="c-row"><label>يوم السداد</label><input id="edCardPayDay" type="number" min="1" max="28" value="${card.payDay||3}"></div>
     </div>
     <details class="fold" style="margin-top:8px" open>
-      <summary><span>تعديل نظام التقسيط للبطاقة (%)</span><span>▼</span></summary>
-      <div class="fold-body"><div class="c-list">${termsRowsHtml}</div></div>
+      <summary><span class="ic-txt"><i>%</i><span>تعديل نظام التقسيط للبطاقة</span></span><span>▼</span></summary>
+      <div class="fold-body">
+        <div style="display:grid;grid-template-columns:38% 31% 31%;padding:4px 8px 8px;font-size:.68rem;color:var(--mint);border-bottom:1px solid var(--line);margin-bottom:6px">
+          <span>المدة</span>
+          <span style="text-align:center">الفائدة الشهرية %</span>
+          <span style="text-align:center">الرسوم الإدارية %</span>
+        </div>
+        <div class="c-list">${termsRowsHtml}</div>
+      </div>
     </details>
   `;
 
@@ -2459,13 +2748,14 @@ function deleteCard(cardId){
     state.cards = state.cards.filter(c=>c.id!==cardId);
     state.cardOps = state.cardOps.filter(o=>o.cardId!==cardId);
     state.transactions = state.transactions.filter(t=>!t.source || ![...opIds].some(id=>t.source==='card-purchase:'+id));
+    if(activeInlineCardId === cardId) closeInlineCardStatement();
     syncCardInstallmentsToCommitments();
     persist();
     toast('تم حذف البطاقة ✓');
   }, true);
 }
 
-/* 6.6.2 Edit Card Operation + Option to Edit Installment System (New Only vs New & Current) */
+/* 6.2 Edit Single Card Operation (Applies strictly to THIS operation only, without altering the card's global terms or other operations) */
 function openEditCardOpModal(opId){
   const op = state.cardOps.find(o=>o.id===opId);
   if(!op) return;
@@ -2489,16 +2779,11 @@ function openEditCardOpModal(opId){
         </div>
         <div class="c-row"><label>الفائدة الشهرية %</label><input id="edOpIrPct" type="number" step="0.01" value="${curIrPct}"></div>
         <div class="c-row"><label>الرسوم الإدارية %</label><input id="edOpFeePct" type="number" step="0.01" value="${curFeePct}"></div>
-        <div class="c-row"><label>تطبيق نظام التقسيط</label>
-          <select id="edOpTermScope">
-            <option value="current_and_new">المعاملات الجديدة والحالية</option>
-            <option value="new_only">المعاملات الجديدة فقط (مع بقاء هذه العملية كما هي)</option>
-          </select>
-        </div>
       ` : ''}
     </div>
+    <p class="hint">التعديل هنا يقتصر على هذه المعاملة فقط.</p>
   `;
-  showAppCustomForm('تعديل عملية البطاقة', formHtml, ()=>{
+  showAppCustomForm('تعديل معاملة البطاقة', formHtml, ()=>{
     const title = val('edOpTitle').trim();
     const amount = num('edOpAmount');
     const pYM = val('edOpPurchaseYM') || op.purchaseMonth || selected();
@@ -2514,28 +2799,8 @@ function openEditCardOpModal(opId){
       const months = num('edOpMonths') || 12;
       const irDec = round2(num('edOpIrPct') / 100);
       const feeDec = round2(num('edOpFeePct') / 100);
-      const scope = val('edOpTermScope') || 'current_and_new';
       op.months = months;
-
-      if(card){
-        card.terms = card.terms || {};
-        card.terms[months] = { monthlyRate: irDec, adminRate: feeDec };
-      }
-
-      if(scope === 'current_and_new'){
-        recalculateInstallmentOpWithTerms(op, card, irDec, feeDec);
-        // Also update any other active operations on the same card with the same months duration if user selected New & Current
-        if(card){
-          state.cardOps.filter(o=>o.cardId===card.id && o.id!==op.id && o.type==='installment' && Number(o.months)===months).forEach(otherOp=>{
-            recalculateInstallmentOpWithTerms(otherOp, card, irDec, feeDec);
-          });
-        }
-      } else {
-        // 'new_only': only update if amount/purchaseMonth changed using old rate
-        const oldRate = curIrPct / 100;
-        const oldFee = curFeePct / 100;
-        recalculateInstallmentOpWithTerms(op, card, oldRate, oldFee);
-      }
+      recalculateInstallmentOpWithTerms(op, card, irDec, feeDec);
     }
 
     const linkedTx = state.transactions.find(tx=>tx.source==='card-purchase:'+op.id);
@@ -2546,7 +2811,8 @@ function openEditCardOpModal(opId){
     }
     syncCardInstallmentsToCommitments();
     persist();
-    toast('تم حفظ التعديلات وإعادة الحساب ✓');
+    refreshSecondaryFeeds();
+    toast('تم تعديل المعاملة ✓');
     return true;
   });
 }
@@ -2557,13 +2823,14 @@ function deleteCardOp(opId){
     state.transactions = state.transactions.filter(t=>t.source!=='card-purchase:'+opId);
     syncCardInstallmentsToCommitments();
     persist();
+    refreshSecondaryFeeds();
     toast('تم حذف العملية ✓');
   }, true);
 }
 
 function applyKnownBankTerms(){
   let n = val('cardName').trim().toLowerCase();
-  if(n.includes('qnb')){ [3,6,12].forEach(m=>setv('ir'+m,2.18)); [18,24].forEach(m=>setv('ir'+m,1.98)); }
+  if(n.includes('qnb')){ [3,6,12].forEach(m=>setv('ir'+m,2.18)); [15,18,24].forEach(m=>setv('ir'+m,1.98)); }
 }
 function addCard(){
   let name = val('cardName').trim(); if(!name) return toast('اكتب اسم البطاقة');
@@ -2583,13 +2850,9 @@ function dueDateFor(card,date){
 
 
 /* =========================================================
-   SECTION 7: COMMITMENTS PAGE (الالتزامات)
-   - 3 Types of Commitments:
-     1) مستحقات مؤجلة (deferred / once)
-     2) التزامات شهرية (monthly with auto-calculated End Month)
-     3) معاملات بالبطاقة (card_op with purchaseMonth only & Suez Canal Bank vs Regular Bank rule)
-   - Unified Monthly Dues section (مستحقات الشهر)
-   - Single-indicator Green Hero Card (إجمالي التزامات الشهر)
+   #6: COMMITMENTS PAGE (الالتزامات)
+   - 6.2 Structured Monthly Dues + Payment Dialog (Account & Date selector) + Reversible Payment if Transaction is Deleted
+   - 6.3 New Section: جميع المستحقات (Sorted newest-first descending: المعاملة | النوع | المدة | البدء | الانتهاء)
    ========================================================= */
 function setCommitmentAddKind(kind){
   setv('comAddKind', kind);
@@ -2666,11 +2929,12 @@ function addCardOperation(){
   if(type==='installment') syncCardInstallmentsToCommitments();
   persist(); setv('opTitle',''); setv('opAmount','');
   document.getElementById('addCommitmentFold')?.removeAttribute('open');
-  toast('تم تسجيل عملية البطاقة وإدراجها في مستحقات الشهر ✓');
+  toast('تم تسجيل عملية البطاقة وإدراجها في المستحقات ✓');
 }
 
 function saveNewCommitmentItem(){
   const kind = val('comAddKind') || 'deferred';
+  const nowTs = Date.now();
   if(kind === 'deferred'){
     const title = val('defTitle').trim();
     const amount = num('defAmount');
@@ -2678,7 +2942,7 @@ function saveNewCommitmentItem(){
     const note = val('defNote').trim();
     if(!title || amount <= 0) return toast('أدخل اسم العملية والمبلغ');
     state.commitments.push({
-      id: 'com-' + Date.now(),
+      id: 'com-' + nowTs,
       title,
       type: 'مستحقات مؤجلة',
       freq: 'once',
@@ -2686,7 +2950,8 @@ function saveNewCommitmentItem(){
       start: dueDate.slice(0,7),
       end: dueDate.slice(0,7),
       dueDate,
-      note
+      note,
+      createdAt: nowTs
     });
     setv('defTitle',''); setv('defAmount',''); setv('defNote','');
     document.getElementById('addCommitmentFold')?.removeAttribute('open');
@@ -2702,7 +2967,7 @@ function saveNewCommitmentItem(){
     const note = val('monNote').trim();
     if(!title || amount <= 0) return toast('أدخل اسم الالتزام والمبلغ الشهري');
     state.commitments.push({
-      id: 'com-' + Date.now(),
+      id: 'com-' + nowTs,
       title,
       type: 'التزامات شهرية',
       freq: 'monthly',
@@ -2711,7 +2976,8 @@ function saveNewCommitmentItem(){
       start: startYM,
       end: endYM,
       day: 1,
-      note
+      note,
+      createdAt: nowTs
     });
     setv('monTitle',''); setv('monAmount',''); setv('monNote','');
     document.getElementById('addCommitmentFold')?.removeAttribute('open');
@@ -2730,10 +2996,11 @@ function syncCardInstallmentsToCommitments(){
     const lastM = op.schedules?.[op.schedules.length-1]?.month || firstM;
     const existing = state.commitments.find(c=>c.id===comId);
     if(!existing){
-      state.commitments.push({id:comId, cardOpId:op.id, title:`${op.title} (${cName})`, type:'معاملات بالبطاقة', freq:'monthly', amount:round2(Number(op.installment)||0), start:firstM, end:lastM, day:3});
+      state.commitments.push({id:comId, cardOpId:op.id, title:`${op.title} (${cName})`, type:'معاملات بالبطاقة', freq:'monthly', durationMonths:Number(op.months)||12, amount:round2(Number(op.installment)||0), start:firstM, end:lastM, day:3, createdAt:op.createdAt||Date.now()});
     } else {
       existing.title = `${op.title} (${cName})`;
       existing.type = 'معاملات بالبطاقة';
+      existing.durationMonths = Number(op.months)||12;
       existing.amount = round2(Number(op.installment)||0);
       existing.start = firstM;
       existing.end = lastM;
@@ -2741,13 +3008,11 @@ function syncCardInstallmentsToCommitments(){
   }
 }
 
-/* 7.6 Unified Monthly Dues Gatherer (مستحقات مؤجلة + التزامات شهرية + أقساط ورسوم ومشتريات البطاقات) */
 function getUnifiedMonthlyDues(m){
   syncCardInstallmentsToCommitments();
   const items = [];
   let totalDue = 0;
 
-  // 1) Deferred Dues (مستحقات مؤجلة) due in month m
   const deferredList = (state.commitments||[]).filter(c => c.freq === 'once' && ((c.dueDate && String(c.dueDate).slice(0,7) === m) || (!c.dueDate && c.start === m)));
   for(const c of deferredList){
     const amt = round2(Number(c.amount)||0);
@@ -2759,14 +3024,13 @@ function getUnifiedMonthlyDues(m){
       kind: 'commitment',
       categoryType: 'مستحقات مؤجلة',
       title: c.title,
-      sub: c.dueDate ? `تاريخ الاستحقاق: ${c.dueDate}${c.note?' · '+c.note:''}` : (c.note||'مستحق مؤجل'),
+      sub: c.dueDate ? `استحقاق: ${c.dueDate}` : 'مرة واحدة',
       amount: amt,
       paid,
       remaining: rem
     });
   }
 
-  // 2) Monthly Commitments (التزامات شهرية - excluding auto-synced cardOp commitments which we pull directly with full detail below)
   const monthlyList = (state.commitments||[]).filter(c => (c.freq||'monthly') === 'monthly' && !c.cardOpId && commitmentDue(c, m));
   for(const c of monthlyList){
     const amt = round2(Number(c.amount)||0);
@@ -2778,14 +3042,13 @@ function getUnifiedMonthlyDues(m){
       kind: 'commitment',
       categoryType: 'التزامات شهرية',
       title: c.title,
-      sub: `من ${formatYMArabic(c.start)} إلى ${formatYMArabic(c.end)}${c.note?' · '+c.note:''}`,
+      sub: `${formatYMArabic(c.start)} ← ${formatYMArabic(c.end)}`,
       amount: amt,
       paid,
       remaining: rem
     });
   }
 
-  // 3) Card Operations Dues (أقساط البطاقات + الرسوم الإدارية + المشتريات المستحقة في الشهر m)
   for(const op of (state.cardOps||[])){
     const card = state.cards.find(x=>x.id===op.cardId);
     const cName = card?.name || 'بطاقة';
@@ -2800,9 +3063,9 @@ function getUnifiedMonthlyDues(m){
           uid: op.id,
           kind: 'card_swipe',
           opId: op.id,
-          categoryType: 'معاملات بالبطاقة',
-          title: `${op.title} (${cName})`,
-          sub: `شراء بطاقة مستحق بالكامل`,
+          categoryType: 'بطاقة (' + cName + ')',
+          title: op.title,
+          sub: 'شراء كامل',
           amount: amt,
           paid,
           remaining: rem
@@ -2818,9 +3081,9 @@ function getUnifiedMonthlyDues(m){
           uid: op.id + ':fee',
           kind: 'card_fee',
           opId: op.id,
-          categoryType: 'معاملات بالبطاقة',
-          title: `رسوم إدارية: ${op.title} (${cName})`,
-          sub: `رسوم تقسيط ${op.months} شهر`,
+          categoryType: 'رسوم بطاقة (' + cName + ')',
+          title: `رسوم: ${op.title}`,
+          sub: `تقسيط ${op.months} شهر`,
           amount: amt,
           paid,
           remaining: rem
@@ -2837,9 +3100,9 @@ function getUnifiedMonthlyDues(m){
             kind: 'card_inst',
             opId: op.id,
             month: m,
-            categoryType: 'معاملات بالبطاقة',
-            title: `${op.title} (${cName})`,
-            sub: `قسط (${idx+1} من ${op.months})`,
+            categoryType: 'قسط بطاقة (' + cName + ')',
+            title: op.title,
+            sub: `قسط ${idx+1} من ${op.months}`,
             amount: amt,
             paid,
             remaining: rem
@@ -2852,55 +3115,99 @@ function getUnifiedMonthlyDues(m){
   return { items, totalDue: round2(totalDue) };
 }
 
-function payUnifiedDueItem(kind, uid, opId, month){
-  const m = month || selected();
-  const accId = state.prefs?.defaultAccount || state.accounts[0]?.id || null;
-  if(kind === 'commitment'){
-    markCommitmentPaid(uid);
+/* 6.2 Payment Dialog (Choose Account + Date + Amount instead of immediate irreversible 1-click payment!) */
+function openPayDueDialog(kind, uid, opId, month, defaultAmt, itemTitle){
+  if(defaultAmt <= 0){
+    toast('مسدد بالكامل ✓ (احذف معاملة السداد من المعاملات اليومية لإلغاء السداد)');
     return;
   }
-  const op = state.cardOps.find(o=>o.id===opId);
-  if(!op) return;
-  const card = state.cards.find(c=>c.id===op.cardId);
-  const cName = card?.name || 'بطاقة';
-  let payAmt = 0;
-  let payTitle = '';
-  if(kind === 'card_swipe'){
-    payAmt = round2(Math.max(0, (Number(op.amount)||0) - (Number(op.paid)||0)));
-    if(payAmt <= 0) return toast('مسدد بالكامل ✓');
-    op.paid = round2((Number(op.paid)||0) + payAmt);
-    payTitle = `سداد بطاقة (${cName}) - ${op.title}`;
-  } else if(kind === 'card_fee'){
-    payAmt = round2(Math.max(0, (Number(op.feeDue)||0) - (Number(op.feePaid)||0)));
-    if(payAmt <= 0) return toast('مسدد بالكامل ✓');
-    op.feePaid = round2((Number(op.feePaid)||0) + payAmt);
-    payTitle = `سداد رسوم بطاقة (${cName}) - ${op.title}`;
-  } else if(kind === 'card_inst'){
-    const sc = (op.schedules||[]).find(s=>s.month===m);
-    if(!sc) return;
-    payAmt = round2(Math.max(0, (Number(sc.amount)||0) - (Number(sc.paid)||0)));
-    if(payAmt <= 0) return toast('مسدد بالكامل ✓');
-    sc.paid = round2((Number(sc.paid)||0) + payAmt);
-    payTitle = `سداد قسط بطاقة (${cName}) - ${op.title}`;
-  }
-  if(payAmt > 0){
-    state.cardPayments.push({id:'cp-'+Date.now(), cardId:op.cardId, amount:payAmt, date:today(), accountId:accId});
-    state.transactions.push({id:'cardpay-'+Date.now(), type:'credit_payment', title:payTitle, category:'سداد بطاقة', amount:payAmt, date:today(), accountId:accId, source:'card-payment', createdAt:Date.now()});
-    persist();
-    toast('تم تسجيل السداد ✓');
-  }
-}
+  const m = month || selected();
+  const defAcc = state.prefs?.defaultAccount || state.accounts[0]?.id || '';
+  const accOpts = state.accounts.map(a=>`<option value="${a.id}" ${a.id===defAcc?'selected':''}>${esc(a.name)} (${fmt(accountBalance(a))} EGP)</option>`).join('') || '<option value="">كاش</option>';
 
-function markCommitmentPaid(id){
-  const c = state.commitments.find(x=>x.id===id), m = selected(); if(!c) return;
-  const isOnce = c.freq==='once';
-  const paid = isOnce ? state.commitmentPayments.filter(p=>p.commitmentId===id).reduce((s,p)=>s+(Number(p.amount)||0),0) : state.commitmentPayments.filter(p=>p.commitmentId===id&&p.month===m).reduce((s,p)=>s+(Number(p.amount)||0),0);
-  const rem = Math.max(0,(Number(c.amount)||0)-paid);
-  if(!rem) return toast('مسدد بالكامل ✓');
-  const accId = state.prefs?.defaultAccount || state.accounts[0]?.id || null;
-  state.commitmentPayments.push({id:'cmp-'+Date.now(), commitmentId:id, month:m, amount:rem, date:today(), accountId:accId});
-  state.transactions.push({id:'com-pay-'+Date.now(), type:'expense', title:'سداد '+c.title, category:c.type||'التزام', amount:rem, date:today(), accountId:accId, source:'commitment-payment', createdAt:Date.now()});
-  persist(); toast('تم تسجيل السداد ✓');
+  const formHtml = `
+    <div class="c-list">
+      <div class="c-row"><label>البند</label><input value="${esc(itemTitle)}" readonly style="color:var(--mint)"></div>
+      <div class="c-row"><label>السداد من حساب</label><select id="payDueAccSel">${accOpts}</select></div>
+      <div class="c-row"><label>تاريخ السداد</label><input id="payDueDateInp" type="date" value="${today()}"></div>
+      <div class="c-row"><label>المبلغ المسدد</label><input id="payDueAmtInp" type="number" step="0.01" value="${defaultAmt}"></div>
+    </div>
+    <p class="hint">سيتم تسجيل حركة مصروف/سداد من الحساب المختار، وإذا حذفت الحركة من المعاملات اليومية لاحقاً سيعود البند إلى غير مسدد تلقائياً.</p>
+  `;
+
+  showAppCustomForm('تسجيل سداد مستحق', formHtml, ()=>{
+    const accId = val('payDueAccSel') || null;
+    const payDate = val('payDueDateInp') || today();
+    const payAmt = round2(num('payDueAmtInp'));
+    if(payAmt <= 0){ toast('أدخل مبلغ السداد بشكل صحيح'); return false; }
+    const nowTs = Date.now();
+
+    if(kind === 'commitment'){
+      const c = state.commitments.find(x=>x.id===uid);
+      if(!c) return false;
+      const payRecId = 'cmp-' + nowTs;
+      state.commitmentPayments.push({
+        id: payRecId,
+        commitmentId: c.id,
+        month: m,
+        amount: payAmt,
+        date: payDate,
+        accountId: accId
+      });
+      state.transactions.push({
+        id: 'com-pay-' + nowTs,
+        type: 'expense',
+        title: 'سداد ' + c.title,
+        category: c.type || 'التزامات',
+        amount: payAmt,
+        date: payDate,
+        accountId: accId,
+        source: 'commitment-payment',
+        linkedCommitmentPaymentId: payRecId,
+        createdAt: nowTs
+      });
+      persist();
+      toast('تم تسجيل السداد وخصمه من الحساب ✓');
+      return true;
+    }
+
+    const op = state.cardOps.find(o=>o.id===opId);
+    if(!op) return false;
+    const card = state.cards.find(c=>c.id===op.cardId);
+    const cName = card?.name || 'بطاقة';
+    let payTitle = '';
+    if(kind === 'card_swipe'){
+      op.paid = round2((Number(op.paid)||0) + payAmt);
+      payTitle = `سداد بطاقة (${cName}) - ${op.title}`;
+    } else if(kind === 'card_fee'){
+      op.feePaid = round2((Number(op.feePaid)||0) + payAmt);
+      payTitle = `سداد رسوم بطاقة (${cName}) - ${op.title}`;
+    } else if(kind === 'card_inst'){
+      const sc = (op.schedules||[]).find(s=>s.month===m);
+      if(sc) sc.paid = round2((Number(sc.paid)||0) + payAmt);
+      payTitle = `سداد قسط بطاقة (${cName}) - ${op.title}`;
+    }
+    const cardPayRecId = 'cp-' + nowTs;
+    state.cardPayments.push({id:cardPayRecId, cardId:op.cardId, amount:payAmt, date:payDate, accountId:accId});
+    state.transactions.push({
+      id: 'cardpay-' + nowTs,
+      type: 'credit_payment',
+      title: payTitle,
+      category: 'سداد بطاقة',
+      amount: payAmt,
+      date: payDate,
+      accountId: accId,
+      source: 'card-payment',
+      linkedCardOpId: op.id,
+      linkedCardPayKind: kind,
+      linkedCardPayMonth: m,
+      linkedCardPaymentRecordId: cardPayRecId,
+      createdAt: nowTs
+    });
+    persist();
+    toast('تم تسجيل سداد البطاقة ✓');
+    return true;
+  });
 }
 
 function openEditCommitmentModal(id){
@@ -2962,151 +3269,318 @@ function renderPlanScreen(){
   document.getElementById('comHeroTotal').textContent = maskable(egpSmart(totalDue));
   document.getElementById('comMonthLabel').textContent = formatYMArabic(m);
 
-  document.getElementById('commitmentsList').innerHTML = items.length ? items.map(it=>{
-    const left = it.remaining;
-    const isCardItem = it.kind !== 'commitment';
-    const editFn = isCardItem ? `openEditCardOpModal('${esc(it.opId)}')` : `openEditCommitmentModal('${esc(it.uid)}')`;
-    const delFn = isCardItem ? `deleteCardOp('${esc(it.opId)}')` : `deleteCommitment('${esc(it.uid)}')`;
-    const payFn = `payUnifiedDueItem('${it.kind}','${esc(it.uid)}','${esc(it.opId||'')}','${m}')`;
-    return `
-      <div class="listitem" onclick="toggleItemActions(this,event)">
-        <div class="info">
-          <b>${esc(it.title)} <span class="tag">${esc(it.categoryType)}</span></b>
-          <small>${esc(it.sub)} ${it.paid>0 ? `· المسدد: ${egp(it.paid)}` : ''}</small>
-        </div>
-        <strong class="${left>0?'orange':'mint'}">${maskable(egp(left>0 ? left : it.amount))}</strong>
-        <div class="tap-actions">
-          <button type="button" class="smallbtn" style="border-color:var(--mint);color:var(--mint)" onclick="${payFn}">${left>0?'تسجيل سداد':'مسدد ✓'}</button>
-          <button type="button" class="smallbtn" style="border-color:var(--blue);color:var(--blue)" onclick="${editFn}">تعديل</button>
-          <button type="button" class="smallbtn danger" onclick="${delFn}">حذف</button>
-        </div>
+  // 6.2 Structured Columns for Monthly Dues (المعاملة | النوع | المبلغ المستحق)
+  const listEl = document.getElementById('commitmentsList');
+  if(!items.length){
+    listEl.innerHTML = '<div class="empty">لا توجد مبالغ مستحقة في هذا الشهر.</div>';
+  } else {
+    const headHtml = `
+      <div class="com-grid-head">
+        <div>المعاملة</div>
+        <div>النوع / التفاصيل</div>
+        <div style="text-align:right">المستحق</div>
       </div>
     `;
-  }).join('') : '<div class="empty">لا توجد مبالغ مستحقة في هذا الشهر.</div>';
+    const rowsHtml = items.map(it=>{
+      const left = it.remaining;
+      const isCardItem = it.kind !== 'commitment';
+      const editFn = isCardItem ? `openEditCardOpModal('${esc(it.opId)}')` : `openEditCommitmentModal('${esc(it.uid)}')`;
+      const delFn = isCardItem ? `deleteCardOp('${esc(it.opId)}')` : `deleteCommitment('${esc(it.uid)}')`;
+      const payFn = `openPayDueDialog('${it.kind}','${esc(it.uid)}','${esc(it.opId||'')}','${m}',${left},${JSON.stringify(it.title).replace(/"/g,'&quot;')})`;
+      return `
+        <div class="tx-wrap" onclick="toggleItemActions(this,event)">
+          <div class="com-grid-row">
+            <div>
+              <b style="display:block;color:var(--text)">${esc(it.title)}</b>
+              ${left <= 0 ? `<small style="color:var(--mint)">مسدد بالكامل ✓</small>` : (it.paid > 0 ? `<small style="color:var(--mint)">مسدد: ${fmtNum(it.paid)}</small>` : '')}
+            </div>
+            <div>
+              <span class="tag" style="display:inline-block;margin-bottom:2px">${esc(it.categoryType)}</span>
+              <small style="display:block;color:var(--muted);font-size:.66rem">${esc(it.sub)}</small>
+            </div>
+            <div style="text-align:right;direction:ltr">
+              <strong class="${left>0?'orange':'mint'}">${maskable(egpSmart(left>0 ? left : it.amount))}</strong>
+            </div>
+          </div>
+          <div class="tap-actions">
+            <button type="button" class="smallbtn" style="border-color:var(--mint);color:var(--mint)" onclick="${payFn}">${left>0?'تسجيل سداد':'مسدد ✓'}</button>
+            <button type="button" class="smallbtn" style="border-color:var(--blue);color:var(--blue)" onclick="${editFn}">تعديل</button>
+            <button type="button" class="smallbtn danger" onclick="${delFn}">حذف</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+    listEl.innerHTML = headHtml + rowsHtml;
+  }
 
+  // 6.3 New Section: جميع المستحقات (Sorted descending newest-first: المعاملة | النوع | المدة | البدء | الانتهاء)
+  renderAllCommitmentsMasterTable();
   renderYearlyExcelReport();
+}
+
+function renderAllCommitmentsMasterTable(){
+  const wrap = document.getElementById('allCommitmentsTableWrap');
+  if(!wrap) return;
+  syncCardInstallmentsToCommitments();
+
+  const allRows = [];
+  // 1) Non-card commitments (مستحقات مؤجلة & التزامات شهرية)
+  (state.commitments||[]).filter(c => !c.cardOpId).forEach((c, idx)=>{
+    const isOnce = (c.freq === 'once');
+    const startYM = isOnce ? (c.dueDate ? c.dueDate.slice(0,7) : c.start) : c.start;
+    const endYM = isOnce ? '' : c.end;
+    let durNum = Number(c.durationMonths) || 0;
+    if(!isOnce && !durNum && startYM && endYM){
+      const [sy, sm] = startYM.split('-').map(Number);
+      const [ey, em] = endYM.split('-').map(Number);
+      durNum = Math.max(1, (ey - sy) * 12 + (em - sm) + 1);
+    }
+    allRows.push({
+      id: c.id,
+      isCard: false,
+      title: c.title,
+      typeLabel: isOnce ? 'مستحقات' : 'التزامات شهرية',
+      durLabel: isOnce ? 'مرة واحدة' : (durNum ? `${durNum} شهر` : 'شهري'),
+      startLabel: formatYMArabic(startYM),
+      endLabel: isOnce ? '—' : formatYMArabic(endYM),
+      order: getItemTimestampOrder(c, idx)
+    });
+  });
+
+  // 2) Card operations (معاملات البطاقة)
+  (state.cardOps||[]).forEach((op, idx)=>{
+    const isInst = (op.type === 'installment');
+    const firstM = isInst ? (op.schedules?.[0]?.month || op.feeMonth || op.purchaseMonth) : (op.dueDate ? op.dueDate.slice(0,7) : op.purchaseMonth);
+    const lastM = isInst ? (op.schedules?.[op.schedules.length-1]?.month || firstM) : '';
+    allRows.push({
+      id: op.id,
+      isCard: true,
+      title: op.title,
+      typeLabel: 'بطاقة',
+      durLabel: isInst ? `${op.months} شهور` : 'مرة واحدة',
+      startLabel: formatYMArabic(firstM),
+      endLabel: isInst ? formatYMArabic(lastM) : '—',
+      order: getItemTimestampOrder(op, 50000 + idx)
+    });
+  });
+
+  allRows.sort((a,b) => (b.order||0) - (a.order||0));
+
+  if(!allRows.length){
+    wrap.innerHTML = '<div class="empty">لا توجد مستحقات أو التزامات مسجلة بعد.</div>';
+    return;
+  }
+
+  wrap.innerHTML = `
+    <table class="com-all-table">
+      <thead>
+        <tr>
+          <th>المعاملة</th>
+          <th>النوع</th>
+          <th>المدة</th>
+          <th>البدء</th>
+          <th>الانتهاء</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${allRows.map(r=>{
+          const editCall = r.isCard ? `openEditCardOpModal('${esc(r.id)}')` : `openEditCommitmentModal('${esc(r.id)}')`;
+          const delCall = r.isCard ? `deleteCardOp('${esc(r.id)}')` : `deleteCommitment('${esc(r.id)}')`;
+          return `
+            <tr style="cursor:pointer" onclick="${editCall}" title="اضغط للتعديل">
+              <td><b>${esc(r.title)}</b></td>
+              <td><span class="tag">${esc(r.typeLabel)}</span></td>
+              <td>${esc(r.durLabel)}</td>
+              <td>${esc(r.startLabel)}</td>
+              <td>
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:6px">
+                  <span>${esc(r.endLabel)}</span>
+                  <button type="button" class="icon-act-btn" style="color:var(--red);border-color:#75404b;width:24px;height:24px" onclick="event.stopPropagation();${delCall}" title="حذف">✕</button>
+                </div>
+              </td>
+            </tr>
+          `;
+        }).join('')}
+      </tbody>
+    </table>
+  `;
 }
 
 
 /* =========================================================
-   SECTION 8: EXCEL-LIKE YEARLY FINANCIAL REPORT (التقرير المالي السنوي)
-   - Horizontal Scroll + Sticky Month Column
-   - 1) Income Breakdown Columns (المرتب، الأرباح، الجمعيات، وأي بنود دخل أخرى)
-   - 2) Commitments Breakdown Columns (مستحقات مؤجلة، التزامات شهرية، أقساط البطاقات، + تفصيل الالتزامات)
-   - 3) Financial Summary Columns (إجمالي الدخل | إجمالي الالتزامات | صافي المتبقي)
+   #7.0 MANUAL YEARLY FINANCIAL REPORT (التقرير المالي السنوي اليدوي)
+   - Manual entry of Income items & Expense/Commitment items with Duration, Start Month, and End Month
+   - Reflected in the Excel-style table below, automatically calculating Total Income, Total Expenses, and Net!
    ========================================================= */
+function setAnnualPlanItemType(t){
+  setv('annItemType', t);
+  document.getElementById('annTypeIncBtn')?.classList.toggle('active', t==='income');
+  document.getElementById('annTypeExpBtn')?.classList.toggle('active', t==='expense');
+}
+
+function recalcAnnualPlanItemEnd(){
+  const startYM = val('annStartVal') || (String(forecastYear) + '-01');
+  const dur = Math.max(1, Math.round(num('annItemDuration') || 12));
+  const endYM = addMonthsYM(startYM, dur - 1);
+  setv('annEndVal', endYM);
+  setv('annEndAutoLabel', `${formatYMArabic(endYM)} (${dur} شهر)`);
+}
+
+function saveAnnualPlanItem(){
+  const type = val('annItemType') || 'income';
+  const title = val('annItemTitle').trim();
+  const amount = num('annItemAmount');
+  const dur = Math.max(1, Math.round(num('annItemDuration') || 12));
+  const startYM = val('annStartVal') || (String(forecastYear) + '-01');
+  const endYM = addMonthsYM(startYM, dur - 1);
+  if(!title || amount <= 0) return toast('أدخل اسم البند والمبلغ الشهري');
+
+  state.annualPlanItems = state.annualPlanItems || [];
+  state.annualPlanItems.push({
+    id: 'ann-' + Date.now(),
+    type,
+    title,
+    amount: round2(amount),
+    durationMonths: dur,
+    start: startYM,
+    end: endYM
+  });
+  setv('annItemTitle', '');
+  setv('annItemAmount', '');
+  document.getElementById('addManualAnnualFold')?.removeAttribute('open');
+  persist();
+  toast('تمت إضافة البند للتقرير السنوي ✓');
+}
+
+function openEditAnnualPlanItem(id){
+  const item = (state.annualPlanItems||[]).find(x=>x.id===id);
+  if(!item) return;
+  const formHtml = `
+    <div class="c-list">
+      <div class="c-row"><label>نوع البند</label>
+        <select id="edAnnType">
+          <option value="income" ${item.type==='income'?'selected':''}>بند دخل</option>
+          <option value="expense" ${item.type==='expense'?'selected':''}>بند صرف / التزام</option>
+        </select>
+      </div>
+      <div class="c-row"><label>اسم البند</label><input id="edAnnTitle" value="${esc(item.title)}"></div>
+      <div class="c-row"><label>المبلغ الشهري</label><input id="edAnnAmt" type="number" step="0.01" value="${Number(item.amount)||0}"></div>
+      <div class="c-row"><label>تاريخ البدء</label><input id="edAnnStart" type="month" value="${esc(item.start)}"></div>
+      <div class="c-row"><label>المدة بالأشهر</label><input id="edAnnDur" type="number" min="1" max="120" value="${Number(item.durationMonths)||12}"></div>
+    </div>
+    <div style="margin-top:10px">
+      <button type="button" class="smallbtn danger" style="width:100%;padding:8px" onclick="deleteAnnualPlanItem('${item.id}')">حذف هذا البند من الجدول السنوي</button>
+    </div>
+  `;
+  showAppCustomForm('تعديل بند التقرير السنوي', formHtml, ()=>{
+    const t = val('edAnnTitle').trim();
+    const a = num('edAnnAmt');
+    const st = val('edAnnStart') || item.start;
+    const dur = Math.max(1, Math.round(num('edAnnDur')||12));
+    if(!t || a <= 0){ toast('أكمل الاسم والمبلغ'); return false; }
+    item.type = val('edAnnType') || item.type;
+    item.title = t;
+    item.amount = round2(a);
+    item.start = st;
+    item.durationMonths = dur;
+    item.end = addMonthsYM(st, dur - 1);
+    persist();
+    toast('تم تحديث البند ✓');
+    return true;
+  });
+}
+
+function deleteAnnualPlanItem(id){
+  state.annualPlanItems = (state.annualPlanItems||[]).filter(x=>x.id!==id);
+  closeAppDialog();
+  persist();
+  toast('تم حذف البند من الجدول السنوي');
+}
+
 function renderYearlyExcelReport(){
   const headEl = document.getElementById('yearlyExcelHead');
   const bodyEl = document.getElementById('yearlyBreakdownBody');
+  const chipsEl = document.getElementById('annualPlanItemsChips');
   if(!headEl || !bodyEl) return;
 
   const curYM = selected();
   const y = String(forecastYear);
   document.getElementById('forecastYearLabel').textContent = y;
 
-  const defs = (state.reportDefaults||{})[y] || {salary:0, profit:0};
-  const sInp = document.getElementById('repDefSalary');
-  const pInp = document.getElementById('repDefProfit');
-  if(sInp && document.activeElement !== sInp) sInp.value = defs.salary || '';
-  if(pInp && document.activeElement !== pInp) pInp.value = defs.profit || '';
+  const items = state.annualPlanItems || [];
+  if(chipsEl){
+    chipsEl.innerHTML = items.map(it=>`
+      <span class="tag" style="cursor:pointer;border-color:${it.type==='income'?'var(--blue)':'var(--orange)'};color:${it.type==='income'?'var(--blue)':'var(--orange)'};padding:5px 10px" onclick="openEditAnnualPlanItem('${it.id}')">
+        ${it.type==='income'?'+':'−'} ${esc(it.title)}: ${fmtInt(it.amount)} (${formatYMArabic(it.start)} ← ${formatYMArabic(it.end)}) ✎
+      </span>
+    `).join('');
+  }
 
-  // Discover all distinct Income categories active in year y (or configured in incomeCategories)
-  const baseIncCats = ['راتب', 'أرباح', 'جمعيات'];
-  const recordedIncCats = new Set(baseIncCats);
-  (state.incomeCategories||[]).forEach(c=>{ if(c) recordedIncCats.add(c.trim()); });
-  (state.transactions||[]).filter(t=>t.type==='income' && String(t.date||'').startsWith(y)).forEach(t=>{
-    const c = String(t.category||'أخرى').trim() || 'أخرى';
-    recordedIncCats.add(c);
-  });
-  const incCols = [...recordedIncCats];
+  // Group manual items by distinct column names for Income & Expense
+  const incItems = items.filter(x=>x.type==='income');
+  const expItems = items.filter(x=>x.type==='expense');
+  const incCols = [...new Set(incItems.map(x=>x.title))];
+  const expCols = [...new Set(expItems.map(x=>x.title))];
 
-  // Build 12 months data
   const monthData = [];
   for(let m=1; m<=12; m++){
     const mk = y + '-' + String(m).padStart(2,'0');
-    const mTxs = monthTx(mk).filter(t=>t.type==='income');
-    const incByCat = {};
-    incCols.forEach(c => incByCat[c] = 0);
+    const incByCol = {};
+    const expByCol = {};
+    let totInc = 0, totExp = 0;
 
-    for(const t of mTxs){
-      let c = String(t.category||'أخرى').trim() || 'أخرى';
-      if(String(t.source||'').startsWith('salary:')) c = 'راتب';
-      incByCat[c] = round2((incByCat[c]||0) + (Number(t.amount)||0));
-    }
-    if(incByCat['راتب'] <= 0 && (Number(defs.salary)||0) > 0){
-      incByCat['راتب'] = round2(Number(defs.salary)||0);
-    }
-    if(incByCat['أرباح'] <= 0 && (Number(defs.profit)||0) > 0){
-      incByCat['أرباح'] = round2(Number(defs.profit)||0);
-    }
-    const totInc = round2(Object.values(incByCat).reduce((s,v)=>s+v, 0));
+    incCols.forEach(col => {
+      const valSum = incItems
+        .filter(it => it.title === col && mk >= it.start && mk <= it.end)
+        .reduce((s, it) => s + (Number(it.amount)||0), 0);
+      incByCol[col] = round2(valSum);
+      totInc = round2(totInc + valSum);
+    });
 
-    // Commitments breakdown from unified dues for month mk
-    const dues = getUnifiedMonthlyDues(mk);
-    let defSum = 0, monSum = 0, cardSum = 0;
-    const dueByItemName = {};
-    for(const it of dues.items){
-      if(it.categoryType === 'مستحقات مؤجلة') defSum = round2(defSum + it.amount);
-      else if(it.categoryType === 'التزامات شهرية') monSum = round2(monSum + it.amount);
-      else cardSum = round2(cardSum + it.amount);
-      const itemKey = String(it.title||'').trim();
-      if(itemKey) dueByItemName[itemKey] = round2((dueByItemName[itemKey]||0) + it.amount);
-    }
-    const totDue = round2(defSum + monSum + cardSum);
-    const net = round2(totInc - totDue);
+    expCols.forEach(col => {
+      const valSum = expItems
+        .filter(it => it.title === col && mk >= it.start && mk <= it.end)
+        .reduce((s, it) => s + (Number(it.amount)||0), 0);
+      expByCol[col] = round2(valSum);
+      totExp = round2(totExp + valSum);
+    });
 
-    monthData.push({ m, mk, incByCat, defSum, monSum, cardSum, dueByItemName, totInc, totDue, net });
+    const net = round2(totInc - totExp);
+    monthData.push({ m, mk, incByCol, expByCol, totInc, totExp, net });
   }
-
-  // Filter incCols so we show 'راتب', 'أرباح', 'جمعيات', and any income column that has > 0 in at least one month
-  const activeIncCols = incCols.filter(c => c==='راتب' || c==='أرباح' || c==='جمعيات' || monthData.some(md => (md.incByCat[c]||0) > 0));
-
-  // Collect all distinct individual commitment item names active in this year
-  const dueItemSet = new Set();
-  monthData.forEach(md => Object.keys(md.dueByItemName).forEach(k => dueItemSet.add(k)));
-  const activeDueItemCols = [...dueItemSet];
 
   headEl.innerHTML = `
     <tr>
       <th class="sticky-col">الشهر</th>
-      ${activeIncCols.map(c=>`<th style="color:var(--blue)">${esc(c==='راتب'?'المرتب':c)}</th>`).join('')}
-      <th style="color:var(--orange)">مستحقات مؤجلة</th>
-      <th style="color:var(--orange)">التزامات شهرية</th>
-      <th style="color:var(--orange)">أقساط البطاقات</th>
-      ${activeDueItemCols.map(dn=>`<th style="color:#ffd19a">${esc(dn)}</th>`).join('')}
+      ${incCols.map(c=>`<th style="color:var(--blue)">${esc(c)}</th>`).join('')}
+      ${expCols.map(c=>`<th style="color:var(--orange)">${esc(c)}</th>`).join('')}
       <th style="color:var(--blue);background:var(--surface)">إجمالي الدخل</th>
-      <th style="color:var(--orange);background:var(--surface)">إجمالي الالتزامات</th>
-      <th style="color:var(--mint);background:var(--surface)">صافي المتبقي</th>
+      <th style="color:var(--red);background:var(--surface)">إجمالي المصروفات</th>
+      <th style="color:var(--mint);background:var(--surface)">الصافي</th>
     </tr>
   `;
 
   const colSums = {
-    inc: Object.fromEntries(activeIncCols.map(c=>[c,0])),
-    dueItems: Object.fromEntries(activeDueItemCols.map(dn=>[dn,0])),
-    defSum: 0, monSum: 0, cardSum: 0, totInc: 0, totDue: 0, net: 0
+    inc: Object.fromEntries(incCols.map(c=>[c,0])),
+    exp: Object.fromEntries(expCols.map(c=>[c,0])),
+    totInc: 0, totExp: 0, net: 0
   };
 
   let rowsHtml = '';
   for(const md of monthData){
-    activeIncCols.forEach(c => { colSums.inc[c] = round2(colSums.inc[c] + (md.incByCat[c]||0)); });
-    activeDueItemCols.forEach(dn => { colSums.dueItems[dn] = round2(colSums.dueItems[dn] + (md.dueByItemName[dn]||0)); });
-    colSums.defSum = round2(colSums.defSum + md.defSum);
-    colSums.monSum = round2(colSums.monSum + md.monSum);
-    colSums.cardSum = round2(colSums.cardSum + md.cardSum);
+    incCols.forEach(c => { colSums.inc[c] = round2(colSums.inc[c] + (md.incByCol[c]||0)); });
+    expCols.forEach(c => { colSums.exp[c] = round2(colSums.exp[c] + (md.expByCol[c]||0)); });
     colSums.totInc = round2(colSums.totInc + md.totInc);
-    colSums.totDue = round2(colSums.totDue + md.totDue);
+    colSums.totExp = round2(colSums.totExp + md.totExp);
     colSums.net = round2(colSums.net + md.net);
 
     rowsHtml += `
       <tr class="${md.mk===curYM?'cur-row':''}">
         <td class="sticky-col"><b>${monthNamesAr[md.m-1]}</b></td>
-        ${activeIncCols.map(c=>`<td>${maskable(fmtInt(md.incByCat[c]||0))}</td>`).join('')}
-        <td>${maskable(fmtInt(md.defSum))}</td>
-        <td>${maskable(fmtInt(md.monSum))}</td>
-        <td>${maskable(fmtInt(md.cardSum))}</td>
-        ${activeDueItemCols.map(dn=>`<td>${maskable(fmtInt(md.dueByItemName[dn]||0))}</td>`).join('')}
+        ${incCols.map(c=>`<td>${maskable(fmtInt(md.incByCol[c]||0))}</td>`).join('')}
+        ${expCols.map(c=>`<td>${maskable(fmtInt(md.expByCol[c]||0))}</td>`).join('')}
         <td class="blue"><b>${maskable(fmtInt(md.totInc))}</b></td>
-        <td class="orange"><b>${maskable(fmtInt(md.totDue))}</b></td>
+        <td class="red"><b>${maskable(fmtInt(md.totExp))}</b></td>
         <td class="${md.net>=0?'mint':'red'}"><b>${maskable((md.net>0?'+':'')+fmtInt(md.net))}</b></td>
       </tr>
     `;
@@ -3115,25 +3589,14 @@ function renderYearlyExcelReport(){
   rowsHtml += `
     <tr class="sum-row">
       <td class="sticky-col"><b>الإجمالي</b></td>
-      ${activeIncCols.map(c=>`<td class="blue"><b>${maskable(fmtInt(colSums.inc[c]||0))}</b></td>`).join('')}
-      <td class="orange"><b>${maskable(fmtInt(colSums.defSum))}</b></td>
-      <td class="orange"><b>${maskable(fmtInt(colSums.monSum))}</b></td>
-      <td class="orange"><b>${maskable(fmtInt(colSums.cardSum))}</b></td>
-      ${activeDueItemCols.map(dn=>`<td style="color:#ffd19a"><b>${maskable(fmtInt(colSums.dueItems[dn]||0))}</b></td>`).join('')}
+      ${incCols.map(c=>`<td class="blue"><b>${maskable(fmtInt(colSums.inc[c]||0))}</b></td>`).join('')}
+      ${expCols.map(c=>`<td class="orange"><b>${maskable(fmtInt(colSums.exp[c]||0))}</b></td>`).join('')}
       <td class="blue"><b>${maskable(fmtInt(colSums.totInc))}</b></td>
-      <td class="orange"><b>${maskable(fmtInt(colSums.totDue))}</b></td>
+      <td class="red"><b>${maskable(fmtInt(colSums.totExp))}</b></td>
       <td class="${colSums.net>=0?'mint':'red'}"><b>${maskable((colSums.net>0?'+':'')+fmtInt(colSums.net))}</b></td>
     </tr>
   `;
   bodyEl.innerHTML = rowsHtml;
-}
-
-function saveReportDefaults(){
-  const y = String(forecastYear);
-  state.reportDefaults = state.reportDefaults || {};
-  state.reportDefaults[y] = { salary: num('repDefSalary'), profit: num('repDefProfit') };
-  persist();
-  toast('تم حفظ الدخل المتوقع لسنة ' + y);
 }
 
 
@@ -3219,9 +3682,9 @@ function showSalaryResult(){
 
 
 /* =========================================================
-   SETTINGS CATEGORIES TREE MANAGER
+   8.2 SETTINGS CATEGORIES TREE MANAGER (Income on Left, Expense on Right)
    ========================================================= */
-let settingsCatMode = 'expense';
+let settingsCatMode = 'income';
 let expandedSettingsMainCats = {};
 
 function onSettingsCatsFoldToggle(det){
@@ -3244,8 +3707,8 @@ function onSettingsCatsFoldToggle(det){
 
 function setSettingsCatTab(mode){
   settingsCatMode = mode;
-  document.getElementById('setCatTabExp').classList.toggle('active', mode==='expense');
-  document.getElementById('setCatTabInc').classList.toggle('active', mode==='income');
+  document.getElementById('setCatTabInc')?.classList.toggle('active', mode==='income');
+  document.getElementById('setCatTabExp')?.classList.toggle('active', mode==='expense');
   renderSettingsCategories();
 }
 
@@ -3321,6 +3784,8 @@ function renderSettingsCategories(){
   const container = document.getElementById('settingsCatsTreeContainer');
   if(!container) return;
   syncCategoryTrees();
+  document.getElementById('setCatTabInc')?.classList.toggle('active', settingsCatMode==='income');
+  document.getElementById('setCatTabExp')?.classList.toggle('active', settingsCatMode==='expense');
   const tree = settingsCatMode==='income' ? state.categoryTree.income : state.categoryTree.expense;
   const entries = Object.entries(tree||{});
   if(!entries.length){
@@ -3414,7 +3879,70 @@ function clearYMCell(){
   if(ymPickerState.onSelect) ymPickerState.onSelect('');
 }
 
-/* Backup, Restore, Update & Reset */
+/* 8.2 Auto Backup to Google Drive (Daily / Weekly / Monthly) & Manual Backup/Restore */
+function saveAutoDriveBackupFreq(freq){
+  state.prefs = state.prefs || {};
+  state.prefs.autoDriveFreq = freq || 'off';
+  persist();
+  toast(freq === 'off' ? 'تم إيقاف النسخ التلقائي لجوجل درايف' : 'تم تفعيل جدول النسخ التلقائي لجوجل درايف ✓');
+}
+
+async function exportBackupToGoogleDrive(silentAuto){
+  const fileName = 'x-wallet-drive-backup-' + today() + '.json';
+  const jsonStr = JSON.stringify(state, null, 2);
+  const blob = new Blob([jsonStr], {type: 'application/json'});
+
+  state.prefs = state.prefs || {};
+  state.prefs.lastDriveBackup = today();
+  state.prefs.lastBackupDate = today();
+  persist();
+
+  if(!silentAuto && navigator.canShare && navigator.share){
+    try{
+      const fileObj = new File([blob], fileName, {type: 'application/json'});
+      if(navigator.canShare({files: [fileObj]})){
+        await navigator.share({
+          title: 'X-Wallet Google Drive Backup',
+          text: 'نسخة احتياطية لتطبيق X-Wallet (اختر الحفظ في Google Drive)',
+          files: [fileObj]
+        });
+        toast('تمت مشاركة النسخة إلى Google Drive ✓');
+        return;
+      }
+    }catch(_){}
+  }
+
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = fileName;
+  a.click();
+  toast(silentAuto ? 'تم حفظ النسخة الدورية التلقائية ✓' : 'تم تجهيز ملف النسخة لرفعه إلى Google Drive ✓');
+}
+
+function checkScheduledDriveBackupOnBoot(){
+  const freq = state.prefs?.autoDriveFreq || 'off';
+  if(freq === 'off') return;
+  const last = state.prefs?.lastDriveBackup || '';
+  const nowDate = new Date();
+  let due = false;
+  if(!last){
+    due = true;
+  } else {
+    const lastDt = new Date(last + 'T00:00:00');
+    const diffDays = Math.floor((nowDate - lastDt) / (1000 * 60 * 60 * 24));
+    if(freq === 'daily' && diffDays >= 1) due = true;
+    else if(freq === 'weekly' && diffDays >= 7) due = true;
+    else if(freq === 'monthly' && diffDays >= 30) due = true;
+  }
+  if(due && (state.transactions?.length || state.accounts?.length)){
+    setTimeout(()=>{
+      showAppConfirm('نسخة Google Drive الدورية', 'حان موعد النسخة الاحتياطية التلقائية لجوجل درايف. هل تريد حفظها ورفعها الآن؟', ()=>{
+        exportBackupToGoogleDrive(false);
+      }, false);
+    }, 1200);
+  }
+}
+
 function openFilePicker(id){ const e=document.getElementById(id); if(e){ e.value=''; e.click(); } }
 function backup(){
   state.prefs = state.prefs || {};
@@ -3520,7 +4048,7 @@ function installPWA(){
   toast('من قائمة المتصفح ⋮ اختر «تثبيت التطبيق»');
 }
 
-/* Custom Centered Select Enhancer */
+/* 3.2 All Selects Use Custom App Centered Select Modal (Including repPeriodMode & actAccountFilter!) */
 let _activeNativeSelect = null;
 function closeCustomSelectModal(){
   const m = document.getElementById('customSelectModal');
@@ -3530,7 +4058,12 @@ function closeCustomSelectModal(){
 function openCustomSelectFor(sel){
   if(!sel) return;
   _activeNativeSelect = sel;
-  const rowLbl = sel.closest('.c-row')?.querySelector('label,.c-lbl')?.textContent?.replace(':','').trim() || 'اختر';
+  let rowLbl = sel.closest('.c-row')?.querySelector('label,.c-lbl')?.textContent?.replace(':','').trim();
+  if(!rowLbl){
+    if(sel.id === 'repPeriodMode') rowLbl = 'تحديد فترة التقرير';
+    else if(sel.id === 'actAccountFilter') rowLbl = 'فلترة حسب الحساب';
+    else rowLbl = 'اختر';
+  }
   document.getElementById('csModalTitle').textContent = rowLbl;
   const opts = [...sel.options];
   document.getElementById('csModalOptions').innerHTML = opts.map((o, idx)=>`
@@ -3551,12 +4084,16 @@ function pickCustomSelectOption(idx){
 }
 function syncCustomSelectTriggers(){
   document.querySelectorAll('select').forEach(sel=>{
-    if(sel.id === 'actAccountFilter' || sel.id === 'repPeriodMode') return;
     let trig = sel.nextElementSibling;
     if(!trig || !trig.classList.contains('custom-sel-trigger')){
       sel.style.display = 'none';
       trig = document.createElement('div');
       trig.className = 'custom-sel-trigger';
+      if(sel.id === 'repPeriodMode' || sel.id === 'actAccountFilter'){
+        trig.style.width = '100%';
+        trig.style.maxWidth = '100%';
+        trig.style.height = sel.id === 'actAccountFilter' ? '42px' : '34px';
+      }
       trig.innerHTML = '<span class="cs-val"></span><span class="cs-arr">▼</span>';
       trig.onclick = () => openCustomSelectFor(sel);
       sel.parentNode.insertBefore(trig, sel.nextSibling);
@@ -3575,7 +4112,7 @@ function renderAll(){
   renderSettingsCategories();
 }
 
-/* Horizontal Swipe Navigation (5 Main Screens + Sub-tabs, Left-to-Right Tab Order) */
+/* Horizontal Swipe Navigation */
 (function initSwipeNavigation(){
   const MAIN_PAGES = ['trans', 'reports', 'wallet', 'plan', 'settings'];
   const SUB_TABS = {
@@ -3658,7 +4195,7 @@ function renderAll(){
   }, {passive: true});
 })();
 
-/* Full UI Bilingual Translation Engine (Arabic <-> English) with Fixed Layout Directions */
+/* Bilingual Translation Engine */
 const UI_TEXT_PAIRS = [
   ['المعاملات', 'Transactions'],
   ['تحليل المعاملات', 'Analytics'],
@@ -3671,25 +4208,26 @@ const UI_TEXT_PAIRS = [
   ['الدخل', 'Income'],
   ['المصروفات', 'Expenses'],
   ['الصافي', 'Net'],
-  ['إجمالي أرصدة جميع الحسابات', 'Total Accounts Balance'],
-  ['＋ إضافة حساب جديد', '＋ Add New Account'],
+  ['إجمالي أرصدة الحسابات', 'Total Accounts Balance'],
+  ['إضافة حساب', 'Add Account'],
   ['الحسابات المسجلة', 'Registered Accounts'],
-  ['إجمالي أرصدة البطاقات (المستخدم حالياً)', 'Total Used Cards Balance'],
-  ['💳 إضافة بطاقة جديدة', '💳 Add New Card'],
+  ['إجمالي أرصدة البطاقات', 'Total Cards Balance'],
+  ['إضافة بطاقة', 'Add Card'],
   ['البطاقات المسجلة', 'Registered Cards'],
-  ['كل عمليات البطاقة', 'All Card Operations'],
   ['التقرير المالي السنوي', 'Yearly Financial Report'],
-  ['＋ إضافة التزام جديد', '＋ Add New Commitment'],
+  ['إضافة معاملة', 'Add Transaction'],
   ['مستحقات مؤجلة', 'Deferred Dues'],
   ['التزامات شهرية', 'Monthly Commitments'],
   ['معاملات بالبطاقة', 'Card Operations'],
   ['مستحقات الشهر', 'Monthly Dues'],
-  ['⚙ إعدادات عامة', '⚙ General Settings'],
-  ['💼 حاسبة المرتب (الشهرية والسنوية)', '💼 Salary Calculator'],
-  ['🏷 تخصيص الأقسام', '🏷 Customize Categories'],
-  ['💾 النسخ الاحتياطي', '💾 Backup & Restore'],
-  ['⟳ التحديثات', '⟳ Updates'],
-  ['⚠ مسح البيانات', '⚠ Wipe Data'],
+  ['جميع المستحقات', 'All Commitments'],
+  ['إعدادات عامة', 'General Settings'],
+  ['الخصوصية والأمان', 'Privacy & Security'],
+  ['حاسبة المرتب', 'Salary Calculator'],
+  ['تخصيص الأقسام', 'Customize Categories'],
+  ['النسخ الاحتياطي', 'Backup & Restore'],
+  ['التحديثات', 'Updates'],
+  ['مسح البيانات', 'Wipe Data'],
   ['تسجيل حركة جديدة', 'New Transaction'],
   ['مصروف', 'Expense'],
   ['دخل', 'Income'],
@@ -3701,7 +4239,8 @@ const UI_TEXT_PAIRS = [
   ['القسم', 'Category'],
   ['المبلغ', 'Amount'],
   ['رسوم', 'Fee'],
-  ['البيان / ملاحظة', 'Note / Memo'],
+  ['ملاحظات', 'Notes'],
+  ['الوصف', 'Description'],
   ['حفظ', 'Save'],
   ['إلغاء', 'Cancel'],
   ['إغلاق', 'Close']
@@ -3720,7 +4259,7 @@ function applyLanguageTranslations(lang){
     }
   }
   const searchInp = document.getElementById('actSearch');
-  if(searchInp) searchInp.placeholder = isEn ? 'Search memo, notes or category...' : 'بحث في البيان أو الملاحظات أو القسم...';
+  if(searchInp) searchInp.placeholder = isEn ? 'Search notes, description or category...' : 'بحث في الملاحظات أو الوصف أو القسم...';
   syncCustomSelectTriggers();
 }
 
@@ -3734,9 +4273,15 @@ if(comStartLbl) comStartLbl.textContent = formatYMArabic(curYM);
 setv('opPurchaseVal', curYM);
 const opPurLbl = document.getElementById('opPurchaseLabel');
 if(opPurLbl) opPurLbl.textContent = formatYMArabic(curYM);
+const defaultYrStart = String(forecastYear) + '-01';
+setv('annStartVal', defaultYrStart);
+const annStartLbl = document.getElementById('annStartLabel');
+if(annStartLbl) annStartLbl.textContent = formatYMArabic(defaultYrStart);
 setv('defDueDate', today());
 recalcMonthlyCommitmentEnd();
+recalcAnnualPlanItemEnd();
 updateBackupStatusUI();
 renderAll();
 recoverFromIndexedDBIfNeeded();
+checkScheduledDriveBackupOnBoot();
 try{if('serviceWorker'in navigator)window.addEventListener('load',()=>{navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'}).then(r=>r.update()).catch(()=>{});setTimeout(()=>checkForUpdate(true),1500);})}catch(e){}

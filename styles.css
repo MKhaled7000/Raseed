@@ -1199,3 +1199,262 @@ input, textarea, [contenteditable="true"] {
   color: var(--muted);
   margin-top: 4px;
 }
+
+
+/* =========================================================
+   X-Wallet V13.1 Refinements & New Components
+   ========================================================= */
+
+/* General 1: Unified Dimensions & Aesthetic Polish for Top-Right Page Title Card */
+.top-tab-title {
+  min-width: 138px;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 12px;
+  background: linear-gradient(145deg, var(--panel2), var(--surface2));
+  border: 1px solid var(--mint);
+  color: var(--mint);
+  font-size: .82rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  box-shadow: 0 4px 14px #0004, inset 0 1px 0 #ffffff14;
+  letter-spacing: -.1px;
+}
+
+/* 8.2 Icon + Text spacing in Settings & Fold Headers */
+.ic-txt {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.ic-txt i {
+  font-style: normal;
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  background: var(--surface2);
+  border: 1px solid var(--line);
+  font-size: .82rem;
+}
+
+/* 3.3.2, 4.3.1, 5.3.1, 6.2 Framed Section Header Card */
+.sec-title-card {
+  direction: ltr;
+  background: linear-gradient(150deg, var(--panel2), var(--panel));
+  border: 1px solid var(--line2);
+  border-radius: 13px;
+  padding: 9px 14px;
+  margin: 14px 0 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.sec-title-card h2 {
+  font-size: .88rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--text);
+}
+
+/* 1.5 Calm Frame Highlight for Segmented Buttons (شراء / تقسيط) instead of solid green */
+.seg-btn.active {
+  background: #43d6b21a !important;
+  color: var(--mint) !important;
+  border: 1px solid var(--mint) !important;
+  border-radius: 9px;
+}
+
+/* 1.6 Lighter Upper Section in Quick Entry matching Income/Expense/Transfer tab boxes */
+.qm-form-scroll {
+  background: var(--panel2);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 6px 12px;
+  margin-top: 2px;
+}
+.qm-form-scroll .c-row:last-child {
+  border-bottom: 0;
+}
+.qm-desc-textarea {
+  width: 70%;
+  max-width: 70%;
+  min-height: 48px;
+  background: var(--surface);
+  border: 1px solid var(--line2);
+  border-radius: 9px;
+  padding: 6px 8px;
+  color: var(--text);
+  font-size: .78rem;
+  resize: none;
+  outline: none;
+  text-align: left;
+  direction: ltr;
+}
+.qm-desc-textarea:focus {
+  border-color: var(--mint);
+}
+
+/* 3.1 Two Summary Boxes Under Income & Expenses Tabs in Reports */
+.rep-dual-totals {
+  direction: ltr;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.rep-total-card {
+  background: linear-gradient(150deg, var(--panel2), var(--panel));
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 8px 10px;
+  text-align: center;
+}
+.rep-total-card.active-inc {
+  border-color: var(--blue);
+  background: #73a7ff12;
+}
+.rep-total-card.active-exp {
+  border-color: var(--red);
+  background: #ff728512;
+}
+.rep-total-card small {
+  display: block;
+  font-size: .66rem;
+  color: var(--muted);
+}
+.rep-total-card b {
+  display: block;
+  font-size: .88rem;
+  margin-top: 3px;
+  direction: ltr;
+}
+
+/* 3.3.3 Subcategory Breakdown 3-Column Table (الصنف | النسبة | المبلغ) */
+.subcat-table {
+  width: 100%;
+  border-collapse: collapse;
+  direction: ltr;
+  font-size: .78rem;
+}
+.subcat-table th,
+.subcat-table td {
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+}
+.subcat-table th {
+  background: var(--surface);
+  color: var(--muted);
+  font-size: .72rem;
+}
+.subcat-table td.num,
+.subcat-table th.num {
+  text-align: right;
+  direction: ltr;
+}
+.subcat-table tr.total-row td {
+  background: var(--surface2);
+  color: var(--mint);
+  border-bottom: 1.5px solid var(--line2);
+}
+
+/* 6.2 & 6.3 Structured Columns for Monthly Dues & All Commitments */
+.com-table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.com-grid-head,
+.com-grid-row {
+  direction: ltr;
+  display: grid;
+  grid-template-columns: 1.3fr 1fr 0.9fr;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 10px;
+  border-bottom: 1px solid var(--line);
+  font-size: .76rem;
+  text-align: left;
+}
+.com-grid-head {
+  background: var(--surface);
+  color: var(--muted);
+  font-size: .7rem;
+  border-bottom: 1px solid var(--line2);
+}
+.com-all-table {
+  width: 100%;
+  border-collapse: collapse;
+  direction: ltr;
+  font-size: .73rem;
+}
+.com-all-table th,
+.com-all-table td {
+  padding: 9px 7px;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  white-space: nowrap;
+}
+.com-all-table th {
+  background: var(--surface);
+  color: var(--muted);
+  font-size: .68rem;
+}
+
+/* 8.1 Developer & App Profile Card in More Page */
+.dev-profile-card {
+  direction: ltr;
+  background: linear-gradient(145deg, var(--panel2), var(--surface));
+  border: 1px solid var(--line2);
+  border-radius: 18px;
+  padding: 14px 16px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  box-shadow: 0 8px 24px #0003;
+}
+.dev-card-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.dev-card-logo {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: #0b1220;
+  border: 1px solid var(--mint);
+  padding: 4px;
+  flex-shrink: 0;
+}
+.dev-card-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 10px;
+}
+.dev-card-info b {
+  display: block;
+  font-size: 1.02rem;
+  font-weight: 700;
+  color: var(--text);
+}
+.dev-card-info span {
+  display: block;
+  font-size: .72rem;
+  color: var(--text-sub);
+  margin-top: 2px;
+}
+.dev-card-info small {
+  display: block;
+  font-size: .64rem;
+  color: var(--muted);
+  margin-top: 3px;
+}
