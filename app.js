@@ -316,6 +316,8 @@ window.addEventListener('popstate', function(){
   if(am && am.classList.contains('show')){ closeAccountModal(); try{history.pushState({xwGuard:2},'');}catch(_){} return; }
   const qm = document.getElementById('quickModal');
   if(qm && qm.classList.contains('show')){ closeQuickModal(); try{history.pushState({xwGuard:2},'');}catch(_){} return; }
+  const cm = document.getElementById('catsManagerModal');
+  if(cm && cm.classList.contains('show')){ closeCategoriesManagerModal(); try{history.pushState({xwGuard:2},'');}catch(_){} return; }
   const sm = document.getElementById('statementFullModal');
   if(sm && sm.classList.contains('show')){ closeFullStatementModal(); try{history.pushState({xwGuard:2},'');}catch(_){} return; }
   if(activeCatDrillState){ closeCatDetailModal(); try{history.pushState({xwGuard:2},'');}catch(_){} return; }
@@ -730,35 +732,51 @@ function updateTopTabTitle(pageId){
 function updateFabVisibility(){
   const fab = document.querySelector('.fab');
   const fabS = document.getElementById('fabSearchBtn');
+  const fabF = document.getElementById('fabFilterBtn');
   const activePage = document.querySelector('.screen.active')?.id || 'trans';
   const show = (activePage === 'trans' && activeTransSubTab === 'daily');
   if(fab) fab.style.display = show ? 'grid' : 'none';
   if(fabS){
     fabS.style.display = show ? 'grid' : 'none';
-    const isFilterOpen = document.getElementById('mmSearchBox')?.style.display !== 'none';
     const hasQ = !!(document.getElementById('actSearch')?.value || '').trim();
-    const active = isFilterOpen || hasQ || (typeof hasAnyTransAdvFilter === 'function' && hasAnyTransAdvFilter());
-    fabS.classList.toggle('active', active);
-    fabS.textContent = active ? '✕' : '🔍';
+    fabS.classList.toggle('active', hasQ);
+    fabS.textContent = hasQ ? '✕' : '🔍';
+  }
+  if(fabF){
+    fabF.style.display = show ? 'grid' : 'none';
+    const isFilterOpen = document.getElementById('mmSearchBox')?.style.display !== 'none';
+    const hasAdv = (typeof hasAnyTransAdvFilter === 'function' && hasAnyTransAdvFilter());
+    fabF.classList.toggle('active', isFilterOpen || hasAdv);
   }
 }
 
-function toggleSearchFromFab(){
+function toggleFilterFromFab(){
   const box = document.getElementById('mmSearchBox');
-  const inp = document.getElementById('actSearch');
   const isFilterOpen = box && box.style.display !== 'none';
-  const hasQ = !!(inp?.value || '').trim();
-  if(isFilterOpen || hasQ || hasAnyTransAdvFilter()){
+  if(isFilterOpen || hasAnyTransAdvFilter()){
     closeAndClearSearchFilter();
   } else {
     toggleSearchFilterGrid();
-    setTimeout(()=>inp?.focus(), 60);
+  }
+  updateFabVisibility();
+}
+
+function toggleSearchFromFab(){
+  const inp = document.getElementById('actSearch');
+  const hasQ = !!(inp?.value || '').trim();
+  if(hasQ){
+    if(inp) inp.value = '';
+    onTransactionsSearchInput();
+  } else {
+    inp?.focus();
+    inp?.scrollIntoView({behavior:'smooth', block:'center'});
   }
   updateFabVisibility();
 }
 
 function go(id, btn){
   if(document.getElementById('statementFullModal')?.classList.contains('show')) closeFullStatementModal();
+  if(document.getElementById('catsManagerModal')?.classList.contains('show')) closeCategoriesManagerModal();
   document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));
   const t = document.getElementById(id);
   if(t) t.classList.add('active');
@@ -1814,6 +1832,7 @@ function openQmNativeDatePicker(){
   }catch(_){ inp.focus(); }
 }
 
+document.getElementById('qmDesc')?.addEventListener('input', autoResizeQmDesc);
 function onQmDescFocus(){
   document.getElementById('quickModal')?.classList.add('hide-bottom-dock');
 }
@@ -1897,7 +1916,22 @@ function qmCalcPress(key){
   updateQmCalcDisplay();
 }
 
+function autoResizeQmDesc(){
+  const ta = document.getElementById('qmDesc');
+  if(!ta) return;
+  ta.style.height = 'auto';
+  ta.style.height = Math.max(54, ta.scrollHeight) + 'px';
+}
+
 function setQmDockMode(mode, calcFieldId){
+  if(mode === ''){
+    qmState.dock = '';
+    document.getElementById('quickModal')?.classList.add('hide-bottom-dock');
+    ['qmAccTrigger','qmToAccTrigger','qmCatTrigger'].forEach(id=>{
+      document.getElementById(id)?.classList.remove('focused-field');
+    });
+    return;
+  }
   document.getElementById('quickModal')?.classList.remove('hide-bottom-dock');
   if(document.activeElement && (document.activeElement.id === 'qmDesc' || document.activeElement.id === 'qmNote')){
     document.activeElement.blur();
@@ -2021,7 +2055,7 @@ function openEditQuickTx(id){
     cardMode: cardMode,
     editId: t.id,
     editKind: 'tx',
-    dock: 'cat'
+    dock: ''
   };
   document.getElementById('qmHeaderTitle').textContent = 'تعديل معاملة';
   qmState.calcExpr = String(t.amount || '');
@@ -2031,11 +2065,12 @@ function openEditQuickTx(id){
   setv('qmFee', '');
   setv('qmNote', String(t.title||'').replace(/^شراء بالبطاقة\s*-\s*/,''));
   setv('qmDesc', t.description || '');
+  autoResizeQmDesc();
   document.getElementById('qmFeeRow').style.display = 'none';
   updateQmEditActionButtons();
   setQuickTxType(qmState.type);
   renderQuickPickers();
-  setQmDockMode('cat');
+  setQmDockMode('');
   document.getElementById('quickModal').classList.add('show');
 }
 
@@ -2050,7 +2085,7 @@ function openEditLedgerModal(l){
     cardMode: 'swipe',
     editId: l.id,
     editKind: 'ledger',
-    dock: 'toAcc'
+    dock: ''
   };
   document.getElementById('qmHeaderTitle').textContent = 'تعديل معاملة';
   qmState.calcExpr = String(l.amount || '');
@@ -2060,6 +2095,7 @@ function openEditLedgerModal(l){
   setv('qmFee', l.fee || '');
   setv('qmNote', l.note || '');
   setv('qmDesc', l.description || '');
+  autoResizeQmDesc();
   updateQmEditActionButtons();
   setQuickTxType('transfer');
   const feeRow = document.getElementById('qmFeeRow');
@@ -2069,7 +2105,7 @@ function openEditLedgerModal(l){
     if(feeBtn) feeBtn.classList.add('active');
   }
   renderQuickPickers();
-  setQmDockMode('toAcc');
+  setQmDockMode('');
   document.getElementById('quickModal').classList.add('show');
 }
 
@@ -2107,7 +2143,7 @@ function setQuickTxType(t){
     }
   }
   renderQuickPickers();
-  setQmDockMode(qmState.editId ? (isTrn ? 'toAcc' : 'cat') : 'acc');
+  setQmDockMode(qmState.editId ? '' : 'acc');
 }
 
 function setQmCardMode(mode){
@@ -2793,7 +2829,8 @@ function closeAccountModal(){
 function openAccountStatement(id){
   const acc = state.accounts.find(a=>a.id===id);
   if(!acc) return;
-  activeStatementState = { kind:'account', id, year:activeYear, month:activeMonth, allMonths:false };
+  activeStatementState = { kind:'account', id, year:activeYear, month:activeMonth, mode:'monthly' };
+  setv('stmtSearchInp', '');
   renderFullStatementModalContent();
   document.getElementById('statementFullModal').classList.add('show');
 }
@@ -2801,7 +2838,8 @@ function openAccountStatement(id){
 function openCardStatement(cardId){
   const card = state.cards.find(c=>c.id===cardId);
   if(!card) return;
-  activeStatementState = { kind:'card', id:cardId, year:activeYear, month:activeMonth, allMonths:false };
+  activeStatementState = { kind:'card', id:cardId, year:activeYear, month:activeMonth, mode:'monthly' };
+  setv('stmtSearchInp', '');
   renderFullStatementModalContent();
   document.getElementById('statementFullModal').classList.add('show');
 }
@@ -2811,49 +2849,63 @@ function closeFullStatementModal(){
   activeStatementState = null;
 }
 
-function toggleStatementAllMonths(){
-  if(!activeStatementState) return;
-  activeStatementState.allMonths = !activeStatementState.allMonths;
-  renderFullStatementModalContent();
-}
-
 function shiftStatementMonth(delta){
   if(!activeStatementState) return;
-  activeStatementState.allMonths = false;
-  let m = activeStatementState.month + delta;
-  let y = activeStatementState.year;
-  if(m < 1){ m = 12; y -= 1; }
-  else if(m > 12){ m = 1; y += 1; }
-  activeStatementState.month = m;
-  activeStatementState.year = y;
+  if(activeStatementState.mode === 'yearly'){
+    activeStatementState.year += delta;
+  } else {
+    activeStatementState.mode = 'monthly';
+    let m = activeStatementState.month + delta;
+    let y = activeStatementState.year;
+    if(m < 1){ m = 12; y -= 1; }
+    else if(m > 12){ m = 1; y += 1; }
+    activeStatementState.month = m;
+    activeStatementState.year = y;
+  }
   renderFullStatementModalContent();
 }
 
-function openStatementPeriodPicker(){
+function openStatementPeriodModeDialog(){
+  if(!activeStatementState) return;
+  const curMode = activeStatementState.mode || 'monthly';
+  const html = `
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <button type="button" class="cs-opt-btn ${curMode==='monthly'?'selected':''}" onclick="closeAppDialog();openStatementMonthPicker()">
+        <span>📅 عرض بالشهر (اختيار شهر وسنة)</span><span>${curMode==='monthly'?'●':'○'}</span>
+      </button>
+      <button type="button" class="cs-opt-btn ${curMode==='yearly'?'selected':''}" onclick="closeAppDialog();setStatementYearMode()">
+        <span>🗓 عرض بالسنة (${activeStatementState.year})</span><span>${curMode==='yearly'?'●':'○'}</span>
+      </button>
+    </div>
+  `;
+  showAppCustomForm('فترة كشف الحساب', html, null, true);
+}
+
+function setStatementYearMode(){
+  if(!activeStatementState) return;
+  activeStatementState.mode = 'yearly';
+  renderFullStatementModalContent();
+}
+
+function openStatementMonthPicker(){
   if(!activeStatementState) return;
   openCompactYMPicker(null, false, (chosenYM)=>{
     const [y,m] = chosenYM.split('-').map(Number);
     activeStatementState.year = y;
     activeStatementState.month = m;
-    activeStatementState.allMonths = false;
+    activeStatementState.mode = 'monthly';
     renderFullStatementModalContent();
   });
 }
 
 function renderFullStatementModalContent(){
   if(!activeStatementState) return;
-  const { kind, id, year, month, allMonths } = activeStatementState;
+  const { kind, id, year, month, mode } = activeStatementState;
+  const isYearly = (mode === 'yearly');
   const isEn = (state.prefs?.lang === 'en');
   const ym = String(year) + '-' + String(month).padStart(2,'0');
-
-  const allBtn = document.getElementById('stmtAllMonthsBtn');
-  if(allBtn){
-    allBtn.classList.toggle('active', !!allMonths);
-    allBtn.style.borderColor = allMonths ? 'var(--mint)' : 'var(--line2)';
-    allBtn.style.color = allMonths ? 'var(--mint)' : 'var(--text)';
-    allBtn.textContent = allMonths ? 'عرض بالشهر' : 'كل الشهور';
-  }
-  document.getElementById('stmtPeriodLabel').textContent = allMonths ? 'كل الشهور' : formatYMArabic(ym);
+  const yStr = String(year);
+  document.getElementById('stmtPeriodLabel').textContent = isYearly ? ('سنة ' + yStr) : formatYMArabic(ym);
 
   let combined = [];
   const topTitleEl = document.getElementById('stmtTopTabTitle');
@@ -2865,11 +2917,11 @@ function renderFullStatementModalContent(){
     document.getElementById('stmtModalTitle').textContent = acc ? acc.name : 'الحساب';
 
     const txItems = (state.transactions||[])
-      .filter(t => t.accountId===id && (allMonths || monthKey(t.date)===ym))
+      .filter(t => t.accountId===id && (isYearly ? String(t.date||'').startsWith(yStr) : monthKey(t.date)===ym))
       .map((x, idx)=>({...x, _kind:'tx', _order:getItemTimestampOrder(x, idx)}));
 
     const ledItems = (state.ledger||[])
-      .filter(l => (l.from===id || l.to===id) && (allMonths || monthKey(l.date)===ym))
+      .filter(l => (l.from===id || l.to===id) && (isYearly ? String(l.date||'').startsWith(yStr) : monthKey(l.date)===ym))
       .map((l, idx)=>{
         const fromA = state.accounts.find(a=>a.id===l.from)?.name || (isEn?'Cash':'كاش');
         const toA = state.accounts.find(a=>a.id===l.to)?.name || (isEn?'Cash':'كاش');
@@ -2923,7 +2975,7 @@ function renderFullStatementModalContent(){
     }
 
     combined = (state.transactions||[]).filter(t=>{
-      if(!allMonths && monthKey(t.date) !== ym) return false;
+      if(isYearly ? !String(t.date||'').startsWith(yStr) : monthKey(t.date) !== ym) return false;
       if(t.source && String(t.source).startsWith('card-purchase:')){
         const opId = String(t.source).replace('card-purchase:','');
         if(cardOpIds.has(opId)) return true;
@@ -2986,7 +3038,7 @@ function renderFullStatementModalContent(){
 
   document.getElementById('stmtTransactionsFeed').innerHTML = buildDailyGroupedFeedHtml(
     combined,
-    `لا توجد معاملات مسجلة في (${allMonths ? 'كل الشهور' : formatYMArabic(ym)}).`
+    `لا توجد معاملات مسجلة في (${isYearly ? ('سنة '+yStr) : formatYMArabic(ym)}).`
   );
 }
 
@@ -3352,6 +3404,11 @@ function recalcMonthlyCommitmentEnd(){
   setv('comEndAutoLabel', formatYMArabic(endYM));
 }
 
+function selectOpMonthsPill(mVal, btn){
+  setv('opMonths', mVal);
+  document.querySelectorAll('#opMonthsPills .m-pill').forEach(b=>b.classList.toggle('active', b===btn));
+  showCreditQuote();
+}
 function setCardOpType(t){
   setv('opType', t);
   document.getElementById('segOpSwipe')?.classList.toggle('active', t==='swipe');
@@ -3809,7 +3866,7 @@ function renderPlanScreen(){
                 <td style="text-align:right;direction:ltr"><b>${maskable(fmtNum(it.amount))}</b></td>
                 <td style="text-align:right;direction:ltr" class="mint">${maskable(fmtNum(it.paid))}</td>
                 <td style="text-align:right;direction:ltr" class="${left>0?'orange':'mint'}"><b>${maskable(fmtNum(left))}</b></td>
-                <td><span class="tag" style="color:${left>0?'var(--orange)':'var(--mint)'}">${left>0?'سداد':'مسدد ✓'}</span></td>
+                <td><span class="tag" style="color:${left>0?'var(--orange)':'var(--mint)'}">${left>0?'سداد':'مسدد'}</span></td>
               </tr>
             `;
           }).join('')}
@@ -3845,7 +3902,7 @@ function renderAllCommitmentsMasterTable(){
       title: c.title,
       typeLabel: isOnce ? 'مستحقات' : 'شهري',
       amountVal: Number(c.amount)||0,
-      durLabel: isOnce ? 'مرة واحدة' : (durNum ? `${durNum} شهر` : 'شهري'),
+      durLabel: isOnce ? 'مرة' : (durNum ? `${durNum} ش` : 'شهري'),
       startLabel: formatYMArabic(startYM),
       endLabel: isOnce ? '—' : formatYMArabic(endYM),
       order: getItemTimestampOrder(c, idx)
@@ -3862,7 +3919,7 @@ function renderAllCommitmentsMasterTable(){
       title: op.title,
       typeLabel: 'بطاقة',
       amountVal: isInst ? (Number(op.installment)||0) : (Number(op.amount)||0),
-      durLabel: isInst ? `${op.months} شهور` : 'مرة واحدة',
+      durLabel: isInst ? `${op.months} ش` : 'مرة',
       startLabel: formatYMArabic(firstM),
       endLabel: isInst ? formatYMArabic(lastM) : '—',
       order: getItemTimestampOrder(op, 50000 + idx)
@@ -5039,7 +5096,7 @@ function renderAll(){
     if(e.touches.length !== 1) { ignoreTouch = true; return; }
     if(document.querySelector('.modal.show')) { ignoreTouch = true; return; }
     const tgt = e.target;
-    if(tgt && tgt.closest('input, textarea, select, .excel-table-wrap, [contenteditable="true"]')) {
+    if(tgt && tgt.closest('input, textarea, select, .excel-table-wrap, .com-table-wrap, .com-all-table, .yr-table-wrap, [contenteditable="true"]')) {
       ignoreTouch = true;
       return;
     }
@@ -5190,7 +5247,7 @@ try{
           if(newWorker){
             newWorker.addEventListener('statechange', ()=>{
               if(newWorker.state === 'installed' && navigator.serviceWorker.controller){
-                toast('تم تحميل تحديث جديد للتطبيق تلقائياً ✓');
+                checkForUpdate(false);
               }
             });
           }

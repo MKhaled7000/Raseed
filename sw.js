@@ -1,4 +1,4 @@
-const CACHE_NAME = 'x-wallet-v13.6';
+const CACHE_NAME = 'x-wallet-v13.7';
 const ASSETS = [
   './',
   './index.html',
@@ -15,7 +15,6 @@ const ASSETS = [
 ];
 
 self.addEventListener('install', event => {
-  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => Promise.allSettled(ASSETS.map(u => cache.add(u))))
   );

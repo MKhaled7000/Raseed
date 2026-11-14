@@ -7,7 +7,7 @@
    - Separate IndexedDB Store for Auto-Snapshots (Fixes 8.2MB vs 3MB backup size)
    - Selective Screen Rendering on Persist (Instant Save Speed)
    ========================================================= */
-const APP_VERSION = '13.6';
+const APP_VERSION = '13.7';
 const APP_BUILD = '2026-11-14';
 const KEY = 'raseed_mobile_v2';
 const SNAP_KEY = 'raseed_auto_snapshots_v1';
@@ -163,51 +163,62 @@ function getSanitizedStateForBackup(rawState){
   });
 })();
 
-/* 7. Touch & Pointer Drag-to-Reorder Helper for Categories & Subcategories (5.1) */
+/* 5.1 Smooth Fluid Touch/Pointer Drag-to-Reorder Helper */
 function initDragReorderContainer(containerEl, itemSelector, handleSelector, onReorderDone){
   if(!containerEl) return;
-  let dragItem = null;
-  let startY = 0;
-
   containerEl.querySelectorAll(handleSelector).forEach(handle => {
     handle.style.touchAction = 'none';
     handle.onpointerdown = function(ev){
       ev.preventDefault();
       ev.stopPropagation();
-      const item = handle.closest(itemSelector);
-      if(!item) return;
-      dragItem = item;
-      startY = ev.clientY;
+      const dragItem = handle.closest(itemSelector);
+      if(!dragItem) return;
+      const startY = ev.clientY;
+      let lastTop = dragItem.getBoundingClientRect().top;
       dragItem.classList.add('dragging-cat-row');
+      dragItem.style.position = 'relative';
+      dragItem.style.zIndex = '20';
+      dragItem.style.transition = 'none';
       try{ handle.setPointerCapture(ev.pointerId); }catch(_){}
 
       const onMove = (mev) => {
-        if(!dragItem) return;
         const curY = mev.clientY;
+        const delta = curY - startY;
+        const currentRect = dragItem.getBoundingClientRect();
+        const offsetAdjust = currentRect.top - lastTop;
+        dragItem.style.transform = `translateY(${delta - (currentRect.top - lastTop - delta)}px)`;
+        // Simpler, jitter-free swap + continuous finger tracking:
         const siblings = [...containerEl.querySelectorAll(':scope > ' + itemSelector)];
         for(const sib of siblings){
           if(sib === dragItem) continue;
           const rect = sib.getBoundingClientRect();
           const midY = rect.top + rect.height / 2;
-          if(curY < midY && dragItem.compareDocumentPosition(sib) & Node.DOCUMENT_POSITION_PRECEDING){
+          if(curY < midY && (dragItem.compareDocumentPosition(sib) & Node.DOCUMENT_POSITION_PRECEDING)){
+            const prevTop = dragItem.getBoundingClientRect().top;
             containerEl.insertBefore(dragItem, sib);
+            lastTop += (dragItem.getBoundingClientRect().top - prevTop);
             break;
-          } else if(curY > midY && dragItem.compareDocumentPosition(sib) & Node.DOCUMENT_POSITION_FOLLOWING){
+          } else if(curY > midY && (dragItem.compareDocumentPosition(sib) & Node.DOCUMENT_POSITION_FOLLOWING)){
+            const prevTop = dragItem.getBoundingClientRect().top;
             containerEl.insertBefore(dragItem, sib.nextSibling);
+            lastTop += (dragItem.getBoundingClientRect().top - prevTop);
             break;
           }
         }
+        dragItem.style.transform = `translateY(${Math.max(-45, Math.min(45, (curY - startY) * 0.28))}px) scale(1.015)`;
       };
 
       const onUp = (uev) => {
-        if(!dragItem) return;
         dragItem.classList.remove('dragging-cat-row');
+        dragItem.style.position = '';
+        dragItem.style.zIndex = '';
+        dragItem.style.transform = '';
+        dragItem.style.transition = '';
         try{ handle.releasePointerCapture(uev.pointerId); }catch(_){}
         handle.removeEventListener('pointermove', onMove);
         handle.removeEventListener('pointerup', onUp);
         handle.removeEventListener('pointercancel', onUp);
         const orderedNames = [...containerEl.querySelectorAll(':scope > ' + itemSelector)].map(el => el.getAttribute('data-cat-name')).filter(Boolean);
-        dragItem = null;
         if(onReorderDone && orderedNames.length) onReorderDone(orderedNames);
       };
 

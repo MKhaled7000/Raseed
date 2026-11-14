@@ -9,7 +9,7 @@
    ========================================================= */
 let activeReportTab = 'exp';
 let reportPeriodMode = 'monthly';
-let reportYear = activeYear;
+let reportYear = new Date().getFullYear();
 let mainRepChartOpen = false;
 let catDrillChartOpen = false;
 

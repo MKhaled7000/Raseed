@@ -2600,3 +2600,159 @@ details.fold[open] > summary .fold-arrow {
 nav.bottom {
   z-index: 55 !important;
 }
+
+
+/* =========================================================
+   X-Wallet V13.7 Complete UI, Layout & Usability Upgrades
+   ========================================================= */
+
+/* 1.1 Wider, More Comfortable Edit Pencil & Add Buttons for Main/Sub Categories */
+.cat-head-frame {
+  height: 32px !important;
+  border-radius: 10px !important;
+}
+.cat-head-frame .chf-btn {
+  width: 34px !important;
+  font-size: .92rem !important;
+}
+.cat-head-frame .chf-lbl {
+  padding: 0 9px !important;
+  font-size: .74rem !important;
+  line-height: 30px !important;
+}
+
+/* 1.2 Full-Page Scroll for Quick Entry Upper Section (No cramped internal scroll inside Description) */
+#quickModal .sheet.fullpage-sheet {
+  overflow-y: auto !important;
+}
+#quickModal .qm-form-scroll {
+  flex: 0 0 auto !important;
+  overflow-y: visible !important;
+}
+#quickModal .qm-desc-textarea.frameless-desc {
+  min-height: 54px !important;
+  height: auto !important;
+  overflow-y: hidden !important;
+}
+
+/* 2.1 Completely Separate Summary Stats Card (Income / Expenses / Net) from Search & Month Card */
+.mm-stats-card {
+  background: linear-gradient(150deg, var(--panel2), var(--panel));
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 8px 10px;
+  margin-bottom: 10px;
+}
+
+/* 2.2 Floating Filter Button Above Floating Search Lens Button */
+.fab-filter {
+  position: fixed;
+  bottom: 198px;
+  right: 23px;
+  left: auto;
+  z-index: 12;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  border: 2px solid var(--blue);
+  background: var(--panel2);
+  color: var(--blue);
+  box-shadow: 0 6px 20px #0006;
+  display: grid;
+  place-items: center;
+}
+.fab-filter.active {
+  background: var(--blue);
+  color: #061529;
+}
+@media(min-width:560px){
+  .fab-filter { right: calc(50% - 240px); left: auto; }
+}
+
+/* 4.1 Installment Months Number Pills (3 - 6 - 9 - 12 - 15 - 18 - 24) */
+.months-pill-bar {
+  width: 64%;
+  max-width: 64%;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 3px;
+}
+.months-pill-bar .m-pill {
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid var(--line2);
+  background: var(--surface2);
+  color: var(--text-sub);
+  font-size: .74rem;
+  font-weight: 700;
+  padding: 0;
+  display: grid;
+  place-items: center;
+}
+.months-pill-bar .m-pill.active {
+  border-color: var(--mint);
+  background: #43d6b226;
+  color: var(--mint);
+}
+
+/* 4.2 Vertical Column Borders in Monthly Dues & All Commitments Tables */
+.com-all-table th,
+.com-all-table td {
+  border-right: 1px solid var(--line) !important;
+  padding: 8px 7px !important;
+}
+.com-all-table th:last-child,
+.com-all-table td:last-child {
+  border-right: 0 !important;
+}
+
+/* 5.2 Full-Page Categories Manager Trigger Card in Settings */
+.fold-link-card {
+  direction: ltr;
+  background: linear-gradient(150deg, var(--panel2), var(--panel));
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  margin: 10px 0;
+  padding: 13px 15px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 700;
+  font-size: .84rem;
+  cursor: pointer;
+}
+#catsManagerModal.with-bottom-nav {
+  z-index: 45 !important;
+}
+
+/* 6.1 Exact Equal Width Between Month Stepper (.ym-stepper) and Top Tab Title Box (.top-tab-title) */
+.top-tab-title,
+.ym-stepper {
+  width: 156px !important;
+  min-width: 156px !important;
+  max-width: 156px !important;
+  box-sizing: border-box !important;
+}
+.ym-stepper button.step-label {
+  flex: 1 !important;
+  min-width: 0 !important;
+  padding: 4px 4px !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+/* 6.2 Fix White Search Input Background in Statement Modal (.mm-inline-search-bar input) */
+.mm-inline-search-bar input {
+  flex: 1;
+  min-width: 0;
+  height: 100% !important;
+  background: transparent !important;
+  border: 0 !important;
+  padding: 0 !important;
+  color: var(--text) !important;
+  font-size: .78rem !important;
+  outline: none !important;
+  text-align: right;
+  direction: rtl;
+}
