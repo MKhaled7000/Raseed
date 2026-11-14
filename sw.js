@@ -1,4 +1,4 @@
-const CACHE_NAME = 'x-wallet-v13.7';
+const CACHE_NAME = 'x-wallet-v13.8';
 const ASSETS = [
   './',
   './index.html',
@@ -32,7 +32,13 @@ self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
   const url = new URL(event.request.url);
 
-  // 1. Offline Font Caching (Google Fonts stylesheets & font binaries cached permanently for offline use)
+  // Always fetch version.json fresh from network so update notification appears
+  if (url.pathname.endsWith('version.json')) {
+    event.respondWith(fetch(event.request, { cache: 'no-store' }).catch(() => caches.match(event.request)));
+    return;
+  }
+
+  // Offline Font & Library Caching
   if (url.hostname.includes('fonts.googleapis.com') || url.hostname.includes('fonts.gstatic.com') || url.hostname.includes('cdnjs.cloudflare.com')) {
     event.respondWith(
       caches.match(event.request).then(cached => {
@@ -49,16 +55,18 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // 2. Network-First for App Shell (HTML, CSS, JS, version.json) so new updates arrive automatically without clearing cache!
+  // Strict Cache-First for App Shell so updates NEVER apply silently until user clicks "تحديث"
   if (url.origin === self.location.origin) {
     event.respondWith(
-      fetch(event.request, { cache: 'no-cache' }).then(res => {
-        if (res && res.status === 200) {
-          const clone = res.clone();
-          caches.open(CACHE_NAME).then(c => c.put(event.request, clone));
-        }
-        return res;
-      }).catch(() => caches.match(event.request).then(r => r || caches.match('./index.html')))
+      caches.match(event.request).then(cached => {
+        return cached || fetch(event.request).then(res => {
+          if (res && res.status === 200) {
+            const clone = res.clone();
+            caches.open(CACHE_NAME).then(c => c.put(event.request, clone));
+          }
+          return res;
+        }).catch(() => caches.match('./index.html'));
+      })
     );
   }
 });

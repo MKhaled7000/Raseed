@@ -2756,3 +2756,127 @@ nav.bottom {
   text-align: right;
   direction: rtl;
 }
+
+
+/* =========================================================
+   X-Wallet V13.8 Precision Layout, Calm Controls & Mobile Bar Fixes
+   ========================================================= */
+
+/* 6.1 EXACT Width of Month Stepper (.ym-stepper) = Sub-Tab Width (calc(50% - 4px)) Across ALL Pages */
+.ym-stepper,
+.cancel-filter-top-btn {
+  width: calc(50% - 4px) !important;
+  min-width: calc(50% - 4px) !important;
+  max-width: calc(50% - 4px) !important;
+  box-sizing: border-box !important;
+  flex-shrink: 0 !important;
+}
+.ym-stepper button.step-label {
+  flex: 1 !important;
+  min-width: 0 !important;
+}
+
+/* 1.1 (Prev) Comfortable, Wide Edit & Add Buttons for Main/Sub Categories */
+.cat-head-dual-bar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.cat-head-frame {
+  height: 30px !important;
+  border-radius: 9px !important;
+}
+.cat-head-frame .chf-btn {
+  width: 36px !important;
+  font-size: .95rem !important;
+}
+.cat-head-frame .chf-lbl {
+  padding: 0 10px !important;
+  font-size: .74rem !important;
+}
+
+/* 1.1 (Current) Full-Page Scrollable Quick Entry Sheet with Auto-Growing Description */
+#quickModal .sheet.fullpage-sheet {
+  height: 100dvh !important;
+  max-height: 100dvh !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  padding-bottom: calc(34px + env(safe-area-inset-bottom)) !important;
+}
+#quickModal .qm-form-scroll {
+  flex: 0 0 auto !important;
+  overflow: visible !important;
+}
+#quickModal .qm-desc-textarea.frameless-desc {
+  min-height: 54px !important;
+  height: auto !important;
+  overflow: hidden !important;
+}
+
+/* 1.2 Calm, Simple Muted Colors for Bottom Action Bar (Copy / Save / Delete / Cancel) */
+#qmBottomActionsBar.actions.qm-mid-actions button {
+  background: var(--surface2) !important;
+  border: 1px solid var(--line2) !important;
+  color: var(--text-sub) !important;
+  font-weight: 600 !important;
+  font-size: .78rem !important;
+  border-radius: 11px !important;
+  box-shadow: none !important;
+}
+#qmBottomActionsBar.actions.qm-mid-actions button.primary {
+  background: #43d6b218 !important;
+  border-color: #43d6b288 !important;
+  color: var(--mint) !important;
+}
+#qmBottomActionsBar.actions.qm-mid-actions button.danger {
+  background: #ff728512 !important;
+  border-color: #ff728566 !important;
+  color: #f28b99 !important;
+}
+#qmBottomActionsBar.actions.qm-mid-actions #qmBtnCopyExisting {
+  background: var(--surface) !important;
+  border-color: var(--line2) !important;
+  color: var(--text-sub) !important;
+}
+
+/* 1.3 Keep In-App Calculator Safely Above Android Home/Back/Recents Navigation Bar */
+#qmBottomDock.qm-bottom-dock {
+  height: 38dvh !important;
+  min-height: 258px !important;
+  max-height: 310px !important;
+  margin-bottom: 10px !important;
+  flex-shrink: 0 !important;
+}
+#qmDockCalc .qm-calc-pad.five-rows-pad {
+  padding: 6px 10px 10px !important;
+  gap: 5px !important;
+}
+
+/* 2. Remove Green Border Frame Around Detached Filter Bar */
+.filter-bar-detached {
+  background: var(--surface) !important;
+  border: 1px solid var(--line) !important;
+  box-shadow: none !important;
+  margin: 4px 0 0 !important;
+}
+
+/* 4.1 Concise Truncated Table Cells with Vertical Column Lines in Monthly Dues & All Commitments */
+.com-all-table td,
+.com-all-table th {
+  max-width: 118px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 4.1 (Prev) Installment Pills inside Quick Entry */
+.months-pill-bar.qm-pills {
+  width: 72% !important;
+  max-width: 72% !important;
+}
+
+/* 5.1 Smooth Transition on Category Rows During Drag Reordering */
+.cat-mgr-row,
+.cat-mgr-sub-row {
+  transition: transform .16s ease, box-shadow .16s ease, background .16s ease;
+}

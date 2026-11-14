@@ -2028,6 +2028,7 @@ function openQuickAddModal(defaultType){
   renderQuickPickers();
   setQmDockMode('acc');
   document.getElementById('quickModal').classList.add('show');
+  setTimeout(autoResizeQmDesc, 35);
 }
 
 function openEditQuickTx(id){
@@ -2042,7 +2043,7 @@ function openEditQuickTx(id){
     if(op){
       cardId = op.cardId;
       cardMode = op.type || 'swipe';
-      if(op.months) setv('qmCardMonths', op.months);
+      if(op.months) syncQmCardMonthsPills(op.months);
     }
   }
   qmState = {
@@ -2065,13 +2066,14 @@ function openEditQuickTx(id){
   setv('qmFee', '');
   setv('qmNote', String(t.title||'').replace(/^شراء بالبطاقة\s*-\s*/,''));
   setv('qmDesc', t.description || '');
-  autoResizeQmDesc();
   document.getElementById('qmFeeRow').style.display = 'none';
   updateQmEditActionButtons();
   setQuickTxType(qmState.type);
   renderQuickPickers();
   setQmDockMode('');
   document.getElementById('quickModal').classList.add('show');
+  setTimeout(autoResizeQmDesc, 35);
+  setTimeout(autoResizeQmDesc, 35);
 }
 
 function openEditLedgerModal(l){
@@ -2107,6 +2109,8 @@ function openEditLedgerModal(l){
   renderQuickPickers();
   setQmDockMode('');
   document.getElementById('quickModal').classList.add('show');
+  setTimeout(autoResizeQmDesc, 35);
+  setTimeout(autoResizeQmDesc, 35);
 }
 
 function closeQuickModal(){
@@ -2146,6 +2150,17 @@ function setQuickTxType(t){
   setQmDockMode(qmState.editId ? '' : 'acc');
 }
 
+function selectQmCardMonthsPill(mVal, btn){
+  setv('qmCardMonths', mVal);
+  document.querySelectorAll('#qmCardMonthsPills .m-pill').forEach(b=>b.classList.toggle('active', b===btn));
+}
+function syncQmCardMonthsPills(mVal){
+  const target = String(mVal || 12);
+  setv('qmCardMonths', target);
+  document.querySelectorAll('#qmCardMonthsPills .m-pill').forEach(b=>{
+    b.classList.toggle('active', b.textContent.trim() === target);
+  });
+}
 function setQmCardMode(mode){
   qmState.cardMode = mode;
   document.getElementById('qmCardSwipeBtn').classList.toggle('active', mode==='swipe');
@@ -2826,6 +2841,14 @@ function closeAccountModal(){
   document.getElementById('accountModal').classList.remove('show');
 }
 
+function openCategoriesManagerModal(){
+  renderSettingsCategories();
+  document.getElementById('catsManagerModal')?.classList.add('show');
+}
+function closeCategoriesManagerModal(){
+  document.getElementById('catsManagerModal')?.classList.remove('show');
+}
+
 function openAccountStatement(id){
   const acc = state.accounts.find(a=>a.id===id);
   if(!acc) return;
@@ -2867,18 +2890,25 @@ function shiftStatementMonth(delta){
 
 function openStatementPeriodModeDialog(){
   if(!activeStatementState) return;
-  const curMode = activeStatementState.mode || 'monthly';
-  const html = `
-    <div style="display:flex;flex-direction:column;gap:8px">
-      <button type="button" class="cs-opt-btn ${curMode==='monthly'?'selected':''}" onclick="closeAppDialog();openStatementMonthPicker()">
-        <span>📅 عرض بالشهر (اختيار شهر وسنة)</span><span>${curMode==='monthly'?'●':'○'}</span>
-      </button>
-      <button type="button" class="cs-opt-btn ${curMode==='yearly'?'selected':''}" onclick="closeAppDialog();setStatementYearMode()">
-        <span>🗓 عرض بالسنة (${activeStatementState.year})</span><span>${curMode==='yearly'?'●':'○'}</span>
-      </button>
-    </div>
-  `;
-  showAppCustomForm('فترة كشف الحساب', html, null, true);
+  openCompactYMPicker(
+    null,
+    false,
+    (chosenYM)=>{
+      const [y,m] = chosenYM.split('-').map(Number);
+      activeStatementState.year = y;
+      activeStatementState.month = m;
+      activeStatementState.mode = 'monthly';
+      renderFullStatementModalContent();
+    },
+    (chosenYear)=>{
+      activeStatementState.year = chosenYear;
+      activeStatementState.mode = 'yearly';
+      renderFullStatementModalContent();
+    }
+  );
+  ymPickerState.year = activeStatementState.year;
+  ymPickerState.month = activeStatementState.month;
+  renderCompactYMPicker();
 }
 
 function setStatementYearMode(){
@@ -3578,7 +3608,7 @@ function getUnifiedMonthlyDues(m){
     items.push({
       uid: c.id,
       kind: 'commitment',
-      categoryType: 'مستحقات',
+      categoryType: 'مستحق',
       title: c.title,
       sub: c.dueDate ? `استحقاق: ${c.dueDate}` : 'مرة واحدة',
       amount: amt,
@@ -3619,7 +3649,7 @@ function getUnifiedMonthlyDues(m){
           uid: op.id,
           kind: 'card_swipe',
           opId: op.id,
-          categoryType: 'بطاقة (' + cName + ')',
+          categoryType: cName,
           title: op.title,
           sub: 'شراء كامل',
           amount: amt,
@@ -3637,7 +3667,7 @@ function getUnifiedMonthlyDues(m){
           uid: op.id + ':fee',
           kind: 'card_fee',
           opId: op.id,
-          categoryType: 'رسوم بطاقة (' + cName + ')',
+          categoryType: 'رسوم ' + cName,
           title: `رسوم: ${op.title}`,
           sub: `تقسيط ${op.months} شهر`,
           amount: amt,
@@ -3656,7 +3686,7 @@ function getUnifiedMonthlyDues(m){
             kind: 'card_inst',
             opId: op.id,
             month: m,
-            categoryType: 'قسط بطاقة (' + cName + ')',
+            categoryType: 'قسط ' + cName,
             title: op.title,
             sub: `قسط ${idx+1} من ${op.months}`,
             amount: amt,
@@ -3900,7 +3930,7 @@ function renderAllCommitmentsMasterTable(){
       id: c.id,
       isCard: false,
       title: c.title,
-      typeLabel: isOnce ? 'مستحقات' : 'شهري',
+      typeLabel: isOnce ? 'مستحق' : 'شهري',
       amountVal: Number(c.amount)||0,
       durLabel: isOnce ? 'مرة' : (durNum ? `${durNum} ش` : 'شهري'),
       startLabel: formatYMArabic(startYM),
@@ -4478,11 +4508,12 @@ function openHomePeriodPicker(){
     renderAll();
   });
 }
-function openCompactYMPicker(prefix, allowClear, customCb){
+function openCompactYMPicker(prefix, allowClear, customCb, onYearPick){
   let cur = prefix ? (val(prefix+'Val')||selected()) : selected();
   let [y,m] = cur.includes('-') ? cur.split('-').map(Number) : [activeYear, activeMonth];
   ymPickerState = {
     year: y, month: m, allowClear: !!allowClear,
+    onYearPick: onYearPick || null,
     onSelect: (chosen)=>{
       if(prefix){
         setv(prefix+'Val', chosen);
@@ -4494,6 +4525,12 @@ function openCompactYMPicker(prefix, allowClear, customCb){
   };
   renderCompactYMPicker();
 }
+function selectYMYearOnly(){
+  document.getElementById('ymModal')?.classList.remove('show');
+  if(ymPickerState.onYearPick){
+    ymPickerState.onYearPick(ymPickerState.year);
+  }
+}
 function renderCompactYMPicker(){
   let d = document.getElementById('ymModal');
   if(!d){
@@ -4503,10 +4540,13 @@ function renderCompactYMPicker(){
     document.body.appendChild(d);
   }
   const grid = monthNamesAr.map((n,i)=>`<button type="button" class="ym-cell ${(i+1)===ymPickerState.month?'active':''}" onclick="selectYMCell(${i+1})">${n}</button>`).join('');
+  const yearCenterHtml = ymPickerState.onYearPick
+    ? `<button type="button" onclick="selectYMYearOnly()" style="width:auto;padding:0 16px;border-color:var(--mint);color:var(--mint);font-weight:700" title="اضغط لعرض السنة بالكامل">سنة ${ymPickerState.year}</button>`
+    : `<b>${ymPickerState.year}</b>`;
   document.getElementById('ymModalBody').innerHTML = `
     <div class="ym-year-bar">
       <button type="button" onclick="ymPickerState.year--;renderCompactYMPicker()">‹</button>
-      <b>${ymPickerState.year}</b>
+      ${yearCenterHtml}
       <button type="button" onclick="ymPickerState.year++;renderCompactYMPicker()">›</button>
     </div>
     <div class="ym-grid">${grid}</div>
