@@ -1,5 +1,5 @@
-const APP_VERSION='13.3';
-const APP_BUILD='2026-11-13';
+const APP_VERSION='13.4';
+const APP_BUILD='2026-11-14';
 const KEY='raseed_mobile_v2';
 
 const monthNamesAr=['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
@@ -26,7 +26,7 @@ state.categories=Array.isArray(state.categories)?state.categories:[];
 state.incomeCategories=Array.isArray(state.incomeCategories)?state.incomeCategories:[];
 state.categoryTree=state.categoryTree||{expense:{}, income:{}};
 state.prefs=state.prefs||{
-  lang:'ar',fontSize:'1',theme:'mint',bgMode:'dark',userName:'',defaultAccount:'',
+  lang:'ar',fontFamily:'system',fontSize:'1',theme:'mint',bgMode:'dark',userName:'',defaultAccount:'',
   privacy:false,homeDecimals:false,secPin:'',bioEnabled:false,bioCredentialId:'',
   appLockOnStart:true,bioOnPrivacy:true,autoDriveFreq:'off',lastDriveBackup:'',
   driveEmail:'',driveWebhookUrl:'',driveClientId:'',driveAccessToken:''
@@ -396,6 +396,18 @@ const THEMES = {
 let _pendingTheme = null;
 let _pendingBgMode = null;
 
+let _pendingFontFamily = null;
+const FONT_STACKS = {
+  'system': "system-ui, 'Noto Sans Arabic', 'Tahoma', sans-serif",
+  'Cairo': "'Cairo', system-ui, sans-serif",
+  'Tajawal': "'Tajawal', system-ui, sans-serif",
+  'Almarai': "'Almarai', system-ui, sans-serif",
+  'Readex Pro': "'Readex Pro', system-ui, sans-serif"
+};
+function previewFontFamily(fontKey){
+  _pendingFontFamily = fontKey || 'system';
+  document.documentElement.style.setProperty('--app-font', FONT_STACKS[_pendingFontFamily] || FONT_STACKS.system);
+}
 function previewBgMode(mode){
   _pendingBgMode = mode;
   document.documentElement.setAttribute('data-bg', mode || 'dark');
@@ -413,6 +425,9 @@ function selectTempTheme(thName){
 function applyPreferences(){
   const p = state.prefs || {};
   document.documentElement.style.setProperty('--scale', p.fontSize || '1');
+  const fKey = p.fontFamily || 'system';
+  document.documentElement.style.setProperty('--app-font', FONT_STACKS[fKey] || FONT_STACKS.system);
+  setv('prefFontFamily', fKey);
   const bg = p.bgMode || 'dark';
   document.documentElement.setAttribute('data-bg', bg);
   setv('prefBgMode', bg);
@@ -438,8 +453,8 @@ function applyPreferences(){
 
   const bioBadge = document.getElementById('bioStatusBadge');
   if(bioBadge){
-    bioBadge.textContent = p.bioEnabled ? 'مفعلة ✓' : 'غير مفعلة';
-    bioBadge.style.color = p.bioEnabled ? 'var(--mint)' : 'var(--muted)';
+    bioBadge.textContent = p.bioEnabled ? 'البصمة مفعلة ✓' : 'تفعيل البصمة 🫆';
+    bioBadge.style.color = p.bioEnabled ? 'var(--mint)' : 'var(--text)';
   }
 
   document.querySelectorAll('.dec-toggle-btn').forEach(b=>{
@@ -463,12 +478,14 @@ function applyPreferences(){
 function saveGeneralSettings(){
   state.prefs = state.prefs || {};
   state.prefs.lang = document.getElementById('prefLang')?.value || 'ar';
+  state.prefs.fontFamily = _pendingFontFamily || document.getElementById('prefFontFamily')?.value || 'system';
   state.prefs.fontSize = document.getElementById('prefFontSize')?.value || '1';
   state.prefs.defaultAccount = document.getElementById('prefDefaultAcc')?.value || '';
   state.prefs.bgMode = _pendingBgMode || document.getElementById('prefBgMode')?.value || 'dark';
   if(_pendingTheme) state.prefs.theme = _pendingTheme;
   _pendingTheme = null;
   _pendingBgMode = null;
+  _pendingFontFamily = null;
   applyPreferences();
   syncCustomSelectTriggers();
   persist();
@@ -732,22 +749,154 @@ function shiftForecastYear(delta){
 }
 
 let activeReportCategoryFilter = null;
+let transAdvFilter = { date:'', accountId:'', accountLabel:'', mainCat:'', subCat:'', amount:'' };
 
-function toggleSearchBar(){
-  const box = document.getElementById('mmSearchBox');
-  const btn = document.getElementById('btnToggleSearch');
-  const open = box.style.display === 'none';
-  box.style.display = open ? 'block' : 'none';
-  btn.classList.toggle('active', open);
-  if(open){
-    if(activeTransSubTab === 'monthly'){
-      switchTransSubTab('daily');
-    }
-    setTimeout(()=>document.getElementById('actSearch')?.focus(), 50);
-  } else {
-    clearTransactionsSearch();
+function hasAnyTransAdvFilter(){
+  return !!(transAdvFilter.date || transAdvFilter.accountId || transAdvFilter.mainCat || transAdvFilter.subCat || transAdvFilter.amount);
+}
+
+function updateTransFilterGridUI(){
+  const dCard = document.getElementById('fCardDate');
+  const aCard = document.getElementById('fCardAcc');
+  const mCard = document.getElementById('fCardMainCat');
+  const sCard = document.getElementById('fCardSubCat');
+  const amCard = document.getElementById('fCardAmt');
+  if(dCard){
+    dCard.classList.toggle('active', !!transAdvFilter.date);
+    document.getElementById('fValDate').textContent = transAdvFilter.date ? formatDateDMY(transAdvFilter.date) : 'الكل';
+  }
+  if(aCard){
+    aCard.classList.toggle('active', !!transAdvFilter.accountId);
+    document.getElementById('fValAcc').textContent = transAdvFilter.accountLabel || 'الكل';
+  }
+  if(mCard){
+    mCard.classList.toggle('active', !!transAdvFilter.mainCat);
+    document.getElementById('fValMainCat').textContent = transAdvFilter.mainCat || 'الكل';
+  }
+  if(sCard){
+    sCard.classList.toggle('active', !!transAdvFilter.subCat);
+    document.getElementById('fValSubCat').textContent = transAdvFilter.subCat || 'الكل';
+  }
+  if(amCard){
+    amCard.classList.toggle('active', !!transAdvFilter.amount);
+    document.getElementById('fValAmt').textContent = transAdvFilter.amount ? (transAdvFilter.amount + ' EGP') : 'الكل';
   }
 }
+
+function toggleSearchFilterGrid(){
+  const box = document.getElementById('mmSearchBox');
+  const btn = document.getElementById('btnToggleSearch');
+  if(!box) return;
+  const open = box.style.display === 'none';
+  box.style.display = open ? 'block' : 'none';
+  btn?.classList.toggle('active', open || hasAnyTransAdvFilter());
+  if(open && activeTransSubTab === 'monthly'){
+    switchTransSubTab('daily');
+  }
+  updateTransFilterGridUI();
+}
+function toggleSearchBar(){
+  toggleSearchFilterGrid();
+}
+
+function openTransFilterPrompt(kind){
+  if(activeTransSubTab === 'monthly') switchTransSubTab('daily');
+  if(kind === 'date'){
+    const html = `
+      <div class="c-list">
+        <div class="c-row"><label>اختر التاريخ</label><input id="fltDateInp" type="date" value="${esc(transAdvFilter.date || today())}"></div>
+      </div>
+      <div style="margin-top:8px"><button type="button" class="secondary" style="width:100%" onclick="transAdvFilter.date='';closeAppDialog();updateTransFilterGridUI();renderTransactionsScreen()">إلغاء فلتر التاريخ (عرض الكل)</button></div>
+    `;
+    showAppCustomForm('فلترة بالتاريخ', html, ()=>{
+      const d = val('fltDateInp');
+      transAdvFilter.date = d || '';
+      if(d && d.length >= 7){
+        activeYear = Number(d.slice(0,4)) || activeYear;
+        activeMonth = Number(d.slice(5,7)) || activeMonth;
+      }
+      updateTransFilterGridUI();
+      renderTransactionsScreen();
+      return true;
+    });
+    return;
+  }
+  if(kind === 'account'){
+    const opts = [{id:'', name:'كل الحسابات والبطاقات'}];
+    state.accounts.forEach(a=>opts.push({id:a.id, name:a.name}));
+    state.cards.forEach(c=>opts.push({id:'card:'+c.id, name:'💳 '+c.name}));
+    const listHtml = `<div class="cs-opt-list">` + opts.map(o=>`
+      <button type="button" class="cs-opt-btn ${transAdvFilter.accountId===o.id?'selected':''}" onclick="selectTransFilterAccount('${esc(o.id)}','${esc(o.name)}')">
+        <span>${esc(o.name)}</span><span>${transAdvFilter.accountId===o.id?'●':'○'}</span>
+      </button>
+    `).join('') + `</div>`;
+    showAppCustomForm('فلترة بالحساب', listHtml, null, true);
+    return;
+  }
+  if(kind === 'mainCat'){
+    syncCategoryTrees();
+    const allMain = [...new Set([...Object.keys(state.categoryTree.expense||{}), ...Object.keys(state.categoryTree.income||{})])];
+    const opts = ['', ...allMain];
+    const listHtml = `<div class="cs-opt-list">` + opts.map(c=>`
+      <button type="button" class="cs-opt-btn ${transAdvFilter.mainCat===c?'selected':''}" onclick="selectTransFilterMainCat('${esc(c)}')">
+        <span>${esc(c || 'كل الأقسام الرئيسية')}</span><span>${transAdvFilter.mainCat===c?'●':'○'}</span>
+      </button>
+    `).join('') + `</div>`;
+    showAppCustomForm('فلترة بالقسم الرئيسي', listHtml, null, true);
+    return;
+  }
+  if(kind === 'subCat'){
+    syncCategoryTrees();
+    let subs = [];
+    if(transAdvFilter.mainCat){
+      subs = [...(state.categoryTree.expense?.[transAdvFilter.mainCat]||[]), ...(state.categoryTree.income?.[transAdvFilter.mainCat]||[])];
+    } else {
+      subs = [...Object.values(state.categoryTree.expense||{}).flat(), ...Object.values(state.categoryTree.income||{}).flat()];
+    }
+    subs = [...new Set(subs.filter(Boolean))];
+    const opts = ['', ...subs];
+    const listHtml = `<div class="cs-opt-list">` + opts.map(sc=>`
+      <button type="button" class="cs-opt-btn ${transAdvFilter.subCat===sc?'selected':''}" onclick="selectTransFilterSubCat('${esc(sc)}')">
+        <span>${esc(sc || 'كل الأقسام الفرعية')}</span><span>${transAdvFilter.subCat===sc?'●':'○'}</span>
+      </button>
+    `).join('') + `</div>`;
+    showAppCustomForm('فلترة بالقسم الفرعي', listHtml, null, true);
+    return;
+  }
+  if(kind === 'amount'){
+    showAppPrompt('فلترة بالمبلغ', 'أدخل المبلغ للبحث عنه (اتركه فارغاً للكل)...', transAdvFilter.amount || '', (v)=>{
+      transAdvFilter.amount = String(v||'').trim();
+      updateTransFilterGridUI();
+      renderTransactionsScreen();
+    }, false, 'number');
+  }
+}
+
+function selectTransFilterAccount(id, name){
+  transAdvFilter.accountId = id;
+  transAdvFilter.accountLabel = id ? name : '';
+  setv('actAccountFilter', id);
+  closeAppDialog();
+  updateTransFilterGridUI();
+  renderTransactionsScreen();
+}
+function selectTransFilterMainCat(mc){
+  transAdvFilter.mainCat = mc;
+  if(mc && transAdvFilter.subCat){
+    const allowed = [...(state.categoryTree.expense?.[mc]||[]), ...(state.categoryTree.income?.[mc]||[])];
+    if(!allowed.includes(transAdvFilter.subCat)) transAdvFilter.subCat = '';
+  }
+  closeAppDialog();
+  updateTransFilterGridUI();
+  renderTransactionsScreen();
+}
+function selectTransFilterSubCat(sc){
+  transAdvFilter.subCat = sc;
+  closeAppDialog();
+  updateTransFilterGridUI();
+  renderTransactionsScreen();
+}
+
 function onTransactionsSearchInput(){
   const inp = document.getElementById('actSearch');
   const qVal = (inp?.value || '').trim();
@@ -761,11 +910,13 @@ function onTransactionsSearchInput(){
   state.prefs.savedSearch = qVal;
   try{localStorage.setItem(KEY,JSON.stringify(state))}catch(_){}
   const clrBtn = document.getElementById('btnClearSearch');
-  if(clrBtn) clrBtn.style.display = qVal ? 'block' : 'none';
+  if(clrBtn) clrBtn.style.display = (qVal || hasAnyTransAdvFilter()) ? 'block' : 'none';
   renderTransactionsScreen();
 }
 function clearTransactionsSearch(){
   activeReportCategoryFilter = null;
+  transAdvFilter = { date:'', accountId:'', accountLabel:'', mainCat:'', subCat:'', amount:'' };
+  setv('actAccountFilter', '');
   const inp = document.getElementById('actSearch');
   if(inp) inp.value = '';
   state.prefs = state.prefs || {};
@@ -773,6 +924,7 @@ function clearTransactionsSearch(){
   try{localStorage.setItem(KEY,JSON.stringify(state))}catch(_){}
   const clrBtn = document.getElementById('btnClearSearch');
   if(clrBtn) clrBtn.style.display = 'none';
+  updateTransFilterGridUI();
   renderTransactionsScreen();
 }
 
@@ -1027,9 +1179,11 @@ function renderTransactionsScreen(){
   }
   const rawQ = (searchInputEl?.value||'').trim();
   const q = rawQ.toLowerCase();
+  const hasAdv = hasAnyTransAdvFilter();
   const clrBtn = document.getElementById('btnClearSearch');
-  if(clrBtn) clrBtn.style.display = rawQ ? 'block' : 'none';
-  const accFilter = af?.value || '';
+  if(clrBtn) clrBtn.style.display = (rawQ || hasAdv) ? 'block' : 'none';
+  updateTransFilterGridUI();
+  const accFilter = transAdvFilter.accountId || af?.value || '';
 
   const feed = document.getElementById('dailyTransactionsFeed');
 
@@ -1102,7 +1256,23 @@ function renderTransactionsScreen(){
   });
 
   let combined = [...txList, ...ledList].filter(it=>{
-    if(accFilter && it.accountId !== accFilter && it.toAccountId !== accFilter) return false;
+    if(accFilter){
+      if(accFilter.startsWith('card:')){
+        const cid = accFilter.replace('card:','');
+        const opId = String(it.source||'').replace('card-purchase:','');
+        const op = state.cardOps.find(o=>o.id===opId);
+        if(!op || op.cardId !== cid) return false;
+      } else if(it.accountId !== accFilter && it.toAccountId !== accFilter){
+        return false;
+      }
+    }
+    if(transAdvFilter.date && String(it.date||'').slice(0,10) !== transAdvFilter.date) return false;
+    if(transAdvFilter.mainCat && String(it.category||'').trim() !== transAdvFilter.mainCat) return false;
+    if(transAdvFilter.subCat && String(it.subCategory||'').trim() !== transAdvFilter.subCat) return false;
+    if(transAdvFilter.amount){
+      const targetAmt = Number(transAdvFilter.amount);
+      if(Number.isFinite(targetAmt) && Math.abs((Number(it.amount)||0) - targetAmt) > 0.009 && !String(it.amount||'').includes(transAdvFilter.amount)) return false;
+    }
     if(q){
       const accDisp = resolveAccountDisplayLabel(it, isEn).toLowerCase();
       const hay = [
@@ -1124,7 +1294,7 @@ function renderTransactionsScreen(){
   });
 
   // Update summary boxes dynamically when search/filter is active
-  if(q || accFilter){
+  if(q || accFilter || hasAdv){
     const fInc = round2(combined.filter(x=>x.type==='income').reduce((s,x)=>s+(Number(x.amount)||0),0));
     const fExp = round2(combined.filter(x=>isActualExpenseTx(x)).reduce((s,x)=>s+(Number(x.amount)||0),0));
     const fNet = round2(fInc - fExp);
@@ -1328,6 +1498,20 @@ function refreshSecondaryFeeds(){
 let activeReportTab = 'exp';
 let reportPeriodMode = 'monthly';
 let reportYear = activeYear;
+let mainRepChartOpen = false;
+let catDrillChartOpen = false;
+
+function toggleMainReportChart(){
+  mainRepChartOpen = !mainRepChartOpen;
+  const pnl = document.getElementById('repChartPanel');
+  const btn = document.getElementById('btnToggleMainRepChart');
+  if(pnl) pnl.style.display = mainRepChartOpen ? 'flex' : 'none';
+  if(btn) btn.classList.toggle('active', mainRepChartOpen);
+}
+function toggleCatDrillChart(){
+  catDrillChartOpen = !catDrillChartOpen;
+  renderCategoryDrillDownContent();
+}
 const CHART_COLORS = ['#ff6b6b','#ff9f43','#feca57','#1dd1a1','#48dbfb','#54a0ff','#5f27cd','#ff9ff3','#00d2d3','#c8d6e5','#ee5253','#10ac84'];
 
 function switchReportTab(tab){
@@ -1543,6 +1727,7 @@ function buildSvgLineChartWithYAxis(monthTotals, isInc){
 
 function openCategoryDrillDown(catName, txType){
   activeCatDrillState = { catName, txType, subFilter: '' };
+  catDrillChartOpen = false;
   renderCategoryDrillDownContent();
   document.getElementById('catDetailModal').classList.add('show');
 }
@@ -1571,21 +1756,28 @@ function renderCategoryDrillDownContent(){
   if(!activeCatDrillState) return;
   const { catName, txType, subFilter } = activeCatDrillState;
   const isInc = (txType === 'income');
-  const { periodLabel, yearForChart, list } = getReportFilteredTransactions(isInc);
+  const incData = getReportFilteredTransactions(true);
+  const expData = getReportFilteredTransactions(false);
+  const totIncPeriod = round2(incData.list.reduce((s,t)=>s+(Number(t.amount)||0), 0));
+  const totExpPeriod = round2(expData.list.reduce((s,t)=>s+(Number(t.amount)||0), 0));
 
-  // Update top period stepper inside #catDetailModal (3.1)
+  document.getElementById('catDrillTabInc')?.classList.toggle('active', isInc);
+  document.getElementById('catDrillTabExp')?.classList.toggle('active', !isInc);
+  const dBoxInc = document.getElementById('catDrillBoxTotalInc');
+  const dBoxExp = document.getElementById('catDrillBoxTotalExp');
+  if(dBoxInc) dBoxInc.textContent = maskable(egpSmart(totIncPeriod));
+  if(dBoxExp) dBoxExp.textContent = maskable(egpSmart(totExpPeriod));
+
+  const { periodLabel, yearForChart, list } = isInc ? incData : expData;
+
   document.getElementById('catDetailTitle').textContent = subFilter ? `${catName} / ${subFilter}` : catName;
-  const subBadge = document.getElementById('catDetailSubFilterBadge');
-  if(subBadge){
-    subBadge.style.display = subFilter ? 'inline-block' : 'none';
-    subBadge.textContent = `إلغاء فلتر «${subFilter}» ✕`;
-  }
+  const chartBtn = document.getElementById('btnToggleDrillChart');
+  if(chartBtn) chartBtn.classList.toggle('active', catDrillChartOpen);
+
   const stepBox = document.getElementById('catDetailStepperBox');
   const stepLbl = document.getElementById('catDetailStepLabel');
-  const pLbl = document.getElementById('catDetailPeriodLabel');
   if(stepBox) stepBox.style.display = (reportPeriodMode === 'monthly' || reportPeriodMode === 'yearly') ? 'inline-flex' : 'none';
   if(stepLbl) stepLbl.textContent = (reportPeriodMode === 'yearly') ? String(reportYear) : formatYMArabic(selected());
-  if(pLbl) pLbl.textContent = `الفترة: ${periodLabel}`;
 
   const allMainCatTxs = list
     .filter(t => (String(t.category||'أخرى').trim() || 'أخرى') === catName)
@@ -1660,13 +1852,8 @@ function renderCategoryDrillDownContent(){
   const dailyFeedHtml = buildDailyGroupedFeedHtml(displayedTxs, 'لا توجد معاملات مسجلة لهذا البند في هذه الفترة.');
 
   document.getElementById('catDetailBody').innerHTML = `
-    <div class="sec-title-card" style="margin-top:4px"><h2>توزيع البنود الفرعية</h2></div>
-    <div class="panel" style="padding:0;overflow:hidden">${subTableHtml}</div>
-
-    <div class="sec-title-card"><h2>الرسم البياني الشهري (${yearForChart})${subFilter?' – '+esc(subFilter):''}</h2></div>
-    <div class="panel" style="padding:12px 10px">${lineChartHtml}</div>
-
-    <div class="sec-title-card"><h2>التقرير اليومي التفصيلي${subFilter?' – '+esc(subFilter):''}</h2><span class="tag">${displayedTxs.length} معاملة</span></div>
+    <div class="panel" style="padding:0;overflow:hidden;margin-bottom:10px">${subTableHtml}</div>
+    <div class="panel" id="catDrillChartPanel" style="display:${catDrillChartOpen?'block':'none'};padding:12px 10px;margin-bottom:10px">${lineChartHtml}</div>
     <div>${dailyFeedHtml}</div>
   `;
 }
@@ -1684,22 +1871,137 @@ function closeCatDetailModal(){
    - 1.3 Clear divider line
    - 2.2 Direct Edit with Copy & Delete buttons inside modal
    ========================================================= */
-let qmState = { type:'expense', accountId:'', toAccountId:'', category:'', subCategory:'', isCard:false, cardMode:'swipe', editId:null, editKind:'tx', dock:'acc' };
+let qmState = { type:'expense', accountId:'', toAccountId:'', category:'', subCategory:'', isCard:false, cardMode:'swipe', editId:null, editKind:'tx', dock:'acc', calcTarget:'qmAmount', calcExpr:'' };
+
+function formatDateDMY(iso){
+  const s = String(iso || today()).slice(0, 10);
+  if(/^\d{4}-\d{2}-\d{2}$/.test(s)){
+    return `${s.slice(8,10)}-${s.slice(5,7)}-${s.slice(0,4)}`;
+  }
+  return s;
+}
+
+function syncQmDateDisplay(){
+  const raw = val('qmDate') || today();
+  const disp = document.getElementById('qmDateDisplay');
+  if(disp) disp.textContent = formatDateDMY(raw);
+}
+
+function openQmNativeDatePicker(){
+  const inp = document.getElementById('qmDate');
+  if(!inp) return;
+  try{
+    if(typeof inp.showPicker === 'function') inp.showPicker();
+    else inp.focus();
+  }catch(_){ inp.focus(); }
+}
+
+function onQmDescFocus(){
+  document.getElementById('quickModal')?.classList.add('hide-bottom-dock');
+}
+function onQmDescBlur(){
+  setTimeout(()=>{
+    if(document.activeElement?.id !== 'qmDesc'){
+      document.getElementById('quickModal')?.classList.remove('hide-bottom-dock');
+    }
+  }, 120);
+}
+function onQmTextInputFocus(hideDock){
+  if(!hideDock) document.getElementById('quickModal')?.classList.remove('hide-bottom-dock');
+}
 
 function getActiveCatTree(){
   syncCategoryTrees();
   return qmState.type === 'income' ? state.categoryTree.income : state.categoryTree.expense;
 }
 
-function setQmDockMode(mode){
-  // 1.2 Keep #qmBottomDock always visible at fixed size; only switch which inner panel is shown
-  const effectiveMode = (mode === 'acc' || mode === 'toAcc' || mode === 'cat')
+function evaluateCalcExpression(expr){
+  const sanitized = String(expr || '')
+    .replace(/×/g, '*')
+    .replace(/÷/g, '/')
+    .replace(/−/g, '-')
+    .replace(/[^0-9.+\-*/]/g, '');
+  if(!sanitized) return 0;
+  const trimmed = sanitized.replace(/[+\-*/.]+$/, '');
+  if(!trimmed) return 0;
+  try{
+    const res = Function('"use strict"; return (' + trimmed + ')')();
+    if(Number.isFinite(res)) return Math.max(0, round2(res));
+  }catch(_){}
+  return 0;
+}
+
+function updateQmCalcDisplay(){
+  const targetId = qmState.calcTarget || 'qmAmount';
+  const titleEl = document.getElementById('qmCalcTargetTitle');
+  if(titleEl) titleEl.textContent = targetId === 'qmFee' ? 'الرسوم' : 'المبلغ';
+  const prevEl = document.getElementById('qmCalcExprPreview');
+  const expr = qmState.calcExpr || '';
+  const hasOp = /[+\-×÷]/.test(expr.slice(1));
+  const valNum = evaluateCalcExpression(expr);
+  if(prevEl){
+    prevEl.textContent = expr ? (hasOp ? `${expr} = ${valNum}` : expr) : '0';
+  }
+  setv(targetId, valNum > 0 ? String(valNum) : '');
+}
+
+function qmCalcPress(key){
+  let expr = String(qmState.calcExpr || '');
+  if(key === 'C'){
+    expr = '';
+  } else if(key === '⌫'){
+    expr = expr.slice(0, -1);
+  } else if(key === '='){
+    const valNum = evaluateCalcExpression(expr);
+    expr = valNum > 0 ? String(valNum) : '';
+    qmState.calcExpr = expr;
+    updateQmCalcDisplay();
+    toast('تم إدراج الناتج في المبلغ ✓');
+    return;
+  } else if(['+','-','×','÷'].includes(key)){
+    if(!expr) expr = '0';
+    if(['+','-','×','÷'].includes(expr.slice(-1))){
+      expr = expr.slice(0, -1) + key;
+    } else {
+      expr += key;
+    }
+  } else if(key === '.'){
+    const parts = expr.split(/[+\-×÷]/);
+    const curPart = parts[parts.length - 1] || '';
+    if(!curPart.includes('.')){
+      expr += (curPart ? '.' : '0.');
+    }
+  } else {
+    if(expr === '0') expr = key === '00' ? '0' : key;
+    else expr += key;
+  }
+  qmState.calcExpr = expr;
+  updateQmCalcDisplay();
+}
+
+function setQmDockMode(mode, calcFieldId){
+  document.getElementById('quickModal')?.classList.remove('hide-bottom-dock');
+  if(document.activeElement && (document.activeElement.id === 'qmDesc' || document.activeElement.id === 'qmNote')){
+    document.activeElement.blur();
+  }
+  const effectiveMode = (mode === 'acc' || mode === 'toAcc' || mode === 'cat' || mode === 'calc')
     ? mode
     : (qmState.type === 'transfer' ? 'toAcc' : 'cat');
   qmState.dock = effectiveMode;
+  if(effectiveMode === 'calc'){
+    const tgt = calcFieldId || qmState.calcTarget || 'qmAmount';
+    qmState.calcTarget = tgt;
+    const curVal = val(tgt);
+    if(!qmState.calcExpr || qmState.calcTarget !== tgt){
+      qmState.calcExpr = curVal && Number(curVal) > 0 ? String(curVal) : '';
+    }
+    updateQmCalcDisplay();
+  }
+
   const dAcc = document.getElementById('qmDockAcc');
   const dToAcc = document.getElementById('qmDockToAcc');
   const dCat = document.getElementById('qmDockCat');
+  const dCalc = document.getElementById('qmDockCalc');
   const tAcc = document.getElementById('qmAccTrigger');
   const tToAcc = document.getElementById('qmToAccTrigger');
   const tCat = document.getElementById('qmCatTrigger');
@@ -1709,6 +2011,7 @@ function setQmDockMode(mode){
   if(dAcc) dAcc.style.display = effectiveMode === 'acc' ? 'flex' : 'none';
   if(dToAcc) dToAcc.style.display = effectiveMode === 'toAcc' ? 'flex' : 'none';
   if(dCat) dCat.style.display = effectiveMode === 'cat' ? 'flex' : 'none';
+  if(dCalc) dCalc.style.display = effectiveMode === 'calc' ? 'flex' : 'none';
 
   if(effectiveMode === 'acc' && tAcc) tAcc.classList.add('focused-field');
   if(effectiveMode === 'toAcc' && tToAcc) tToAcc.classList.add('focused-field');
@@ -1730,7 +2033,7 @@ function toggleQuickTransferFeeRow(){
   const show = row.style.display === 'none';
   row.style.display = show ? 'flex' : 'none';
   if(btn) btn.classList.toggle('active', show);
-  if(show) document.getElementById('qmFee')?.focus();
+  if(show){ qmState.calcExpr=''; setQmDockMode('calc','qmFee'); }
   else setv('qmFee', '');
 }
 
@@ -1758,8 +2061,10 @@ function openQuickAddModal(defaultType){
     editKind: 'tx',
     dock: 'acc'
   };
-  document.getElementById('qmHeaderTitle').textContent = 'تسجيل حركة جديدة';
+  document.getElementById('qmHeaderTitle').textContent = 'إضافة معاملة';
+  qmState.calcExpr = '';
   setv('qmDate', today());
+  syncQmDateDisplay();
   setv('qmAmount', '');
   setv('qmFee', '');
   setv('qmNote', '');
@@ -1800,8 +2105,10 @@ function openEditQuickTx(id){
     editKind: 'tx',
     dock: 'cat'
   };
-  document.getElementById('qmHeaderTitle').textContent = 'تعديل المعاملة';
+  document.getElementById('qmHeaderTitle').textContent = 'تعديل معاملة';
+  qmState.calcExpr = String(t.amount || '');
   setv('qmDate', t.date || today());
+  syncQmDateDisplay();
   setv('qmAmount', t.amount || '');
   setv('qmFee', '');
   setv('qmNote', String(t.title||'').replace(/^شراء بالبطاقة\s*-\s*/,''));
@@ -1827,8 +2134,10 @@ function openEditLedgerModal(l){
     editKind: 'ledger',
     dock: 'toAcc'
   };
-  document.getElementById('qmHeaderTitle').textContent = 'تعديل التحويل';
+  document.getElementById('qmHeaderTitle').textContent = 'تعديل معاملة';
+  qmState.calcExpr = String(l.amount || '');
   setv('qmDate', l.date || today());
+  syncQmDateDisplay();
   setv('qmAmount', l.amount || '');
   setv('qmFee', l.fee || '');
   setv('qmNote', l.note || '');
@@ -1977,7 +2286,7 @@ function selectQuickAcc(id, isCard){
 function selectQuickToAcc(id){
   qmState.toAccountId = id;
   renderQuickPickers();
-  document.getElementById('qmAmount')?.focus();
+  setQmDockMode('calc','qmAmount');
 }
 function selectQuickMainCat(mc){
   qmState.category = mc;
@@ -1985,13 +2294,13 @@ function selectQuickMainCat(mc){
   renderQuickPickers();
   const subs = getActiveCatTree()[mc] || [];
   if(!subs.length){
-    document.getElementById('qmAmount')?.focus();
+    setQmDockMode('calc','qmAmount');
   }
 }
 function selectQuickSubCat(sc){
   qmState.subCategory = (qmState.subCategory === sc) ? '' : sc;
   renderQuickPickers();
-  document.getElementById('qmAmount')?.focus();
+  setQmDockMode('calc','qmAmount');
 }
 function openAddQuickCatPrompt(isSub){
   const label = isSub ? `إضافة قسم فرعي داخل «${qmState.category}»` : 'إضافة قسم رئيسي جديد';
@@ -2018,6 +2327,7 @@ function openAddQuickCatPrompt(isSub){
 }
 
 function saveQuickModal(){
+  if(qmState.dock === 'calc' && qmState.calcExpr){ updateQmCalcDisplay(); }
   const amount = num('qmAmount');
   const fee = num('qmFee');
   const date = val('qmDate') || today();
@@ -2179,6 +2489,7 @@ function detectCurrencyCodeAndRate(rawCurUid, currencyMap){
 
 function readMmbak(ev){
   let file = ev.target.files && ev.target.files[0]; if(!file) return;
+  const dtBox = document.getElementById('mmDateRangeBox'); if(dtBox) dtBox.style.display = 'flex';
   let out = document.getElementById('mmbakPreview'); out.textContent = 'جارٍ قراءة النسخة والعملات والأقسام…';
   if(!window.initSqlJs){ out.textContent = 'مكتبة SQL غير متاحة.'; return; }
   let reader = new FileReader();
@@ -4114,17 +4425,14 @@ function renderAutoSnapshotsList(){
   if(!box) return;
   const snaps = state.autoSnapshots || [];
   if(!snaps.length){
-    box.innerHTML = '<div class="hint" style="margin:4px 0 0;font-size:.68rem">عند تفعيل الجدول التلقائي، يحفظ التطبيق نسخاً دورية تلقائياً هنا ويمكنك رفعها إلى Google Drive بضغطة واحدة.</div>';
+    box.innerHTML = '<div class="hint bidi-ar" style="margin:4px 0 0;font-size:.68rem">عند تفعيل النسخ التلقائي، يحتفظ التطبيق بآخر 5 نسخ احتياطية تلقائياً هنا لاستعادتها في أي وقت.</div>';
     return;
   }
-  box.innerHTML = `<div style="font-size:.68rem;color:var(--muted);margin:6px 0 4px">النسخ التلقائية المحفوظة (${snaps.length}):</div>` +
+  box.innerHTML = `<div class="bidi-ar" style="font-size:.68rem;color:var(--muted);margin:6px 0 4px">النسخ التلقائية المحفوظة (${snaps.length}):</div>` +
     snaps.map((s, idx)=>`
       <div style="display:flex;align-items:center;justify-content:space-between;background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:6px 9px;margin-top:4px;font-size:.72rem">
-        <span>📅 نسخة ${esc(s.date)} (${s.txCount||0} معاملة)</span>
-        <div style="display:flex;gap:6px">
-          <button type="button" class="smallbtn" style="padding:3px 8px;border-color:var(--blue);color:var(--blue)" onclick="shareSnapshotToDrive(${idx})">☁ Drive</button>
-          <button type="button" class="smallbtn" style="padding:3px 8px;border-color:var(--mint);color:var(--mint)" onclick="restoreFromAutoSnapshot(${idx})">استعادة</button>
-        </div>
+        <span class="bidi-ar">📅 نسخة <bdi>${esc(formatDateDMY(s.date))}</bdi> (<bdi>${s.txCount||0}</bdi> معاملة)</span>
+        <button type="button" class="smallbtn" style="padding:3px 10px;border-color:var(--mint);color:var(--mint)" onclick="restoreFromAutoSnapshot(${idx})">استعادة</button>
       </div>
     `).join('');
 }
