@@ -2146,3 +2146,219 @@ body, button, input, select, textarea {
   unicode-bidi: isolate;
   text-align: right;
 }
+
+
+/* =========================================================
+   X-Wallet V13.5 Complete Refinements & Visual Polish
+   ========================================================= */
+
+/* 1.1 & 3.2 Zero-Shift Header & Identical Background in Full-Page Modals */
+.modal.fullpage-modal {
+  background: var(--bg-grad), var(--bg) !important;
+  padding: 0 !important;
+}
+.sheet.fullpage-sheet {
+  max-width: 540px !important;
+  margin: 0 auto !important;
+  padding: 8px 8px calc(8px + env(safe-area-inset-bottom)) !important;
+  background: var(--bg-grad), var(--bg) !important;
+}
+.sheet.fullpage-sheet > header.top {
+  height: 48px !important;
+  margin: 2px 0 10px !important;
+  padding: 0 2px !important;
+}
+.sheet.fullpage-sheet > .sub-tabs {
+  margin-bottom: 10px !important;
+  gap: 8px !important;
+}
+
+/* 1.3 Action Bar Directly Below Upper Section in #quickModal */
+.actions.qm-mid-actions {
+  margin: 6px 0 2px !important;
+  flex-shrink: 0 !important;
+}
+.actions.qm-mid-actions button {
+  padding: 9px 12px !important;
+}
+
+/* 1.5 4-Row Calculator Keypad without 00 */
+.qm-calc-pad.four-rows-pad {
+  grid-template-columns: repeat(5, 1fr) !important;
+  grid-template-rows: repeat(4, 1fr) !important;
+  gap: 6px !important;
+  padding: 8px 10px !important;
+}
+
+/* 3.1 Bring Label Closer to Number in Analytics Income/Expense Merged Tabs */
+.sub-tabs.rep-merged-tabs .rep-merged-btn {
+  justify-content: center !important;
+  gap: 10px !important;
+}
+
+/* 3.3 Icon & Spacing inside Period Mode Selector Box */
+.rep-mode-box .custom-sel-trigger {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 8px !important;
+  padding: 0 12px !important;
+}
+.rep-mode-box .custom-sel-trigger .cs-val {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 7px !important;
+}
+
+/* 3.4 Inline From / To Date Boxes in Same Row when All or Custom Period is Selected */
+.rep-inline-dates {
+  direction: ltr;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
+  flex: 1.35;
+  min-width: 0;
+  height: 42px;
+}
+.rep-date-mini {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--line2);
+  border-radius: 11px;
+  padding: 2px 7px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  overflow: hidden;
+}
+.rep-date-mini small {
+  font-size: .56rem;
+  color: var(--mint);
+  line-height: 1.1;
+}
+.rep-date-mini b {
+  font-size: .68rem;
+  color: var(--text);
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.rep-date-mini input[type="date"] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+
+/* 4.5 Separate Type Column from Details Column in Monthly Dues (4 Columns) */
+.com-grid-head.four-cols,
+.com-grid-row.four-cols {
+  grid-template-columns: 1.25fr 0.85fr 1fr 0.85fr !important;
+  gap: 6px !important;
+  padding: 9px 10px !important;
+}
+
+/* 4.6 Hide Month Stepper in Monthly Dues Header When Collapsed */
+#monthlyDuesFold:not([open]) .dues-summary-stepper {
+  display: none !important;
+}
+
+/* 5.2 Left-Side Reorder Buttons for Main & Sub Categories in Settings */
+.cat-reorder-box {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-right: 6px;
+  flex-shrink: 0;
+}
+.cat-move-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  border: 1px solid var(--line2);
+  background: var(--surface2);
+  color: var(--mint);
+  font-size: .7rem;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  line-height: 1;
+}
+.cat-move-btn:disabled {
+  opacity: 0.25;
+  pointer-events: none;
+}
+
+/* 5.4 Equal Width & Aligned Boxes for Version Tag & Update Check Button */
+.upd-equal-box {
+  width: 118px !important;
+  min-width: 118px !important;
+  max-width: 118px !important;
+  height: 34px !important;
+  border-radius: 10px !important;
+  background: var(--surface2) !important;
+  border: 1px solid var(--mint) !important;
+  color: var(--mint) !important;
+  font-size: .75rem !important;
+  font-weight: 700 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  padding: 0 8px !important;
+  flex-shrink: 0 !important;
+}
+
+/* 5.5 Larger Icons in More/Settings Page */
+#settings .ic-txt i {
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: 9px !important;
+  font-size: 1.04rem !important;
+}
+#settings .ic-txt {
+  gap: 11px !important;
+}
+
+/* 6.2 Prominent, Eye-Catching Toast Banner */
+.toast {
+  top: 22px !important;
+  background: linear-gradient(145deg, var(--panel2), var(--surface)) !important;
+  border: 2px solid var(--mint) !important;
+  color: var(--text) !important;
+  padding: 12px 20px !important;
+  border-radius: 16px !important;
+  font-size: .84rem !important;
+  font-weight: 700 !important;
+  box-shadow: 0 14px 36px rgba(0,0,0,0.65), 0 0 0 4px rgba(67,214,178,0.18) !important;
+  min-width: 240px;
+  letter-spacing: 0.1px;
+  animation: toastPopIn .22s cubic-bezier(0.2, 0.9, 0.3, 1.1);
+}
+@keyframes toastPopIn {
+  from { opacity: 0; transform: translate(-50%, -14px) scale(0.92); }
+  to   { opacity: 1; transform: translate(-50%, 0) scale(1); }
+}
+
+/* 6.3 Accordion Arrow: Points Left & White when Collapsed, Points Down & Green when Open */
+details.fold > summary .fold-arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  font-size: .85rem;
+  color: #ffffff !important;
+  transform: rotate(90deg);
+  transition: transform .2s ease, color .2s ease;
+}
+[data-bg="light"] details.fold:not([open]) > summary .fold-arrow {
+  color: var(--text) !important;
+}
+details.fold[open] > summary .fold-arrow {
+  color: var(--mint) !important;
+  transform: rotate(0deg);
+}

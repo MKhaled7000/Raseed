@@ -1,11 +1,4 @@
-const APP_VERSION='13.4';
-const APP_BUILD='2026-11-14';
-const KEY='raseed_mobile_v2';
-
-const monthNamesAr=['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
-const monthNamesEn=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-const dayNamesAr=['الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
-const dayNamesEn=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+/* Core constants loaded from core.js */
 
 let state;
 try{state=JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){state=null}
@@ -61,6 +54,22 @@ function syncCategoryTrees(){
     }
   }
 }
+// Migrate legacy autoSnapshots out of state so backup files stay tiny & fast
+let _autoSnapshotsMemory = [];
+try{
+  const rawSnaps = localStorage.getItem(SNAP_KEY);
+  if(rawSnaps) _autoSnapshotsMemory = JSON.parse(rawSnaps) || [];
+}catch(_){}
+if(Array.isArray(state.autoSnapshots) && state.autoSnapshots.length){
+  if(!_autoSnapshotsMemory.length) _autoSnapshotsMemory = state.autoSnapshots.slice(0, 5);
+  delete state.autoSnapshots;
+  try{ localStorage.setItem(SNAP_KEY, JSON.stringify(_autoSnapshotsMemory)); }catch(_){}
+}
+// Migrate plain-text PIN to hashed PIN automatically
+if(state.prefs && state.prefs.secPin && !state.prefs.secPinHash){
+  state.prefs.secPinHash = fallbackHashPin(state.prefs.secPin);
+  delete state.prefs.secPin;
+}
 syncCategoryTrees();
 
 let activeYear = new Date().getFullYear();
@@ -75,7 +84,6 @@ const fmtNum=n=>(state.prefs?.homeDecimals ? fmt(n) : fmtInt(n));
 const egp=n=>fmt(n)+' EGP';
 const egpSmart=n=>fmtNum(n)+' EGP';
 const maskable=str=>state.prefs?.privacy ? '••••' : str;
-const today=()=>new Date().toISOString().slice(0,10);
 const monthKey=d=>String(d||'').slice(0,7);
 const selected=()=>String(activeYear)+'-'+String(activeMonth).padStart(2,'0');
 const num=id=>Number(document.getElementById(id)?.value)||0;
@@ -84,8 +92,15 @@ const setv=(id,v)=>{let e=document.getElementById(id);if(e)e.value=v??''};
 const round2=x=>Math.round((Number(x)||0)*100)/100;
 const ceilTo=(x,step)=>Math.ceil(x/step)*step;
 
-function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-function toast(s){let x=document.getElementById('toast');if(!x)return;x.textContent=s;x.style.display='block';setTimeout(()=>x.style.display='none',2300)}
+let _toastTimer = null;
+function toast(s){
+  let x = document.getElementById('toast');
+  if(!x) return;
+  x.textContent = s;
+  x.style.display = 'block';
+  if(_toastTimer) clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(()=>{ x.style.display = 'none'; }, 2900);
+}
 
 function formatYMArabic(ym){
   if(!ym || !ym.includes('-')) return '—';
@@ -160,11 +175,17 @@ function updateBackupStatusUI(){
   }
 }
 
-function persist(){
-  try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){toast('تم الحفظ في IndexedDB')}
-  saveToIndexedDB(state);
+let _idbSaveTimer = null;
+function persist(onlyActiveScreen){
+  if(state && state.autoSnapshots) delete state.autoSnapshots;
+  try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){}
+  if(_idbSaveTimer) clearTimeout(_idbSaveTimer);
+  _idbSaveTimer = setTimeout(()=>{
+    saveToIndexedDB(state);
+    triggerSilentAutoCloudSyncIfEnabled();
+  }, 60);
   updateBackupStatusUI();
-  renderAll();
+  renderActiveScreenOnly(onlyActiveScreen);
 }
 
 /* Custom Unified Dialog System */
@@ -297,8 +318,7 @@ window.addEventListener('popstate', function(){
   if(qm && qm.classList.contains('show')){ closeQuickModal(); try{history.pushState({xwGuard:2},'');}catch(_){} return; }
   const sm = document.getElementById('statementFullModal');
   if(sm && sm.classList.contains('show')){ closeFullStatementModal(); try{history.pushState({xwGuard:2},'');}catch(_){} return; }
-  const cd = document.getElementById('catDetailModal');
-  if(cd && cd.classList.contains('show')){ closeCatDetailModal(); try{history.pushState({xwGuard:2},'');}catch(_){} return; }
+  if(activeCatDrillState){ closeCatDetailModal(); try{history.pushState({xwGuard:2},'');}catch(_){} return; }
 
   const searchBox = document.getElementById('mmSearchBox');
   const searchInp = document.getElementById('actSearch');
@@ -447,7 +467,7 @@ function applyPreferences(){
   setv('prefFontSize', p.fontSize || '1');
   setv('prefAutoDriveFreq', p.autoDriveFreq || 'off');
   setv('prefDriveEmail', p.driveEmail || '');
-  setv('secPinInput', p.secPin || '');
+  setv('secPinInput', (p.secPinHash || p.secPin) ? '••••' : '');
   setv('secAppLockOnStart', p.appLockOnStart === false ? '0' : '1');
   setv('secBioOnPrivacy', p.bioOnPrivacy === false ? '0' : '1');
 
@@ -502,14 +522,20 @@ function toggleDecimalsMode(){
    ========================================================= */
 let _appUnlockedThisSession = false;
 
-function saveSecuritySettings(){
+async function saveSecuritySettings(){
   state.prefs = state.prefs || {};
-  state.prefs.secPin = val('secPinInput').trim();
+  const rawPin = val('secPinInput').trim();
+  if(rawPin && rawPin !== '••••'){
+    state.prefs.secPinHash = await hashPinString(rawPin);
+  } else if(!rawPin){
+    state.prefs.secPinHash = '';
+  }
+  delete state.prefs.secPin;
   state.prefs.appLockOnStart = val('secAppLockOnStart') !== '0';
   state.prefs.bioOnPrivacy = val('secBioOnPrivacy') !== '0';
   applyPreferences();
   persist();
-  toast('تم حفظ إعدادات الخصوصية والأمان ✓');
+  toast('تم تشفير وحفظ إعدادات الخصوصية والأمان 🔒✓');
 }
 
 async function registerBiometricLock(){
@@ -549,13 +575,14 @@ async function registerBiometricLock(){
 
 function checkAppLockOnBoot(){
   const p = state.prefs || {};
-  const shouldLock = p.appLockOnStart !== false && (p.bioEnabled || p.secPin);
+  const hasPin = !!(p.secPinHash || p.secPin);
+  const shouldLock = p.appLockOnStart !== false && (p.bioEnabled || hasPin);
   const lockScreen = document.getElementById('appLockScreen');
   if(!shouldLock || _appUnlockedThisSession || !lockScreen) return;
 
   lockScreen.classList.add('show');
   const pinWrap = document.getElementById('lockPinWrap');
-  if(pinWrap) pinWrap.style.display = p.secPin ? 'flex' : 'none';
+  if(pinWrap) pinWrap.style.display = hasPin ? 'flex' : 'none';
 
   if(p.bioEnabled){
     setTimeout(()=>unlockAppWithBiometrics(), 250);
@@ -591,7 +618,7 @@ async function unlockAppWithBiometrics(){
     }catch(_){
       toast('اضغط فتح بالبصمة مرة أخرى أو أدخل الرمز');
     }
-  } else if(p.secPin){
+  } else if(p.secPinHash || p.secPin){
     document.getElementById('lockPinWrap').style.display = 'flex';
     document.getElementById('lockPinInput')?.focus();
   } else {
@@ -600,22 +627,22 @@ async function unlockAppWithBiometrics(){
   }
 }
 
-function unlockAppWithPin(){
+async function unlockAppWithPin(){
   const p = state.prefs || {};
   const entered = val('lockPinInput').trim();
-  if(entered && entered === String(p.secPin).trim()){
+  const ok = await verifyEnteredPin(entered, p);
+  if(ok){
     _appUnlockedThisSession = true;
     setv('lockPinInput', '');
     document.getElementById('appLockScreen')?.classList.remove('show');
     toast('تم فتح التطبيق ✓');
-  } else {
-    toast('رمز المرور غير صحيح');
   }
 }
 
 async function verifyBiometricOrPin(onSuccess){
   const p = state.prefs || {};
-  const needLock = p.bioOnPrivacy !== false && (p.bioEnabled || p.secPin);
+  const hasPin = !!(p.secPinHash || p.secPin);
+  const needLock = p.bioOnPrivacy !== false && (p.bioEnabled || hasPin);
   if(!needLock){
     onSuccess();
     return;
@@ -643,19 +670,16 @@ async function verifyBiometricOrPin(onSuccess){
         return;
       }
     }catch(_){
-      if(!p.secPin){
+      if(!hasPin){
         toast('لم يتم التحقق من البصمة');
         return;
       }
     }
   }
-  if(p.secPin){
-    showAppPrompt('أدخل رمز المرور لإظهار الأرقام', 'رمز المرور (PIN)...', '', (entered)=>{
-      if(String(entered).trim() === String(p.secPin).trim()){
-        onSuccess();
-      } else {
-        toast('رمز المرور غير صحيح');
-      }
+  if(hasPin){
+    showAppPrompt('أدخل رمز المرور لإظهار الأرقام', 'رمز المرور (PIN)...', '', async (entered)=>{
+      const ok = await verifyEnteredPin(entered, p);
+      if(ok) onSuccess();
     }, false, 'password');
     return;
   }
@@ -702,6 +726,14 @@ function updateTopTabTitle(pageId){
   el.textContent = (TAB_TITLES[lang] || TAB_TITLES.ar)[curId] || '';
 }
 
+function updateFabVisibility(){
+  const fab = document.querySelector('.fab');
+  if(!fab) return;
+  const activePage = document.querySelector('.screen.active')?.id || 'trans';
+  const show = (activePage === 'trans' && activeTransSubTab === 'daily');
+  fab.style.display = show ? 'grid' : 'none';
+}
+
 function go(id, btn){
   document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));
   const t = document.getElementById(id);
@@ -712,6 +744,8 @@ function go(id, btn){
     document.querySelectorAll('#settings details.fold[open]').forEach(f=>f.removeAttribute('open'));
   }
   updateTopTabTitle(id);
+  updateFabVisibility();
+  renderActiveScreenOnly();
   window.scrollTo(0,0);
 }
 function switchWalletTab(which){
@@ -749,10 +783,10 @@ function shiftForecastYear(delta){
 }
 
 let activeReportCategoryFilter = null;
-let transAdvFilter = { date:'', accountId:'', accountLabel:'', mainCat:'', subCat:'', amount:'' };
+let transAdvFilter = { dateFrom:'', dateTo:'', accountId:'', accountLabel:'', mainCat:'', subCat:'', amountFrom:'', amountTo:'' };
 
 function hasAnyTransAdvFilter(){
-  return !!(transAdvFilter.date || transAdvFilter.accountId || transAdvFilter.mainCat || transAdvFilter.subCat || transAdvFilter.amount);
+  return !!(transAdvFilter.dateFrom || transAdvFilter.dateTo || transAdvFilter.accountId || transAdvFilter.mainCat || transAdvFilter.subCat || transAdvFilter.amountFrom || transAdvFilter.amountTo);
 }
 
 function updateTransFilterGridUI(){
@@ -762,8 +796,15 @@ function updateTransFilterGridUI(){
   const sCard = document.getElementById('fCardSubCat');
   const amCard = document.getElementById('fCardAmt');
   if(dCard){
-    dCard.classList.toggle('active', !!transAdvFilter.date);
-    document.getElementById('fValDate').textContent = transAdvFilter.date ? formatDateDMY(transAdvFilter.date) : 'الكل';
+    const hasD = !!(transAdvFilter.dateFrom || transAdvFilter.dateTo);
+    dCard.classList.toggle('active', hasD);
+    let dTxt = 'الكل';
+    if(transAdvFilter.dateFrom && transAdvFilter.dateTo && transAdvFilter.dateFrom !== transAdvFilter.dateTo){
+      dTxt = `${formatDateDMY(transAdvFilter.dateFrom).slice(0,5)}←${formatDateDMY(transAdvFilter.dateTo).slice(0,5)}`;
+    } else if(transAdvFilter.dateFrom || transAdvFilter.dateTo){
+      dTxt = formatDateDMY(transAdvFilter.dateFrom || transAdvFilter.dateTo);
+    }
+    document.getElementById('fValDate').textContent = dTxt;
   }
   if(aCard){
     aCard.classList.toggle('active', !!transAdvFilter.accountId);
@@ -778,8 +819,15 @@ function updateTransFilterGridUI(){
     document.getElementById('fValSubCat').textContent = transAdvFilter.subCat || 'الكل';
   }
   if(amCard){
-    amCard.classList.toggle('active', !!transAdvFilter.amount);
-    document.getElementById('fValAmt').textContent = transAdvFilter.amount ? (transAdvFilter.amount + ' EGP') : 'الكل';
+    const hasA = !!(transAdvFilter.amountFrom || transAdvFilter.amountTo);
+    amCard.classList.toggle('active', hasA);
+    let aTxt = 'الكل';
+    if(transAdvFilter.amountFrom && transAdvFilter.amountTo && transAdvFilter.amountFrom !== transAdvFilter.amountTo){
+      aTxt = `${transAdvFilter.amountFrom} – ${transAdvFilter.amountTo}`;
+    } else if(transAdvFilter.amountFrom || transAdvFilter.amountTo){
+      aTxt = `${transAdvFilter.amountFrom || transAdvFilter.amountTo}`;
+    }
+    document.getElementById('fValAmt').textContent = aTxt;
   }
 }
 
@@ -802,19 +850,20 @@ function toggleSearchBar(){
 function openTransFilterPrompt(kind){
   if(activeTransSubTab === 'monthly') switchTransSubTab('daily');
   if(kind === 'date'){
+    const defStart = transAdvFilter.dateFrom || (selected() + '-01');
+    const defEnd = transAdvFilter.dateTo || today();
     const html = `
       <div class="c-list">
-        <div class="c-row"><label>اختر التاريخ</label><input id="fltDateInp" type="date" value="${esc(transAdvFilter.date || today())}"></div>
+        <div class="c-row"><label>من تاريخ</label><input id="fltDateFromInp" type="date" value="${esc(defStart)}"></div>
+        <div class="c-row"><label>إلى تاريخ</label><input id="fltDateToInp" type="date" value="${esc(defEnd)}"></div>
       </div>
-      <div style="margin-top:8px"><button type="button" class="secondary" style="width:100%" onclick="transAdvFilter.date='';closeAppDialog();updateTransFilterGridUI();renderTransactionsScreen()">إلغاء فلتر التاريخ (عرض الكل)</button></div>
+      <div style="margin-top:8px"><button type="button" class="secondary" style="width:100%" onclick="transAdvFilter.dateFrom='';transAdvFilter.dateTo='';closeAppDialog();updateTransFilterGridUI();renderTransactionsScreen()">إلغاء فلتر التاريخ (عرض الكل)</button></div>
     `;
-    showAppCustomForm('فلترة بالتاريخ', html, ()=>{
-      const d = val('fltDateInp');
-      transAdvFilter.date = d || '';
-      if(d && d.length >= 7){
-        activeYear = Number(d.slice(0,4)) || activeYear;
-        activeMonth = Number(d.slice(5,7)) || activeMonth;
-      }
+    showAppCustomForm('فلترة بالتاريخ (من : إلى)', html, ()=>{
+      const df = val('fltDateFromInp');
+      const dt = val('fltDateToInp');
+      transAdvFilter.dateFrom = df || '';
+      transAdvFilter.dateTo = dt || '';
       updateTransFilterGridUI();
       renderTransactionsScreen();
       return true;
@@ -826,7 +875,7 @@ function openTransFilterPrompt(kind){
     state.accounts.forEach(a=>opts.push({id:a.id, name:a.name}));
     state.cards.forEach(c=>opts.push({id:'card:'+c.id, name:'💳 '+c.name}));
     const listHtml = `<div class="cs-opt-list">` + opts.map(o=>`
-      <button type="button" class="cs-opt-btn ${transAdvFilter.accountId===o.id?'selected':''}" onclick="selectTransFilterAccount('${esc(o.id)}','${esc(o.name)}')">
+      <button type="button" class="cs-opt-btn ${transAdvFilter.accountId===o.id?'selected':''}" onclick="selectTransFilterAccount('${escJs(o.id)}','${escJs(o.name)}')">
         <span>${esc(o.name)}</span><span>${transAdvFilter.accountId===o.id?'●':'○'}</span>
       </button>
     `).join('') + `</div>`;
@@ -838,7 +887,7 @@ function openTransFilterPrompt(kind){
     const allMain = [...new Set([...Object.keys(state.categoryTree.expense||{}), ...Object.keys(state.categoryTree.income||{})])];
     const opts = ['', ...allMain];
     const listHtml = `<div class="cs-opt-list">` + opts.map(c=>`
-      <button type="button" class="cs-opt-btn ${transAdvFilter.mainCat===c?'selected':''}" onclick="selectTransFilterMainCat('${esc(c)}')">
+      <button type="button" class="cs-opt-btn ${transAdvFilter.mainCat===c?'selected':''}" onclick="selectTransFilterMainCat('${escJs(c)}')">
         <span>${esc(c || 'كل الأقسام الرئيسية')}</span><span>${transAdvFilter.mainCat===c?'●':'○'}</span>
       </button>
     `).join('') + `</div>`;
@@ -856,7 +905,7 @@ function openTransFilterPrompt(kind){
     subs = [...new Set(subs.filter(Boolean))];
     const opts = ['', ...subs];
     const listHtml = `<div class="cs-opt-list">` + opts.map(sc=>`
-      <button type="button" class="cs-opt-btn ${transAdvFilter.subCat===sc?'selected':''}" onclick="selectTransFilterSubCat('${esc(sc)}')">
+      <button type="button" class="cs-opt-btn ${transAdvFilter.subCat===sc?'selected':''}" onclick="selectTransFilterSubCat('${escJs(sc)}')">
         <span>${esc(sc || 'كل الأقسام الفرعية')}</span><span>${transAdvFilter.subCat===sc?'●':'○'}</span>
       </button>
     `).join('') + `</div>`;
@@ -864,11 +913,23 @@ function openTransFilterPrompt(kind){
     return;
   }
   if(kind === 'amount'){
-    showAppPrompt('فلترة بالمبلغ', 'أدخل المبلغ للبحث عنه (اتركه فارغاً للكل)...', transAdvFilter.amount || '', (v)=>{
-      transAdvFilter.amount = String(v||'').trim();
+    const html = `
+      <div class="c-list">
+        <div class="c-row"><label>من مبلغ</label><input id="fltAmtFromInp" type="number" step="0.01" placeholder="مثال: 450" value="${esc(transAdvFilter.amountFrom||'')}"></div>
+        <div class="c-row"><label>إلى مبلغ</label><input id="fltAmtToInp" type="number" step="0.01" placeholder="اتركه فارغاً لمطابقة المبلغ بالضبط" value="${esc(transAdvFilter.amountTo||'')}"></div>
+      </div>
+      <p class="hint">لو كتبت رقم في «من مبلغ» فقط (مثلاً 450)، هيبحث عن 450 بالضبط.</p>
+      <div style="margin-top:8px"><button type="button" class="secondary" style="width:100%" onclick="transAdvFilter.amountFrom='';transAdvFilter.amountTo='';closeAppDialog();updateTransFilterGridUI();renderTransactionsScreen()">إلغاء فلتر المبلغ (عرض الكل)</button></div>
+    `;
+    showAppCustomForm('فلترة بالمبلغ (من : إلى)', html, ()=>{
+      const af = String(val('fltAmtFromInp')||'').trim();
+      const at = String(val('fltAmtToInp')||'').trim();
+      transAdvFilter.amountFrom = af;
+      transAdvFilter.amountTo = at;
       updateTransFilterGridUI();
       renderTransactionsScreen();
-    }, false, 'number');
+      return true;
+    });
   }
 }
 
@@ -915,7 +976,7 @@ function onTransactionsSearchInput(){
 }
 function clearTransactionsSearch(){
   activeReportCategoryFilter = null;
-  transAdvFilter = { date:'', accountId:'', accountLabel:'', mainCat:'', subCat:'', amount:'' };
+  transAdvFilter = { dateFrom:'', dateTo:'', accountId:'', accountLabel:'', mainCat:'', subCat:'', amountFrom:'', amountTo:'' };
   setv('actAccountFilter', '');
   const inp = document.getElementById('actSearch');
   if(inp) inp.value = '';
@@ -1020,6 +1081,7 @@ let activeTransSubTab = 'daily';
 
 function switchTransSubTab(mode){
   activeTransSubTab = (mode === 'monthly') ? 'monthly' : 'daily';
+  updateFabVisibility();
   document.getElementById('transTabDaily')?.classList.toggle('active', activeTransSubTab === 'daily');
   document.getElementById('transTabMonthly')?.classList.toggle('active', activeTransSubTab === 'monthly');
   renderTransactionsScreen();
@@ -1231,8 +1293,11 @@ function renderTransactionsScreen(){
   const t = totals(m);
   document.getElementById('homePeriodLabel').textContent = isEn ? `${monthNamesEn[activeMonth-1]} ${activeYear}` : formatYMArabic(m);
 
-  const txList = monthTx(m).map((x, idx)=>({...x, _kind:'tx', _order: getItemTimestampOrder(x, idx)}));
-  const ledList = (state.ledger||[]).filter(l=>monthKey(l.date)===m).map((l, idx)=>{
+  const useGlobalDateRange = !!(transAdvFilter.dateFrom || transAdvFilter.dateTo);
+  const rawTxSource = useGlobalDateRange ? (state.transactions||[]) : monthTx(m);
+  const rawLedSource = useGlobalDateRange ? (state.ledger||[]) : (state.ledger||[]).filter(l=>monthKey(l.date)===m);
+  const txList = rawTxSource.map((x, idx)=>({...x, _kind:'tx', _order: getItemTimestampOrder(x, idx)}));
+  const ledList = rawLedSource.map((l, idx)=>{
     const fromA = state.accounts.find(a=>a.id===l.from)?.name || (isEn?'Cash':'كاش');
     const toA = state.accounts.find(a=>a.id===l.to)?.name || (isEn?'Cash':'كاش');
     const feeTxt = (Number(l.fee)||0) > 0 ? ` (${isEn?'Fee':'رسوم'}: ${fmt(l.fee)})` : '';
@@ -1266,14 +1331,30 @@ function renderTransactionsScreen(){
         return false;
       }
     }
-    if(transAdvFilter.date && String(it.date||'').slice(0,10) !== transAdvFilter.date) return false;
+    const dSlice = String(it.date||'').slice(0,10);
+    if(transAdvFilter.dateFrom && dSlice < transAdvFilter.dateFrom) return false;
+    if(transAdvFilter.dateTo && dSlice > transAdvFilter.dateTo) return false;
     if(transAdvFilter.mainCat && String(it.category||'').trim() !== transAdvFilter.mainCat) return false;
     if(transAdvFilter.subCat && String(it.subCategory||'').trim() !== transAdvFilter.subCat) return false;
-    if(transAdvFilter.amount){
-      const targetAmt = Number(transAdvFilter.amount);
-      if(Number.isFinite(targetAmt) && Math.abs((Number(it.amount)||0) - targetAmt) > 0.009 && !String(it.amount||'').includes(transAdvFilter.amount)) return false;
+    if(transAdvFilter.amountFrom || transAdvFilter.amountTo){
+      const itemAmt = Math.abs(Number(it.amount)||0);
+      const hasF = transAdvFilter.amountFrom !== '' && Number.isFinite(Number(transAdvFilter.amountFrom));
+      const hasT = transAdvFilter.amountTo !== '' && Number.isFinite(Number(transAdvFilter.amountTo));
+      if(hasF && !hasT){
+        // Exact match when only "من مبلغ" is entered (450 matches 450 ONLY, never 4500!)
+        if(Math.abs(itemAmt - Number(transAdvFilter.amountFrom)) > 0.009) return false;
+      } else if(!hasF && hasT){
+        if(Math.abs(itemAmt - Number(transAdvFilter.amountTo)) > 0.009) return false;
+      } else if(hasF && hasT){
+        const minA = Math.min(Number(transAdvFilter.amountFrom), Number(transAdvFilter.amountTo));
+        const maxA = Math.max(Number(transAdvFilter.amountFrom), Number(transAdvFilter.amountTo));
+        if(itemAmt < minA - 0.009 || itemAmt > maxA + 0.009) return false;
+      }
     }
     if(q){
+      const isPureNum = /^\d+(\.\d+)?$/.test(q);
+      const itemAmt = Math.abs(Number(it.amount)||0);
+      const exactNumMatch = isPureNum && Math.abs(itemAmt - Number(q)) < 0.009;
       const accDisp = resolveAccountDisplayLabel(it, isEn).toLowerCase();
       const hay = [
         it.title,
@@ -1281,10 +1362,9 @@ function renderTransactionsScreen(){
         it.description,
         it.category,
         it.subCategory,
-        accDisp,
-        String(it.amount||'')
+        accDisp
       ].map(s=>String(s||'').toLowerCase()).join(' ');
-      if(!hay.includes(q)) return false;
+      if(!exactNumMatch && !hay.includes(q)) return false;
     }
     return true;
   }).sort((a,b)=>{
@@ -1336,7 +1416,7 @@ function duplicateItemToday(id, kind){
     if(!origL) return;
     state.ledger.push({
       ...origL,
-      id: 'ledger-' + nowTs,
+      id: uid('ledger'),
       date: today(),
       createdAt: nowTs
     });
@@ -1351,7 +1431,7 @@ function duplicateItemToday(id, kind){
   if(isCardPurchaseTx(orig)){
     const oldOpId = String(orig.source||'').replace('card-purchase:','');
     const origOp = state.cardOps.find(o=>o.id===oldOpId);
-    const newOpId = 'op-' + nowTs;
+    const newOpId = uid('op');
     const dToday = today();
     if(origOp){
       const card = state.cards.find(c=>c.id===origOp.cardId);
@@ -1399,7 +1479,7 @@ function duplicateItemToday(id, kind){
 
   state.transactions.push({
     ...orig,
-    id: 'tx-' + nowTs,
+    id: uid('tx'),
     date: today(),
     createdAt: nowTs
   });
@@ -1484,7 +1564,7 @@ function refreshSecondaryFeeds(){
   if(activeStatementState && document.getElementById('statementFullModal')?.classList.contains('show')){
     renderFullStatementModalContent();
   }
-  if(activeCatDrillState && document.getElementById('catDetailModal')?.classList.contains('show')){
+  if(activeCatDrillState){
     renderCategoryDrillDownContent();
   }
 }
@@ -1501,41 +1581,77 @@ let reportYear = activeYear;
 let mainRepChartOpen = false;
 let catDrillChartOpen = false;
 
-function toggleMainReportChart(){
-  mainRepChartOpen = !mainRepChartOpen;
-  const pnl = document.getElementById('repChartPanel');
-  const btn = document.getElementById('btnToggleMainRepChart');
-  if(pnl) pnl.style.display = mainRepChartOpen ? 'flex' : 'none';
-  if(btn) btn.classList.toggle('active', mainRepChartOpen);
+function openNativeInputPicker(id){
+  const el = document.getElementById(id);
+  if(!el) return;
+  try{
+    if(typeof el.showPicker === 'function') el.showPicker();
+    else el.focus();
+  }catch(_){ el.focus(); }
 }
-function toggleCatDrillChart(){
-  catDrillChartOpen = !catDrillChartOpen;
-  renderCategoryDrillDownContent();
+
+function syncRepInlineDateDisplays(){
+  const df = val('repCustomFrom') || (selected() + '-01');
+  const dt = val('repCustomTo') || today();
+  const fDisp = document.getElementById('repFromDisp');
+  const tDisp = document.getElementById('repToDisp');
+  if(fDisp) fDisp.textContent = formatDateDMY(df);
+  if(tDisp) tDisp.textContent = formatDateDMY(dt);
 }
+
+function onRepInlineDateChange(){
+  syncRepInlineDateDisplays();
+  renderReportsScreen();
+  if(activeCatDrillState) renderCategoryDrillDownContent();
+}
+
+function toggleUnifiedReportChart(){
+  if(activeCatDrillState){
+    catDrillChartOpen = !catDrillChartOpen;
+    document.getElementById('btnToggleMainRepChart')?.classList.toggle('active', catDrillChartOpen);
+    renderCategoryDrillDownContent();
+  } else {
+    mainRepChartOpen = !mainRepChartOpen;
+    const pnl = document.getElementById('repChartPanel');
+    const btn = document.getElementById('btnToggleMainRepChart');
+    if(pnl) pnl.style.display = mainRepChartOpen ? 'flex' : 'none';
+    if(btn) btn.classList.toggle('active', mainRepChartOpen);
+  }
+}
+function toggleMainReportChart(){ toggleUnifiedReportChart(); }
+function toggleCatDrillChart(){ toggleUnifiedReportChart(); }
 const CHART_COLORS = ['#ff6b6b','#ff9f43','#feca57','#1dd1a1','#48dbfb','#54a0ff','#5f27cd','#ff9ff3','#00d2d3','#c8d6e5','#ee5253','#10ac84'];
 
 function switchReportTab(tab){
   activeReportTab = (tab === 'inc') ? 'inc' : 'exp';
+  if(activeCatDrillState){
+    closeCatDetailModal();
+  }
   document.getElementById('repTabInc')?.classList.toggle('active', activeReportTab==='inc');
   document.getElementById('repTabExp')?.classList.toggle('active', activeReportTab==='exp');
-  document.getElementById('repCardTotalInc')?.classList.toggle('active-inc', activeReportTab==='inc');
-  document.getElementById('repCardTotalExp')?.classList.toggle('active-exp', activeReportTab==='exp');
   renderReportsScreen();
 }
 
 function onReportPeriodModeChange(mode){
   reportPeriodMode = mode || 'monthly';
   const stepBox = document.getElementById('repStepperBox');
-  const customRow = document.getElementById('repCustomDatesRow');
-  if(stepBox) stepBox.style.display = (reportPeriodMode === 'monthly' || reportPeriodMode === 'yearly') ? 'inline-flex' : 'none';
-  if(customRow){
-    customRow.style.display = (reportPeriodMode === 'custom') ? 'grid' : 'none';
-    if(reportPeriodMode === 'custom'){
+  const inlineDates = document.getElementById('repInlineDatesBox');
+  const isDateBoxes = (reportPeriodMode === 'all' || reportPeriodMode === 'custom');
+  if(stepBox) stepBox.style.display = isDateBoxes ? 'none' : 'inline-flex';
+  if(inlineDates){
+    inlineDates.style.display = isDateBoxes ? 'grid' : 'none';
+    if(reportPeriodMode === 'all'){
+      const allDates = (state.transactions||[]).map(t=>String(t.date||'').slice(0,10)).filter(d=>/^\d{4}-\d{2}-\d{2}$/.test(d)).sort();
+      setv('repCustomFrom', allDates[0] || (String(activeYear)+'-01-01'));
+      setv('repCustomTo', allDates[allDates.length-1] || today());
+    } else if(reportPeriodMode === 'custom'){
       if(!val('repCustomFrom')) setv('repCustomFrom', selected() + '-01');
       if(!val('repCustomTo')) setv('repCustomTo', today());
     }
+    syncRepInlineDateDisplays();
   }
   renderReportsScreen();
+  if(activeCatDrillState) renderCategoryDrillDownContent();
 }
 
 function shiftReportPeriod(delta){
@@ -1545,6 +1661,7 @@ function shiftReportPeriod(delta){
   } else {
     shiftActiveMonth(delta);
   }
+  if(activeCatDrillState) renderCategoryDrillDownContent();
 }
 
 function openReportPeriodPicker(){
@@ -1582,10 +1699,15 @@ function getReportFilteredTransactions(isInc){
       })
     };
   }
+  const dFromAll = val('repCustomFrom') || '0000-01-01';
+  const dToAll = val('repCustomTo') || '9999-12-31';
   return {
     periodLabel: 'كل الفترات',
     yearForChart: activeYear,
-    list: allMatchingType
+    list: allMatchingType.filter(t => {
+      const d = String(t.date||'').slice(0,10);
+      return (!val('repCustomFrom') || d >= dFromAll) && (!val('repCustomTo') || d <= dToAll);
+    })
   };
 }
 
@@ -1728,8 +1850,12 @@ function buildSvgLineChartWithYAxis(monthTotals, isInc){
 function openCategoryDrillDown(catName, txType){
   activeCatDrillState = { catName, txType, subFilter: '' };
   catDrillChartOpen = false;
+  document.getElementById('repModeSelectWrap').style.display = 'none';
+  document.getElementById('repSelectedCatBtn').style.display = 'flex';
+  document.getElementById('repMainContentWrap').style.display = 'none';
+  document.getElementById('catDetailInlineWrap').style.display = 'block';
+  document.getElementById('btnToggleMainRepChart')?.classList.toggle('active', false);
   renderCategoryDrillDownContent();
-  document.getElementById('catDetailModal').classList.add('show');
 }
 
 function selectSubcategoryInDrillDown(subName){
@@ -1740,16 +1866,10 @@ function selectSubcategoryInDrillDown(subName){
 
 function shiftCatDrillPeriod(delta){
   shiftReportPeriod(delta);
-  if(activeCatDrillState) renderCategoryDrillDownContent();
 }
 
 function openCatDrillPeriodPicker(){
-  openCompactYMPicker(null, false, (chosenYM)=>{
-    const [y,m] = chosenYM.split('-').map(Number);
-    activeYear = y; activeMonth = m; forecastYear = y;
-    renderAll();
-    if(activeCatDrillState) renderCategoryDrillDownContent();
-  });
+  openReportPeriodPicker();
 }
 
 function renderCategoryDrillDownContent(){
@@ -1758,26 +1878,10 @@ function renderCategoryDrillDownContent(){
   const isInc = (txType === 'income');
   const incData = getReportFilteredTransactions(true);
   const expData = getReportFilteredTransactions(false);
-  const totIncPeriod = round2(incData.list.reduce((s,t)=>s+(Number(t.amount)||0), 0));
-  const totExpPeriod = round2(expData.list.reduce((s,t)=>s+(Number(t.amount)||0), 0));
-
-  document.getElementById('catDrillTabInc')?.classList.toggle('active', isInc);
-  document.getElementById('catDrillTabExp')?.classList.toggle('active', !isInc);
-  const dBoxInc = document.getElementById('catDrillBoxTotalInc');
-  const dBoxExp = document.getElementById('catDrillBoxTotalExp');
-  if(dBoxInc) dBoxInc.textContent = maskable(egpSmart(totIncPeriod));
-  if(dBoxExp) dBoxExp.textContent = maskable(egpSmart(totExpPeriod));
-
   const { periodLabel, yearForChart, list } = isInc ? incData : expData;
 
   document.getElementById('catDetailTitle').textContent = subFilter ? `${catName} / ${subFilter}` : catName;
-  const chartBtn = document.getElementById('btnToggleDrillChart');
-  if(chartBtn) chartBtn.classList.toggle('active', catDrillChartOpen);
-
-  const stepBox = document.getElementById('catDetailStepperBox');
-  const stepLbl = document.getElementById('catDetailStepLabel');
-  if(stepBox) stepBox.style.display = (reportPeriodMode === 'monthly' || reportPeriodMode === 'yearly') ? 'inline-flex' : 'none';
-  if(stepLbl) stepLbl.textContent = (reportPeriodMode === 'yearly') ? String(reportYear) : formatYMArabic(selected());
+  document.getElementById('btnToggleMainRepChart')?.classList.toggle('active', catDrillChartOpen);
 
   const allMainCatTxs = list
     .filter(t => (String(t.category||'أخرى').trim() || 'أخرى') === catName)
@@ -1861,6 +1965,15 @@ function renderCategoryDrillDownContent(){
 function closeCatDetailModal(){
   document.getElementById('catDetailModal')?.classList.remove('show');
   activeCatDrillState = null;
+  const modeWrap = document.getElementById('repModeSelectWrap');
+  const catBtn = document.getElementById('repSelectedCatBtn');
+  const mainWrap = document.getElementById('repMainContentWrap');
+  const drillWrap = document.getElementById('catDetailInlineWrap');
+  if(modeWrap) modeWrap.style.display = 'block';
+  if(catBtn) catBtn.style.display = 'none';
+  if(mainWrap) mainWrap.style.display = 'block';
+  if(drillWrap) drillWrap.style.display = 'none';
+  document.getElementById('btnToggleMainRepChart')?.classList.toggle('active', mainRepChartOpen);
 }
 
 
@@ -2220,7 +2333,7 @@ function renderQuickPickers(){
     document.getElementById('qmAccSelectedText').textContent = 'كاش';
   }
   document.getElementById('qmAccGrid').innerHTML = accItems.map(a=>`
-    <button type="button" class="qg-item ${a.id===qmState.accountId?'selected':''}" onclick="selectQuickAcc('${a.id}', ${a.isCard})">${esc(a.name)}</button>
+    <button type="button" class="qg-item ${a.id===qmState.accountId?'selected':''}" onclick="selectQuickAcc('${escJs(a.id)}', ${a.isCard})">${esc(a.name)}</button>
   `).join('');
 
   const toAcc = state.accounts.find(a=>a.id===qmState.toAccountId) || state.accounts.find(a=>a.id!==qmState.accountId) || state.accounts[0];
@@ -2229,7 +2342,7 @@ function renderQuickPickers(){
     document.getElementById('qmToAccSelectedText').textContent = toAcc.name;
   }
   document.getElementById('qmToAccGrid').innerHTML = state.accounts.map(a=>`
-    <button type="button" class="qg-item ${a.id===qmState.toAccountId?'selected':''}" onclick="selectQuickToAcc('${a.id}')">${esc(a.name)}</button>
+    <button type="button" class="qg-item ${a.id===qmState.toAccountId?'selected':''}" onclick="selectQuickToAcc('${escJs(a.id)}')">${esc(a.name)}</button>
   `).join('');
 
   const tree = getActiveCatTree();
@@ -2255,7 +2368,7 @@ function renderQuickPickers(){
     } else {
       mainColEl.innerHTML = mainCats.map(mc=>{
         const subsCount = (tree[mc]||[]).length;
-        return `<button type="button" class="mm-cat-item ${mc===qmState.category?'active':''}" onclick="selectQuickMainCat('${esc(mc)}')">
+        return `<button type="button" class="mm-cat-item ${mc===qmState.category?'active':''}" onclick="selectQuickMainCat('${escJs(mc)}')">
           <span>${esc(mc)}</span>
           ${subsCount ? `<small style="opacity:.7">›</small>` : ''}
         </button>`;
@@ -2266,7 +2379,7 @@ function renderQuickPickers(){
         subColEl.innerHTML = '<div class="empty" style="padding:14px 6px;font-size:.68rem">بدون أقسام فرعية</div>';
       } else {
         subColEl.innerHTML = subs.map(sc=>`
-          <button type="button" class="mm-cat-item ${sc===qmState.subCategory?'active':''}" onclick="selectQuickSubCat('${esc(sc)}')"><span>${esc(sc)}</span></button>
+          <button type="button" class="mm-cat-item ${sc===qmState.subCategory?'active':''}" onclick="selectQuickSubCat('${escJs(sc)}')"><span>${esc(sc)}</span></button>
         `).join('');
       }
     }
@@ -2355,7 +2468,7 @@ function saveQuickModal(){
       return;
     }
     state.ledger.push({
-      id: 'ledger-' + nowTs,
+      id: uid('ledger'),
       type: 'transfer',
       from: qmState.accountId,
       to: qmState.toAccountId,
@@ -2424,7 +2537,7 @@ function saveQuickModal(){
     if(!card) return toast('اختر البطاقة');
     const title = note || qmState.subCategory || qmState.category || 'شراء بالبطاقة';
     const opType = qmState.cardMode;
-    let op = {id:'op-'+nowTs, cardId:card.id, type:opType, title, amount, date, paid:0, dueDate:dueDateFor(card,date), createdAt:nowTs};
+    let op = {id:uid('op'), cardId:card.id, type:opType, title, amount, date, paid:0, dueDate:dueDateFor(card,date), createdAt:nowTs};
     if(opType === 'installment'){
       const months = num('qmCardMonths') || 12;
       const t = (card.terms||{})[months] || {monthlyRate:0, adminRate:0};
@@ -2446,7 +2559,7 @@ function saveQuickModal(){
   }
 
   state.transactions.push({
-    id: 'tx-' + nowTs,
+    id: uid('tx'),
     type: qmState.type,
     category: qmState.category,
     subCategory: qmState.subCategory || '',
@@ -2696,7 +2809,7 @@ function commitMmbakDirect(){
     let ds = String(wdate||'').slice(0,10);
     if(!/^\d{4}-\d{2}-\d{2}$/.test(ds)){
       const raw=Number(date);
-      ds=Number.isFinite(raw)&&raw>100000000000?new Date(raw).toISOString().slice(0,10):String(date).slice(0,10);
+      ds=Number.isFinite(raw)&&raw>100000000000?localDateISO(new Date(raw)):String(date).slice(0,10);
     }
     const from = val('mmFrom')||'0000-01-01', dateTo = val('mmTo')||'9999-12-31';
     if(ds < from || ds > dateTo) continue;
@@ -2817,7 +2930,7 @@ function commitMmbakDirect(){
 function addAccount(){
   let name = val('accName').trim(), opening = num('accOpening');
   if(!name) return toast('اكتب اسم الحساب');
-  state.accounts.push({id:'acc-'+Date.now(), name, type:val('accType'), opening});
+  state.accounts.push({id:uid('acc'), name, type:val('accType'), opening});
   persist(); setv('accName',''); setv('accOpening','');
   document.getElementById('addAccountFold')?.removeAttribute('open');
   toast('تمت إضافة الحساب ✓');
@@ -3061,7 +3174,7 @@ function saveEditedAccount(id){
   acc.type = val('editAccType') || acc.type;
   if(Math.abs(diff) >= 0.01){
     state.ledger.push({
-      id: 'adj-' + Date.now(),
+      id: uid('adj'),
       type: 'adjust',
       from: acc.id,
       delta: diff,
@@ -3341,7 +3454,7 @@ function addCard(){
   const limit = num('cardLimit'), available = num('cardAvailable');
   if(limit<=0) return toast('أدخل الحد الائتماني');
   let terms={}; [3,6,9,12,15,18,24,36].forEach(n=>terms[n]={monthlyRate:round2(num('ir'+n)/100), adminRate:round2(num('fee'+n)/100)});
-  state.cards.push({id:'card-'+Date.now(), name, payDay:num('cardPayDay')||3, limit, balance:round2(Math.max(0,limit-available)), terms});
+  state.cards.push({id:uid('card'), name, payDay:num('cardPayDay')||3, limit, balance:round2(Math.max(0,limit-available)), terms});
   persist(); setv('cardName',''); setv('cardLimit',''); setv('cardAvailable','');
   document.getElementById('addCardFold')?.removeAttribute('open');
   toast('تم حفظ البطاقة ✓');
@@ -3376,7 +3489,7 @@ function recalcMonthlyCommitmentEnd(){
   const dur = Math.max(1, Math.round(num('monDuration') || 12));
   const endYM = addMonthsYM(startYM, dur - 1);
   setv('comEndVal', endYM);
-  setv('comEndAutoLabel', `${formatYMArabic(endYM)} (${dur} شهر)`);
+  setv('comEndAutoLabel', formatYMArabic(endYM));
 }
 
 function setCardOpType(t){
@@ -3397,18 +3510,44 @@ function showCreditQuote(){
   const el = document.getElementById('creditQuote'); if(!el) return;
   const card = state.cards.find(c=>c.id===val('opCard')), amount = num('opAmount'), months = num('opMonths')||12;
   if(!card || !amount || val('opType')!=='installment'){
-    el.innerHTML='<div class="empty">أدخل المبلغ لعرض القسط وتاريخ البدء حسب البنك.</div>';
+    el.innerHTML='<div class="empty" style="padding:10px">أدخل المبلغ لعرض جدول الفائدة/الرسوم وأول قسط.</div>';
     return;
   }
   const t = (card.terms||{})[months] || {monthlyRate:0, adminRate:0};
-  const interest = round2(amount * t.monthlyRate * months), fee = round2(amount * t.adminRate), base = round2((amount + interest)/months);
+  const interest = round2(amount * t.monthlyRate * months);
+  const fee = round2(amount * t.adminRate);
+  const base = round2((amount + interest)/months);
   const purchaseYM = val('opPurchaseVal') || selected();
   const built = buildInstallmentSchedulesForCard(card, purchaseYM, months, base, fee);
   const isSuez = isSuezCanalBankCard(card);
+
+  const firstRowLabel = isSuez ? 'رسوم إدارية' : 'فائدة';
+  const firstRowAmt = isSuez ? fee : round2(interest / months);
+  const firstRowMonth = isSuez ? formatYMArabic(built.feeYM) : formatYMArabic(built.firstInstYM);
+  const instRowAmt = isSuez ? base : round2((amount / months) + (interest / months));
+
   el.innerHTML = `
-    <div class="rowline"><span>نظام البنك (${esc(card.name)})</span><b class="mint">${isSuez ? 'قناة السويس (رسوم ثم قسط)' : 'بنك عادي (الشهر التالي لشهر الشراء)'}</b></div>
-    <div class="rowline"><span>القسط الشهري (يبدأ ${formatYMArabic(built.firstInstYM)})</span><b>${fmt(base)} EGP</b></div>
-    ${fee > 0 || isSuez ? `<div class="rowline"><span>الرسوم الإدارية (${formatYMArabic(built.feeYM)})</span><b>${fmt(fee)} EGP</b></div>` : ''}
+    <table class="com-all-table" style="font-size:.74rem">
+      <thead>
+        <tr>
+          <th>البند</th>
+          <th>المبلغ</th>
+          <th>شهر الاستحقاق</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><b>${firstRowLabel}</b></td>
+          <td dir="ltr" class="orange"><b>${fmtNum(firstRowAmt)}</b></td>
+          <td>${esc(firstRowMonth)}</td>
+        </tr>
+        <tr>
+          <td><b>أول قسط</b></td>
+          <td dir="ltr" class="mint"><b>${fmtNum(instRowAmt)}</b></td>
+          <td>${esc(formatYMArabic(built.firstInstYM))}</td>
+        </tr>
+      </tbody>
+    </table>
   `;
 }
 
@@ -3418,7 +3557,7 @@ function addCardOperation(){
   const date = purchaseYM + '-01';
   if(!card||!amount||!title) return toast('أكمل بيانات البطاقة والوصف والمبلغ');
   const nowTs = Date.now();
-  let op={id:'op-'+nowTs, cardId:card.id, type, title, amount, date, purchaseMonth:purchaseYM, paid:0, dueDate:dueDateFor(card,date), createdAt:nowTs};
+  let op={id:uid('op'), cardId:card.id, type, title, amount, date, purchaseMonth:purchaseYM, paid:0, dueDate:dueDateFor(card,date), createdAt:nowTs};
   if(type==='installment'){
     const months = num('opMonths')||12, t = (card.terms||{})[months]||{monthlyRate:0,adminRate:0};
     const interest = round2(amount*t.monthlyRate*months), fee = round2(amount*t.adminRate), base = round2((amount+interest)/months);
@@ -3445,7 +3584,7 @@ function saveNewCommitmentItem(){
     const note = val('defNote').trim();
     if(!title || amount <= 0) return toast('أدخل اسم العملية والمبلغ');
     state.commitments.push({
-      id: 'com-' + nowTs,
+      id: uid('com'),
       title,
       type: 'مستحقات مؤجلة',
       freq: 'once',
@@ -3470,7 +3609,7 @@ function saveNewCommitmentItem(){
     const note = val('monNote').trim();
     if(!title || amount <= 0) return toast('أدخل اسم الالتزام والمبلغ الشهري');
     state.commitments.push({
-      id: 'com-' + nowTs,
+      id: uid('com'),
       title,
       type: 'شهري',
       freq: 'monthly',
@@ -3647,7 +3786,7 @@ function openPayDueDialog(kind, uid, opId, month, defaultAmt, itemTitle){
     if(kind === 'commitment'){
       const c = state.commitments.find(x=>x.id===uid);
       if(!c) return false;
-      const payRecId = 'cmp-' + nowTs;
+      const payRecId = uid('cmp');
       state.commitmentPayments.push({
         id: payRecId,
         commitmentId: c.id,
@@ -3657,7 +3796,7 @@ function openPayDueDialog(kind, uid, opId, month, defaultAmt, itemTitle){
         accountId: accId
       });
       state.transactions.push({
-        id: 'com-pay-' + nowTs,
+        id: uid('com-pay'),
         type: 'expense',
         title: 'سداد ' + c.title,
         category: c.type || 'التزامات',
@@ -3689,10 +3828,10 @@ function openPayDueDialog(kind, uid, opId, month, defaultAmt, itemTitle){
       if(sc) sc.paid = round2((Number(sc.paid)||0) + payAmt);
       payTitle = `سداد قسط بطاقة (${cName}) - ${op.title}`;
     }
-    const cardPayRecId = 'cp-' + nowTs;
+    const cardPayRecId = uid('cp');
     state.cardPayments.push({id:cardPayRecId, cardId:op.cardId, amount:payAmt, date:payDate, accountId:accId});
     state.transactions.push({
-      id: 'cardpay-' + nowTs,
+      id: uid('cardpay'),
       type: 'credit_payment',
       title: payTitle,
       category: 'سداد بطاقة',
@@ -3776,27 +3915,30 @@ function renderPlanScreen(){
     listEl.innerHTML = '<div class="empty">لا توجد مبالغ مستحقة في هذا الشهر.</div>';
   } else {
     const headHtml = `
-      <div class="com-grid-head">
+      <div class="com-grid-head four-cols">
         <div>المعاملة</div>
-        <div>النوع / التفاصيل</div>
+        <div>النوع</div>
+        <div>التفاصيل</div>
         <div style="text-align:right">المستحق</div>
       </div>
     `;
     const rowsHtml = items.map(it=>{
       const left = it.remaining;
       const isCardItem = it.kind !== 'commitment';
-      const editFn = isCardItem ? `openEditCardOpModal('${esc(it.opId)}')` : `openEditCommitmentModal('${esc(it.uid)}')`;
-      const delFn = isCardItem ? `deleteCardOp('${esc(it.opId)}')` : `deleteCommitment('${esc(it.uid)}')`;
-      const payFn = `openPayDueDialog('${it.kind}','${esc(it.uid)}','${esc(it.opId||'')}','${m}',${left},${JSON.stringify(it.title).replace(/"/g,'&quot;')})`;
+      const editFn = isCardItem ? `openEditCardOpModal('${escJs(it.opId)}')` : `openEditCommitmentModal('${escJs(it.uid)}')`;
+      const delFn = isCardItem ? `deleteCardOp('${escJs(it.opId)}')` : `deleteCommitment('${escJs(it.uid)}')`;
+      const payFn = `openPayDueDialog('${it.kind}','${escJs(it.uid)}','${escJs(it.opId||'')}','${m}',${left},'${escJs(it.title)}')`;
       return `
         <div class="tx-wrap" onclick="toggleItemActions(this,event)">
-          <div class="com-grid-row">
+          <div class="com-grid-row four-cols">
             <div>
               <b style="display:block;color:var(--text)">${esc(it.title)}</b>
-              ${left <= 0 ? `<small style="color:var(--mint)">مسدد بالكامل ✓</small>` : (it.paid > 0 ? `<small style="color:var(--mint)">مسدد: ${fmtNum(it.paid)}</small>` : '')}
+              ${left <= 0 ? `<small style="color:var(--mint)">مسدد ✓</small>` : (it.paid > 0 ? `<small style="color:var(--mint)">مسدد: ${fmtNum(it.paid)}</small>` : '')}
             </div>
             <div>
-              <span class="tag" style="display:inline-block;margin-bottom:2px">${esc(it.categoryType)}</span>
+              <span class="tag">${esc(it.categoryType)}</span>
+            </div>
+            <div>
               <small style="display:block;color:var(--muted);font-size:.66rem">${esc(it.sub)}</small>
             </div>
             <div style="text-align:right;direction:ltr">
@@ -3924,7 +4066,7 @@ function recalcAnnualPlanItemEnd(){
   const dur = Math.max(1, Math.round(num('annItemDuration') || 12));
   const endYM = addMonthsYM(startYM, dur - 1);
   setv('annEndVal', endYM);
-  setv('annEndAutoLabel', `${formatYMArabic(endYM)} (${dur} شهر)`);
+  setv('annEndAutoLabel', formatYMArabic(endYM));
 }
 
 function saveAnnualPlanItem(){
@@ -3938,7 +4080,7 @@ function saveAnnualPlanItem(){
 
   state.annualPlanItems = state.annualPlanItems || [];
   state.annualPlanItems.push({
-    id: 'ann-' + Date.now(),
+    id: uid('ann'),
     type,
     title,
     amount: round2(amount),
@@ -4289,6 +4431,45 @@ function toggleSettingsMainCatExpand(mainName){
   renderSettingsCategories();
 }
 
+function moveMainCategoryOrder(mainName, dir){
+  syncCategoryTrees();
+  const isInc = (settingsCatMode === 'income');
+  const tree = isInc ? state.categoryTree.income : state.categoryTree.expense;
+  const keys = Object.keys(tree || {});
+  const idx = keys.indexOf(mainName);
+  const newIdx = idx + dir;
+  if(idx === -1 || newIdx < 0 || newIdx >= keys.length) return;
+  const swapped = [...keys];
+  const tmp = swapped[idx];
+  swapped[idx] = swapped[newIdx];
+  swapped[newIdx] = tmp;
+  const rebuilt = {};
+  swapped.forEach(k => { rebuilt[k] = tree[k]; });
+  if(isInc){
+    state.categoryTree.income = rebuilt;
+    state.incomeCategories = swapped;
+  } else {
+    state.categoryTree.expense = rebuilt;
+    state.categories = swapped;
+  }
+  persist();
+}
+
+function moveSubCategoryOrder(mainName, subName, dir){
+  syncCategoryTrees();
+  const isInc = (settingsCatMode === 'income');
+  const tree = isInc ? state.categoryTree.income : state.categoryTree.expense;
+  const subs = [...(tree[mainName] || [])];
+  const idx = subs.indexOf(subName);
+  const newIdx = idx + dir;
+  if(idx === -1 || newIdx < 0 || newIdx >= subs.length) return;
+  const tmp = subs[idx];
+  subs[idx] = subs[newIdx];
+  subs[newIdx] = tmp;
+  tree[mainName] = subs;
+  persist();
+}
+
 function renderSettingsCategories(){
   const container = document.getElementById('settingsCatsTreeContainer');
   if(!container) return;
@@ -4301,30 +4482,40 @@ function renderSettingsCategories(){
     container.innerHTML = '<div class="empty">لا توجد أقسام مسجلة. اضغط على علامة ＋ بالأعلى للإضافة.</div>';
     return;
   }
-  container.innerHTML = entries.map(([mc, subs])=>{
+  container.innerHTML = entries.map(([mc, subs], mIdx)=>{
     const isOpen = !!expandedSettingsMainCats[mc];
     const previewSubs = subs.length ? subs.slice(0,5).join('، ') + (subs.length>5 ? '…' : '') : 'لا توجد أقسام فرعية';
     const subsHtml = isOpen ? `
       <div class="cat-mgr-subs">
-        ${subs.map(sc=>`
+        ${subs.map((sc, sIdx)=>`
           <div class="cat-mgr-sub-row">
-            <span>${esc(sc)}</span>
-            <button type="button" class="icon-act-btn" title="تعديل الفرعي" onclick="renameSubCategoryInSettings('${esc(mc)}','${esc(sc)}')">✎</button>
+            <div style="display:flex;align-items:center;min-width:0;flex:1">
+              <div class="cat-reorder-box">
+                <button type="button" class="cat-move-btn" ${sIdx===0?'disabled':''} onclick="moveSubCategoryOrder('${escJs(mc)}','${escJs(sc)}',-1)" title="تحريك لأعلى">↑</button>
+                <button type="button" class="cat-move-btn" ${sIdx===subs.length-1?'disabled':''} onclick="moveSubCategoryOrder('${escJs(mc)}','${escJs(sc)}',1)" title="تحريك لأسفل">↓</button>
+              </div>
+              <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(sc)}</span>
+            </div>
+            <button type="button" class="icon-act-btn" title="تعديل الفرعي" onclick="renameSubCategoryInSettings('${escJs(mc)}','${escJs(sc)}')">✎</button>
           </div>
         `).join('')}
-        <button type="button" class="smallbtn" style="width:100%;margin-top:2px;border-color:var(--mint);color:var(--mint)" onclick="addSubCategoryInSettings('${esc(mc)}')">＋ إضافة قسم فرعي</button>
+        <button type="button" class="smallbtn" style="width:100%;margin-top:2px;border-color:var(--mint);color:var(--mint)" onclick="addSubCategoryInSettings('${escJs(mc)}')">＋ إضافة قسم فرعي</button>
       </div>
     ` : '';
     return `
       <div class="cat-mgr-row">
         <div class="cat-mgr-main">
-          <div class="cat-mgr-main-title" onclick="toggleSettingsMainCatExpand('${esc(mc)}')">
+          <div class="cat-reorder-box" onclick="event.stopPropagation()">
+            <button type="button" class="cat-move-btn" ${mIdx===0?'disabled':''} onclick="moveMainCategoryOrder('${escJs(mc)}',-1)" title="تحريك لأعلى">↑</button>
+            <button type="button" class="cat-move-btn" ${mIdx===entries.length-1?'disabled':''} onclick="moveMainCategoryOrder('${escJs(mc)}',1)" title="تحريك لأسفل">↓</button>
+          </div>
+          <div class="cat-mgr-main-title" onclick="toggleSettingsMainCatExpand('${escJs(mc)}')">
             <b>${esc(mc)} <span style="color:var(--muted);font-weight:400">(${subs.length})</span></b>
             <small>${esc(previewSubs)}</small>
           </div>
           <div class="cat-mgr-icons">
-            <button type="button" class="icon-act-btn" title="تعديل القسم الرئيسي" onclick="renameMainCategoryInSettings('${esc(mc)}')">✎</button>
-            <button type="button" class="icon-act-btn" title="عرض الأقسام الفرعية" onclick="toggleSettingsMainCatExpand('${esc(mc)}')">${isOpen?'▲':'▼'}</button>
+            <button type="button" class="icon-act-btn" title="تعديل القسم الرئيسي" onclick="renameMainCategoryInSettings('${escJs(mc)}')">✎</button>
+            <button type="button" class="icon-act-btn" title="عرض الأقسام الفرعية" onclick="toggleSettingsMainCatExpand('${escJs(mc)}')">${isOpen?'▲':'▼'}</button>
           </div>
         </div>
         ${subsHtml}
@@ -4403,95 +4594,134 @@ function saveAutoDriveBackupFreq(freq){
 }
 
 function createAutomaticLocalSnapshot(){
-  state.autoSnapshots = Array.isArray(state.autoSnapshots) ? state.autoSnapshots : [];
+  _autoSnapshotsMemory = Array.isArray(_autoSnapshotsMemory) ? _autoSnapshotsMemory : [];
   const dStr = today();
-  const snapCopy = JSON.parse(JSON.stringify(state));
-  delete snapCopy.autoSnapshots;
-  const existingIdx = state.autoSnapshots.findIndex(s => s.date === dStr);
+  const cleanCopy = getSanitizedStateForBackup(state);
+  const existingIdx = _autoSnapshotsMemory.findIndex(s => s.date === dStr);
   const entry = {
-    id: 'snap-' + Date.now(),
+    id: uid('snap'),
     date: dStr,
     txCount: (state.transactions||[]).length,
-    payload: JSON.stringify(snapCopy)
+    payload: JSON.stringify(cleanCopy)
   };
-  if(existingIdx !== -1) state.autoSnapshots[existingIdx] = entry;
-  else state.autoSnapshots.unshift(entry);
-  state.autoSnapshots = state.autoSnapshots.slice(0, 5);
+  if(existingIdx !== -1) _autoSnapshotsMemory[existingIdx] = entry;
+  else _autoSnapshotsMemory.unshift(entry);
+  _autoSnapshotsMemory = _autoSnapshotsMemory.slice(0, 5);
   state.prefs.lastDriveBackup = dStr;
+  try{ localStorage.setItem('xw_last_auto_snap', dStr); }catch(_){}
+  try{ localStorage.setItem(SNAP_KEY, JSON.stringify(_autoSnapshotsMemory)); }catch(_){}
 }
 
 function renderAutoSnapshotsList(){
-  const box = document.getElementById('autoSnapshotsBox');
-  if(!box) return;
-  const snaps = state.autoSnapshots || [];
+  const cntEl = document.getElementById('autoSnapsCountLbl');
+  const snaps = _autoSnapshotsMemory || [];
+  if(cntEl) cntEl.textContent = String(snaps.length);
+  const syncBtn = document.getElementById('btnCloudSyncSetup');
+  if(syncBtn){
+    const hasCloud = !!(state.prefs?.driveWebhookUrl || state.prefs?.driveAccessToken);
+    syncBtn.textContent = hasCloud ? '☁ مزامنة متصلة ✓' : '⚙ ربط تلقائي';
+  }
+}
+
+function openAutoSnapshotsDialog(){
+  const snaps = _autoSnapshotsMemory || [];
   if(!snaps.length){
-    box.innerHTML = '<div class="hint bidi-ar" style="margin:4px 0 0;font-size:.68rem">عند تفعيل النسخ التلقائي، يحتفظ التطبيق بآخر 5 نسخ احتياطية تلقائياً هنا لاستعادتها في أي وقت.</div>';
+    toast('لا توجد نسخ تلقائية محفوظة بعد. فعّل النسخ التلقائي أولاً.');
     return;
   }
-  box.innerHTML = `<div class="bidi-ar" style="font-size:.68rem;color:var(--muted);margin:6px 0 4px">النسخ التلقائية المحفوظة (${snaps.length}):</div>` +
-    snaps.map((s, idx)=>`
-      <div style="display:flex;align-items:center;justify-content:space-between;background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:6px 9px;margin-top:4px;font-size:.72rem">
-        <span class="bidi-ar">📅 نسخة <bdi>${esc(formatDateDMY(s.date))}</bdi> (<bdi>${s.txCount||0}</bdi> معاملة)</span>
-        <button type="button" class="smallbtn" style="padding:3px 10px;border-color:var(--mint);color:var(--mint)" onclick="restoreFromAutoSnapshot(${idx})">استعادة</button>
-      </div>
-    `).join('');
+  const html = `<div class="cs-opt-list">` + snaps.map((s, idx)=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--line2);border-radius:11px;padding:9px 12px;font-size:.76rem">
+      <span class="bidi-ar">📅 نسخة <bdi>${esc(formatDateDMY(s.date))}</bdi> (<bdi>${s.txCount||0}</bdi> معاملة)</span>
+      <button type="button" class="smallbtn" style="border-color:var(--mint);color:var(--mint)" onclick="closeAppDialog();restoreFromAutoSnapshot(${idx})">استعادة</button>
+    </div>
+  `).join('') + `</div>`;
+  showAppCustomForm('النسخ التلقائية المحفوظة', html, null, true);
 }
 
 function restoreFromAutoSnapshot(idx){
-  const s = (state.autoSnapshots||[])[idx];
+  const s = (_autoSnapshotsMemory||[])[idx];
   if(!s || !s.payload) return;
-  showAppConfirm('استعادة نسخة تلقائية', `هل تريد استعادة النسخة المحفوظة بتاريخ ${s.date}؟`, ()=>{
+  showAppConfirm('استعادة نسخة تلقائية', `هل تريد استعادة النسخة المحفوظة بتاريخ ${formatDateDMY(s.date)}؟`, ()=>{
     try{
-      const prevSnaps = state.autoSnapshots;
       const parsed = JSON.parse(s.payload);
+      delete parsed.autoSnapshots;
       state = parsed;
-      state.autoSnapshots = prevSnaps;
       syncCategoryTrees();
       applyPreferences();
       persist();
+      renderAll();
       toast('تمت استعادة النسخة التلقائية بنجاح ✓');
     }catch(_){ toast('تعذر استعادة النسخة'); }
   }, false);
 }
 
-async function shareSnapshotToDrive(idx){
-  const s = (state.autoSnapshots||[])[idx];
-  if(!s || !s.payload) return;
-  await triggerEasyDriveSave(s.payload, `X-Wallet-Backup-${s.date}.json`);
+let _cloudSyncDebounce = null;
+function triggerSilentAutoCloudSyncIfEnabled(){
+  const p = state.prefs || {};
+  if(!p.driveWebhookUrl && !p.driveAccessToken) return;
+  if(_cloudSyncDebounce) clearTimeout(_cloudSyncDebounce);
+  _cloudSyncDebounce = setTimeout(()=>{
+    exportBackupToGoogleDrive(true);
+  }, 2500);
 }
 
 async function quickShareBackupToDrive(){
-  createAutomaticLocalSnapshot();
-  const snapCopy = JSON.parse(JSON.stringify(state));
-  delete snapCopy.autoSnapshots;
-  const jsonStr = JSON.stringify(snapCopy, null, 2);
-  state.prefs.lastBackupDate = today();
-  state.prefs.lastDriveBackup = today();
-  persist();
-  renderAutoSnapshotsList();
-  await triggerEasyDriveSave(jsonStr, `X-Wallet-Backup-${today()}.json`);
-}
+  // If direct cloud webhook or OAuth token is configured, upload directly in the cloud AND offer share sheet
+  const p = state.prefs || {};
+  const fileName = `x-wallet-backup-${today()}.json`;
+  const jsonStr = JSON.stringify(getSanitizedStateForBackup(state));
 
-async function triggerEasyDriveSave(jsonStr, fileName){
-  const blob = new Blob([jsonStr], {type: 'application/json'});
-  // 1. Mobile Native Share Sheet (On Android/iOS opens "Save to Drive / حفظ في Drive" directly with 1 tap!)
-  if(navigator.canShare && navigator.share){
+  // CRITICAL: Call navigator.share IMMEDIATELY while transient user activation is active!
+  if(navigator.share){
     try{
-      const fileObj = new File([blob], fileName, {type: 'application/json'});
-      if(navigator.canShare({files: [fileObj]})){
+      const jsonFile = new File([jsonStr], fileName, {type: 'application/json'});
+      if(!navigator.canShare || navigator.canShare({files: [jsonFile]})){
         await navigator.share({
           title: fileName,
-          text: 'اختر «Google Drive» لحفظ النسخة الاحتياطية في حسابك السحابي',
-          files: [fileObj]
+          text: 'نسخة X-Wallet الاحتياطية — اختر Google Drive للحفظ',
+          files: [jsonFile]
         });
-        toast('تم إرسال النسخة إلى Google Drive ✓');
+        state.prefs.lastBackupDate = today();
+        state.prefs.lastDriveBackup = today();
+        persist();
+        toast('تمت مشاركة النسخة إلى Google Drive ✓');
+        return;
+      }
+    }catch(err){
+      if(err && err.name === 'AbortError') return;
+    }
+    // Fallback 2: Some Android WebViews only allow text/plain files in navigator.share
+    try{
+      const txtFile = new File([jsonStr], `x-wallet-backup-${today()}.txt`, {type: 'text/plain'});
+      if(!navigator.canShare || navigator.canShare({files: [txtFile]})){
+        await navigator.share({
+          title: fileName,
+          text: 'نسخة X-Wallet الاحتياطية — اختر Google Drive للحفظ',
+          files: [txtFile]
+        });
+        state.prefs.lastBackupDate = today();
+        state.prefs.lastDriveBackup = today();
+        persist();
+        toast('تمت مشاركة النسخة إلى Google Drive ✓');
         return;
       }
     }catch(err){
       if(err && err.name === 'AbortError') return;
     }
   }
-  // 2. Desktop / Chrome File System Save Picker (Lets user pick Google Drive folder or local folder)
+
+  // If direct cloud sync is configured, upload directly to Drive in background
+  if(p.driveWebhookUrl || p.driveAccessToken){
+    await exportBackupToGoogleDrive(false);
+    return;
+  }
+
+  // Fallback 3: File System Save Picker or download
+  await triggerEasyDriveSave(jsonStr, fileName);
+}
+
+async function triggerEasyDriveSave(jsonStr, fileName){
+  const blob = new Blob([jsonStr], {type: 'application/json'});
   if(window.showSaveFilePicker){
     try{
       const handle = await window.showSaveFilePicker({
@@ -4507,12 +4737,11 @@ async function triggerEasyDriveSave(jsonStr, fileName){
       if(err && err.name === 'AbortError') return;
     }
   }
-  // 3. Fallback direct download
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = fileName;
   a.click();
-  toast('تم حفظ ملف النسخة الاحتياطية ✓');
+  toast('تم تنزيل ملف النسخة الاحتياطية ✓');
 }
 
 function openDriveCloudSetupModal(){
@@ -4555,7 +4784,7 @@ async function exportBackupToGoogleDrive(silentAuto){
   }
 
   const fileName = `x-wallet-backup-${today()}.json`;
-  const jsonStr = JSON.stringify(state, null, 2);
+  const jsonStr = JSON.stringify(getSanitizedStateForBackup(state));
 
   // Route 1: Direct Cloud Upload via Google Apps Script Web App Bridge (Zero prompts, uploads directly into user's Google Drive!)
   if(p.driveWebhookUrl){
@@ -4643,7 +4872,9 @@ function checkScheduledDriveBackupOnBoot(){
   renderAutoSnapshotsList();
   const freq = state.prefs?.autoDriveFreq || 'off';
   if(freq === 'off') return;
-  const last = state.prefs?.lastDriveBackup || '';
+  const last = localStorage.getItem('xw_last_auto_snap') || state.prefs?.lastDriveBackup || '';
+  const todayStr = today();
+  if(last === todayStr) return;
   const nowDate = new Date();
   let due = false;
   if(!last){
@@ -4657,13 +4888,10 @@ function checkScheduledDriveBackupOnBoot(){
   }
   if(due && (state.transactions?.length || state.accounts?.length)){
     createAutomaticLocalSnapshot();
-    persist();
+    try{ localStorage.setItem('xw_last_auto_snap', todayStr); }catch(_){}
+    try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(_){}
     renderAutoSnapshotsList();
-    setTimeout(()=>{
-      showAppConfirm('تم حفظ النسخة الدورية التلقائية ✓', 'تم أخذ نسخة احتياطية تلقائية اليوم داخل التطبيق. هل تود رفع نسخة منها إلى Google Drive الآن بضغطة واحدة؟', ()=>{
-        quickShareBackupToDrive();
-      }, false);
-    }, 900);
+    triggerSilentAutoCloudSyncIfEnabled();
   }
 }
 
@@ -4672,9 +4900,12 @@ function backup(){
   state.prefs = state.prefs || {};
   state.prefs.lastBackupDate = today();
   persist();
-  let b=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}), a=document.createElement('a');
-  a.href=URL.createObjectURL(b); a.download='x-wallet-backup-'+today()+'.json'; a.click();
-  toast('تم تصدير النسخة الاحتياطية ✓');
+  const cleanJson = JSON.stringify(getSanitizedStateForBackup(state));
+  let b = new Blob([cleanJson], {type:'application/json'}), a = document.createElement('a');
+  a.href = URL.createObjectURL(b);
+  a.download = 'x-wallet-backup-' + today() + '.json';
+  a.click();
+  toast('تم تصدير النسخة الاحتياطية بنجاح ✓');
 }
 function restore(e){
   let f=e.target.files[0]; if(!f) return;
@@ -4823,17 +5054,43 @@ function syncCustomSelectTriggers(){
       sel.parentNode.insertBefore(trig, sel.nextSibling);
     }
     const curOpt = sel.options[sel.selectedIndex];
-    trig.querySelector('.cs-val').textContent = curOpt ? curOpt.textContent : '';
+    const optTxt = curOpt ? curOpt.textContent : '';
+    if(sel.id === 'repPeriodMode'){
+      trig.querySelector('.cs-val').innerHTML = `<span style="color:var(--mint);font-size:.82rem">📅</span><span>${esc(optTxt)}</span>`;
+    } else {
+      trig.querySelector('.cs-val').textContent = optTxt;
+    }
   });
+}
+
+function renderActiveScreenOnly(){
+  syncCustomSelectTriggers();
+  updateFabVisibility();
+  const activePage = document.querySelector('.screen.active')?.id || 'trans';
+  if(activePage === 'trans') renderTransactionsScreen();
+  else if(activePage === 'reports'){
+    renderReportsScreen();
+    if(activeCatDrillState) renderCategoryDrillDownContent();
+  }
+  else if(activePage === 'wallet') renderAccountsAndCards();
+  else if(activePage === 'plan') renderPlanScreen();
+  else if(activePage === 'settings'){
+    renderSettingsCategories();
+    renderAutoSnapshotsList();
+  }
+  refreshSecondaryFeeds();
 }
 
 function renderAll(){
   syncCustomSelectTriggers();
+  updateFabVisibility();
   renderTransactionsScreen();
   renderReportsScreen();
+  if(activeCatDrillState) renderCategoryDrillDownContent();
   renderAccountsAndCards();
   renderPlanScreen();
   renderSettingsCategories();
+  renderAutoSnapshotsList();
 }
 
 /* Horizontal Swipe Navigation */
@@ -4940,7 +5197,7 @@ const UI_TEXT_PAIRS = [
   ['البطاقات المسجلة', 'Registered Cards'],
   ['التقرير المالي السنوي', 'Yearly Financial Report'],
   ['إضافة معاملة', 'Add Transaction'],
-  ['مستحقات مؤجلة', 'Deferred Dues'],
+  ['مدفوعات مستحقة', 'Due Payments'],
   ['التزامات شهرية', 'Monthly Commitments'],
   ['معاملات بالبطاقة', 'Card Operations'],
   ['مستحقات الشهر', 'Monthly Dues'],
@@ -4983,7 +5240,7 @@ function applyLanguageTranslations(lang){
     }
   }
   const searchInp = document.getElementById('actSearch');
-  if(searchInp) searchInp.placeholder = isEn ? 'Search notes, description or category...' : 'ابحث في الملاحظات أو الوصف أو القسم...';
+  if(searchInp) searchInp.placeholder = isEn ? 'Search' : 'ابحث';
   syncCustomSelectTriggers();
 }
 
@@ -5009,4 +5266,23 @@ renderAll();
 recoverFromIndexedDBIfNeeded();
 checkAppLockOnBoot();
 checkScheduledDriveBackupOnBoot();
-try{if('serviceWorker'in navigator)window.addEventListener('load',()=>{navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'}).then(r=>r.update()).catch(()=>{});setTimeout(()=>checkForUpdate(true),1500);})}catch(e){}
+try{
+  if('serviceWorker' in navigator){
+    window.addEventListener('load', ()=>{
+      navigator.serviceWorker.register('./sw.js', {updateViaCache: 'none'}).then(reg => {
+        reg.update().catch(()=>{});
+        reg.addEventListener('updatefound', ()=>{
+          const newWorker = reg.installing;
+          if(newWorker){
+            newWorker.addEventListener('statechange', ()=>{
+              if(newWorker.state === 'installed' && navigator.serviceWorker.controller){
+                toast('تم تحميل تحديث جديد للتطبيق تلقائياً ✓');
+              }
+            });
+          }
+        });
+      }).catch(()=>{});
+      setTimeout(()=>checkForUpdate(true), 1500);
+    });
+  }
+}catch(e){}
