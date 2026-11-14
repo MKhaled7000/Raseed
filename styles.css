@@ -2362,3 +2362,241 @@ details.fold[open] > summary .fold-arrow {
   color: var(--mint) !important;
   transform: rotate(0deg);
 }
+
+
+/* =========================================================
+   X-Wallet V13.6 Complete UI & UX Refinements
+   ========================================================= */
+
+/* 1.1 Larger Lower Dock & Taller Rows in Data Entry */
+#qmBottomDock.qm-bottom-dock {
+  height: 41dvh !important;
+  min-height: 272px !important;
+  max-height: 335px !important;
+  flex-shrink: 0 !important;
+}
+.qm-bottom-dock .mm-cat-item {
+  padding: 13px 12px !important;
+  min-height: 44px !important;
+  font-size: .82rem !important;
+}
+.qm-bottom-dock .qg-item {
+  padding: 13px 8px !important;
+  min-height: 44px !important;
+  font-size: .8rem !important;
+}
+
+/* 1.3 5-Row × 4-Column Calculator Layout */
+.qm-calc-pad.five-rows-pad {
+  grid-template-columns: repeat(4, 1fr) !important;
+  grid-template-rows: repeat(5, 1fr) !important;
+  gap: 5px !important;
+  padding: 7px 10px !important;
+}
+
+/* 1.4 Framed [ + | رئيسي | ✎ ] and [ + | فرعي | ✎ ] Pills in Category Header */
+.cat-head-frame {
+  direction: ltr;
+  display: inline-flex;
+  align-items: center;
+  background: var(--surface);
+  border: 1px solid var(--mint);
+  border-radius: 9px;
+  height: 28px;
+  overflow: hidden;
+}
+.cat-head-frame.sub {
+  border-color: var(--blue);
+}
+.cat-head-frame .chf-btn {
+  background: transparent;
+  border: 0;
+  color: var(--mint);
+  width: 25px;
+  height: 100%;
+  font-size: .78rem;
+  font-weight: 700;
+  display: grid;
+  place-items: center;
+  padding: 0;
+}
+.cat-head-frame.sub .chf-btn {
+  color: var(--blue);
+}
+.cat-head-frame .chf-lbl {
+  padding: 0 6px;
+  font-size: .7rem;
+  font-weight: 700;
+  color: var(--text);
+  border-left: 1px solid var(--line);
+  border-right: 1px solid var(--line);
+  line-height: 26px;
+}
+
+/* 2.1, 2.3, 2.4, 2.5 Detached 1-Row 4-Card Filter Bar & Cancel Filter Button */
+.cancel-filter-top-btn {
+  min-width: 138px;
+  height: 42px;
+  border-radius: 12px;
+  background: #ff72851a;
+  border: 1.5px solid var(--red);
+  color: var(--red);
+  font-size: .78rem;
+  font-weight: 700;
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.filter-bar-detached {
+  background: var(--surface2);
+  border: 1.5px solid var(--mint);
+  border-radius: 13px;
+  padding: 6px;
+  margin: 2px 0 10px !important;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.28);
+}
+.mm-filter-chips-grid.four-in-row {
+  direction: ltr;
+  display: grid !important;
+  grid-template-columns: repeat(4, 1fr) !important;
+  gap: 6px !important;
+  padding: 0 !important;
+}
+.mm-filter-chips-grid.four-in-row .mm-f-card {
+  min-height: 38px;
+  padding: 5px 4px;
+  border-radius: 9px;
+}
+.mm-filter-chips-grid.four-in-row .mm-f-lbl {
+  font-size: .72rem;
+  color: var(--text-sub);
+  font-weight: 600;
+}
+.mm-filter-chips-grid.four-in-row .mm-f-card.active .mm-f-lbl {
+  color: var(--mint);
+  font-size: .64rem;
+}
+.mm-filter-chips-grid.four-in-row .mm-f-val {
+  font-size: .66rem;
+}
+.mm-filter-chips-grid.four-in-row .mm-f-val:empty {
+  display: none;
+}
+
+/* 2.6 Floating Search Lens Button Above Floating + Button */
+.fab-search {
+  position: fixed;
+  bottom: 142px;
+  right: 23px;
+  left: auto;
+  z-index: 12;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  border: 2px solid var(--mint);
+  background: var(--panel2);
+  color: var(--mint);
+  font-size: 18px;
+  box-shadow: 0 6px 20px #0006;
+  display: grid;
+  place-items: center;
+}
+.fab-search.active {
+  background: var(--mint);
+  color: #06221e;
+}
+@media(min-width:560px){
+  .fab-search { right: calc(50% - 240px); left: auto; }
+}
+
+/* 3.1 Larger & Higher "من / إلى" Labels Inside Date Boxes in Analytics */
+.rep-date-mini {
+  padding: 1px 6px 3px !important;
+}
+.rep-date-mini small {
+  font-size: .68rem !important;
+  font-weight: 700 !important;
+  color: var(--mint) !important;
+  margin-top: -2px !important;
+  margin-bottom: 1px !important;
+  line-height: 1.1 !important;
+}
+.rep-date-mini b {
+  font-size: .7rem !important;
+}
+
+/* 3.2 Green Horizontal Line Divider with Centered "التقرير التفصيلي" Badge */
+.green-line-divider {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 14px 0 12px;
+}
+.green-line-divider::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1.5px;
+  background: linear-gradient(90deg, transparent, var(--mint), transparent);
+}
+.green-line-divider span {
+  position: relative;
+  z-index: 1;
+  background: var(--panel2);
+  border: 1.5px solid var(--mint);
+  color: var(--mint);
+  padding: 3px 16px;
+  border-radius: 99px;
+  font-size: .74rem;
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+/* 5.1 Drag Handle Icon for Category Reordering */
+.cat-drag-handle {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  background: var(--surface2);
+  border: 1px solid var(--line2);
+  color: var(--mint);
+  display: grid;
+  place-items: center;
+  font-size: .9rem;
+  cursor: grab;
+  margin-right: 8px;
+  flex-shrink: 0;
+  touch-action: none;
+}
+.cat-drag-handle:active {
+  cursor: grabbing;
+  background: #43d6b228;
+}
+.dragging-cat-row {
+  opacity: 0.85;
+  outline: 1.5px dashed var(--mint);
+  background: var(--surface2) !important;
+}
+
+/* 6.1 Match Month Stepper Box Width Across All Pages to Top Tab Title Box Width */
+.ym-stepper {
+  min-width: 140px !important;
+  justify-content: space-between !important;
+}
+.ym-stepper button.step-label {
+  flex: 1 !important;
+  min-width: 92px !important;
+}
+
+/* 6.2 Keep Bottom Navigation Bar Visible When Account/Card Statement Modal is Open */
+#statementFullModal.with-bottom-nav {
+  z-index: 45 !important;
+}
+nav.bottom {
+  z-index: 55 !important;
+}

@@ -466,6 +466,7 @@ function applyPreferences(){
   document.documentElement.dir = 'ltr';
   setv('prefFontSize', p.fontSize || '1');
   setv('prefAutoDriveFreq', p.autoDriveFreq || 'off');
+  if(typeof updateLocalAutoFreqBtnText === 'function') updateLocalAutoFreqBtnText();
   setv('prefDriveEmail', p.driveEmail || '');
   setv('secPinInput', (p.secPinHash || p.secPin) ? '••••' : '');
   setv('secAppLockOnStart', p.appLockOnStart === false ? '0' : '1');
@@ -612,7 +613,7 @@ async function unlockAppWithBiometrics(){
       if(assertion){
         _appUnlockedThisSession = true;
         document.getElementById('appLockScreen')?.classList.remove('show');
-        toast('مرحباً بك في X-Wallet ✓');
+        
         return;
       }
     }catch(_){
@@ -635,7 +636,7 @@ async function unlockAppWithPin(){
     _appUnlockedThisSession = true;
     setv('lockPinInput', '');
     document.getElementById('appLockScreen')?.classList.remove('show');
-    toast('تم فتح التطبيق ✓');
+    
   }
 }
 
@@ -728,13 +729,36 @@ function updateTopTabTitle(pageId){
 
 function updateFabVisibility(){
   const fab = document.querySelector('.fab');
-  if(!fab) return;
+  const fabS = document.getElementById('fabSearchBtn');
   const activePage = document.querySelector('.screen.active')?.id || 'trans';
   const show = (activePage === 'trans' && activeTransSubTab === 'daily');
-  fab.style.display = show ? 'grid' : 'none';
+  if(fab) fab.style.display = show ? 'grid' : 'none';
+  if(fabS){
+    fabS.style.display = show ? 'grid' : 'none';
+    const isFilterOpen = document.getElementById('mmSearchBox')?.style.display !== 'none';
+    const hasQ = !!(document.getElementById('actSearch')?.value || '').trim();
+    const active = isFilterOpen || hasQ || (typeof hasAnyTransAdvFilter === 'function' && hasAnyTransAdvFilter());
+    fabS.classList.toggle('active', active);
+    fabS.textContent = active ? '✕' : '🔍';
+  }
+}
+
+function toggleSearchFromFab(){
+  const box = document.getElementById('mmSearchBox');
+  const inp = document.getElementById('actSearch');
+  const isFilterOpen = box && box.style.display !== 'none';
+  const hasQ = !!(inp?.value || '').trim();
+  if(isFilterOpen || hasQ || hasAnyTransAdvFilter()){
+    closeAndClearSearchFilter();
+  } else {
+    toggleSearchFilterGrid();
+    setTimeout(()=>inp?.focus(), 60);
+  }
+  updateFabVisibility();
 }
 
 function go(id, btn){
+  if(document.getElementById('statementFullModal')?.classList.contains('show')) closeFullStatementModal();
   document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));
   const t = document.getElementById(id);
   if(t) t.classList.add('active');
@@ -791,44 +815,99 @@ function hasAnyTransAdvFilter(){
 
 function updateTransFilterGridUI(){
   const dCard = document.getElementById('fCardDate');
-  const aCard = document.getElementById('fCardAcc');
-  const mCard = document.getElementById('fCardMainCat');
-  const sCard = document.getElementById('fCardSubCat');
   const amCard = document.getElementById('fCardAmt');
+  const aCard = document.getElementById('fCardAcc');
+  const cCard = document.getElementById('fCardCat');
+  const box = document.getElementById('mmSearchBox');
+  const isFilterOpen = box && box.style.display !== 'none';
+  const hasAny = hasAnyTransAdvFilter() || !!(document.getElementById('actSearch')?.value || '').trim();
+
+  // 2.3 Replace month stepper with Cancel Filter button when filter is open or active
+  const stepper = document.getElementById('transNavStepper');
+  const cancelBtn = document.getElementById('btnCancelFilterTop');
+  if(stepper && cancelBtn){
+    const showCancel = isFilterOpen || hasAny;
+    stepper.style.display = showCancel ? 'none' : 'inline-flex';
+    cancelBtn.style.display = showCancel ? 'inline-flex' : 'none';
+  }
+
+  // 2.4 & 2.10 No "الكل" in default state; show value + ✕ when active
   if(dCard){
     const hasD = !!(transAdvFilter.dateFrom || transAdvFilter.dateTo);
     dCard.classList.toggle('active', hasD);
-    let dTxt = 'الكل';
+    let dTxt = '';
     if(transAdvFilter.dateFrom && transAdvFilter.dateTo && transAdvFilter.dateFrom !== transAdvFilter.dateTo){
-      dTxt = `${formatDateDMY(transAdvFilter.dateFrom).slice(0,5)}←${formatDateDMY(transAdvFilter.dateTo).slice(0,5)}`;
+      dTxt = `${formatDateDMY(transAdvFilter.dateFrom).slice(0,5)}←${formatDateDMY(transAdvFilter.dateTo).slice(0,5)} ✕`;
     } else if(transAdvFilter.dateFrom || transAdvFilter.dateTo){
-      dTxt = formatDateDMY(transAdvFilter.dateFrom || transAdvFilter.dateTo);
+      dTxt = `${formatDateDMY(transAdvFilter.dateFrom || transAdvFilter.dateTo)} ✕`;
     }
     document.getElementById('fValDate').textContent = dTxt;
-  }
-  if(aCard){
-    aCard.classList.toggle('active', !!transAdvFilter.accountId);
-    document.getElementById('fValAcc').textContent = transAdvFilter.accountLabel || 'الكل';
-  }
-  if(mCard){
-    mCard.classList.toggle('active', !!transAdvFilter.mainCat);
-    document.getElementById('fValMainCat').textContent = transAdvFilter.mainCat || 'الكل';
-  }
-  if(sCard){
-    sCard.classList.toggle('active', !!transAdvFilter.subCat);
-    document.getElementById('fValSubCat').textContent = transAdvFilter.subCat || 'الكل';
   }
   if(amCard){
     const hasA = !!(transAdvFilter.amountFrom || transAdvFilter.amountTo);
     amCard.classList.toggle('active', hasA);
-    let aTxt = 'الكل';
+    let aTxt = '';
     if(transAdvFilter.amountFrom && transAdvFilter.amountTo && transAdvFilter.amountFrom !== transAdvFilter.amountTo){
-      aTxt = `${transAdvFilter.amountFrom} – ${transAdvFilter.amountTo}`;
+      aTxt = `${transAdvFilter.amountFrom}–${transAdvFilter.amountTo} ✕`;
     } else if(transAdvFilter.amountFrom || transAdvFilter.amountTo){
-      aTxt = `${transAdvFilter.amountFrom || transAdvFilter.amountTo}`;
+      aTxt = `${transAdvFilter.amountFrom || transAdvFilter.amountTo} ✕`;
     }
     document.getElementById('fValAmt').textContent = aTxt;
   }
+  if(aCard){
+    const hasAcc = !!transAdvFilter.accountId;
+    aCard.classList.toggle('active', hasAcc);
+    document.getElementById('fValAcc').textContent = hasAcc ? `${transAdvFilter.accountLabel} ✕` : '';
+  }
+  if(cCard){
+    const hasCat = !!(transAdvFilter.mainCat || transAdvFilter.subCat);
+    cCard.classList.toggle('active', hasCat);
+    let cTxt = '';
+    if(transAdvFilter.mainCat && transAdvFilter.subCat) cTxt = `${transAdvFilter.mainCat}/${transAdvFilter.subCat} ✕`;
+    else if(transAdvFilter.mainCat || transAdvFilter.subCat) cTxt = `${transAdvFilter.mainCat || transAdvFilter.subCat} ✕`;
+    document.getElementById('fValCat').textContent = cTxt;
+  }
+  updateFabVisibility();
+}
+
+function handleFilterCardTap(kind, ev){
+  // 2.10 If this filter is already active, tapping it clears ONLY this filter!
+  if(kind === 'date' && (transAdvFilter.dateFrom || transAdvFilter.dateTo)){
+    transAdvFilter.dateFrom = '';
+    transAdvFilter.dateTo = '';
+    updateTransFilterGridUI();
+    renderTransactionsScreen();
+    return;
+  }
+  if(kind === 'amount' && (transAdvFilter.amountFrom || transAdvFilter.amountTo)){
+    transAdvFilter.amountFrom = '';
+    transAdvFilter.amountTo = '';
+    updateTransFilterGridUI();
+    renderTransactionsScreen();
+    return;
+  }
+  if(kind === 'account' && transAdvFilter.accountId){
+    transAdvFilter.accountId = '';
+    transAdvFilter.accountLabel = '';
+    updateTransFilterGridUI();
+    renderTransactionsScreen();
+    return;
+  }
+  if(kind === 'cat' && (transAdvFilter.mainCat || transAdvFilter.subCat)){
+    transAdvFilter.mainCat = '';
+    transAdvFilter.subCat = '';
+    updateTransFilterGridUI();
+    renderTransactionsScreen();
+    return;
+  }
+  openTransFilterPrompt(kind);
+}
+
+function closeAndClearSearchFilter(){
+  const box = document.getElementById('mmSearchBox');
+  if(box) box.style.display = 'none';
+  document.getElementById('btnToggleSearch')?.classList.remove('active');
+  clearTransactionsSearch();
 }
 
 function toggleSearchFilterGrid(){
@@ -847,23 +926,150 @@ function toggleSearchBar(){
   toggleSearchFilterGrid();
 }
 
+// 2.9 Helper: Get transactions matching current Date & Amount filters for dynamic Category/Account filtering
+function getTransactionsMatchingDateAndAmount(){
+  const hasD = !!(transAdvFilter.dateFrom || transAdvFilter.dateTo);
+  const pool = hasD ? (state.transactions || []) : monthTx(selected());
+  return pool.filter(it => {
+    const dSlice = String(it.date||'').slice(0,10);
+    if(transAdvFilter.dateFrom && dSlice < transAdvFilter.dateFrom) return false;
+    if(transAdvFilter.dateTo && dSlice > transAdvFilter.dateTo) return false;
+    if(transAdvFilter.amountFrom || transAdvFilter.amountTo){
+      const itemAmt = Math.abs(Number(it.amount)||0);
+      const hasF = transAdvFilter.amountFrom !== '' && Number.isFinite(Number(transAdvFilter.amountFrom));
+      const hasT = transAdvFilter.amountTo !== '' && Number.isFinite(Number(transAdvFilter.amountTo));
+      if(hasF && !hasT){
+        if(Math.abs(itemAmt - Number(transAdvFilter.amountFrom)) > 0.009) return false;
+      } else if(!hasF && hasT){
+        if(Math.abs(itemAmt - Number(transAdvFilter.amountTo)) > 0.009) return false;
+      } else if(hasF && hasT){
+        const minA = Math.min(Number(transAdvFilter.amountFrom), Number(transAdvFilter.amountTo));
+        const maxA = Math.max(Number(transAdvFilter.amountFrom), Number(transAdvFilter.amountTo));
+        if(itemAmt < minA - 0.009 || itemAmt > maxA + 0.009) return false;
+      }
+    }
+    return true;
+  });
+}
+
+let _tempFilterMainCat = '';
+function renderFilterCatColumnsModal(){
+  syncCategoryTrees();
+  const hasDateOrAmt = !!(transAdvFilter.dateFrom || transAdvFilter.dateTo || transAdvFilter.amountFrom || transAdvFilter.amountTo);
+  const matchingTxs = hasDateOrAmt ? getTransactionsMatchingDateAndAmount() : null;
+
+  let mainCats = [];
+  let subMap = {};
+
+  if(matchingTxs){
+    // 2.9 Show ONLY categories & subcategories that match the active Date / Amount filter!
+    for(const t of matchingTxs){
+      const mc = String(t.category||'').trim();
+      const sc = String(t.subCategory||'').trim();
+      if(!mc) continue;
+      if(!mainCats.includes(mc)) mainCats.push(mc);
+      if(!subMap[mc]) subMap[mc] = [];
+      if(sc && !subMap[mc].includes(sc)) subMap[mc].push(sc);
+    }
+  } else {
+    const expT = state.categoryTree.expense || {};
+    const incT = state.categoryTree.income || {};
+    mainCats = [...new Set([...Object.keys(expT), ...Object.keys(incT)])];
+    mainCats.forEach(mc => {
+      subMap[mc] = [...new Set([...(expT[mc]||[]), ...(incT[mc]||[])])];
+    });
+  }
+
+  if(!_tempFilterMainCat || !mainCats.includes(_tempFilterMainCat)){
+    _tempFilterMainCat = transAdvFilter.mainCat && mainCats.includes(transAdvFilter.mainCat) ? transAdvFilter.mainCat : (mainCats[0] || '');
+  }
+
+  const mainColEl = document.getElementById('fltMainCatCol');
+  const subColEl = document.getElementById('fltSubCatCol');
+  if(!mainColEl || !subColEl) return;
+
+  if(!mainCats.length){
+    mainColEl.innerHTML = '<div class="empty" style="padding:14px 6px">لا توجد أقسام مطابقة</div>';
+    subColEl.innerHTML = '<div class="empty" style="padding:14px 6px">—</div>';
+    return;
+  }
+
+  mainColEl.innerHTML = mainCats.map(mc => `
+    <button type="button" class="mm-cat-item ${mc===_tempFilterMainCat?'active':''}" onclick="pickFilterMainCatCol('${escJs(mc)}')">
+      <span>${esc(mc)}</span>
+      <small style="opacity:.7">›</small>
+    </button>
+  `).join('');
+
+  const subs = subMap[_tempFilterMainCat] || [];
+  subColEl.innerHTML = `
+    <button type="button" class="mm-cat-item ${!transAdvFilter.subCat && transAdvFilter.mainCat===_tempFilterMainCat?'active':''}" onclick="applyMergedCatFilter('${escJs(_tempFilterMainCat)}','')">
+      <span>كل «${esc(_tempFilterMainCat)}»</span>
+    </button>
+  ` + subs.map(sc => `
+    <button type="button" class="mm-cat-item ${transAdvFilter.subCat===sc?'active':''}" onclick="applyMergedCatFilter('${escJs(_tempFilterMainCat)}','${escJs(sc)}')">
+      <span>${esc(sc)}</span>
+    </button>
+  `).join('');
+}
+
+function pickFilterMainCatCol(mc){
+  _tempFilterMainCat = mc;
+  renderFilterCatColumnsModal();
+}
+
+function applyMergedCatFilter(mc, sc){
+  transAdvFilter.mainCat = mc || '';
+  transAdvFilter.subCat = sc || '';
+  closeAppDialog();
+  updateTransFilterGridUI();
+  renderTransactionsScreen();
+}
+
 function openTransFilterPrompt(kind){
   if(activeTransSubTab === 'monthly') switchTransSubTab('daily');
   if(kind === 'date'){
     const defStart = transAdvFilter.dateFrom || (selected() + '-01');
     const defEnd = transAdvFilter.dateTo || today();
+    // 2.7 Formatted DD-MM-YYYY date triggers inside Date Filter modal
     const html = `
       <div class="c-list">
-        <div class="c-row"><label>من تاريخ</label><input id="fltDateFromInp" type="date" value="${esc(defStart)}"></div>
-        <div class="c-row"><label>إلى تاريخ</label><input id="fltDateToInp" type="date" value="${esc(defEnd)}"></div>
+        <div class="c-row" onclick="openNativeInputPicker('fltDateFromInp')">
+          <label>من تاريخ</label>
+          <div class="picker-trigger" style="position:relative">
+            <b id="fltFromDisp" dir="ltr">${formatDateDMY(defStart)}</b>
+            <input id="fltDateFromInp" type="date" value="${esc(defStart)}" onchange="document.getElementById('fltFromDisp').textContent=formatDateDMY(this.value)" style="position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer">
+          </div>
+        </div>
+        <div class="c-row" onclick="openNativeInputPicker('fltDateToInp')">
+          <label>إلى تاريخ</label>
+          <div class="picker-trigger" style="position:relative">
+            <b id="fltToDisp" dir="ltr">${formatDateDMY(defEnd)}</b>
+            <input id="fltDateToInp" type="date" value="${esc(defEnd)}" onchange="document.getElementById('fltToDisp').textContent=formatDateDMY(this.value)" style="position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer">
+          </div>
+        </div>
       </div>
-      <div style="margin-top:8px"><button type="button" class="secondary" style="width:100%" onclick="transAdvFilter.dateFrom='';transAdvFilter.dateTo='';closeAppDialog();updateTransFilterGridUI();renderTransactionsScreen()">إلغاء فلتر التاريخ (عرض الكل)</button></div>
     `;
     showAppCustomForm('فلترة بالتاريخ (من : إلى)', html, ()=>{
-      const df = val('fltDateFromInp');
-      const dt = val('fltDateToInp');
-      transAdvFilter.dateFrom = df || '';
-      transAdvFilter.dateTo = dt || '';
+      transAdvFilter.dateFrom = val('fltDateFromInp') || '';
+      transAdvFilter.dateTo = val('fltDateToInp') || '';
+      updateTransFilterGridUI();
+      renderTransactionsScreen();
+      return true;
+    });
+    return;
+  }
+  if(kind === 'amount'){
+    // 2.8 Removed the hint text below From/To Amount
+    const html = `
+      <div class="c-list">
+        <div class="c-row"><label>من مبلغ</label><input id="fltAmtFromInp" type="number" step="0.01" placeholder="0" value="${esc(transAdvFilter.amountFrom||'')}"></div>
+        <div class="c-row"><label>إلى مبلغ</label><input id="fltAmtToInp" type="number" step="0.01" placeholder="اختياري" value="${esc(transAdvFilter.amountTo||'')}"></div>
+      </div>
+    `;
+    showAppCustomForm('فلترة بالمبلغ (من : إلى)', html, ()=>{
+      transAdvFilter.amountFrom = String(val('fltAmtFromInp')||'').trim();
+      transAdvFilter.amountTo = String(val('fltAmtToInp')||'').trim();
       updateTransFilterGridUI();
       renderTransactionsScreen();
       return true;
@@ -871,7 +1077,7 @@ function openTransFilterPrompt(kind){
     return;
   }
   if(kind === 'account'){
-    const opts = [{id:'', name:'كل الحسابات والبطاقات'}];
+    const opts = [];
     state.accounts.forEach(a=>opts.push({id:a.id, name:a.name}));
     state.cards.forEach(c=>opts.push({id:'card:'+c.id, name:'💳 '+c.name}));
     const listHtml = `<div class="cs-opt-list">` + opts.map(o=>`
@@ -882,54 +1088,17 @@ function openTransFilterPrompt(kind){
     showAppCustomForm('فلترة بالحساب', listHtml, null, true);
     return;
   }
-  if(kind === 'mainCat'){
-    syncCategoryTrees();
-    const allMain = [...new Set([...Object.keys(state.categoryTree.expense||{}), ...Object.keys(state.categoryTree.income||{})])];
-    const opts = ['', ...allMain];
-    const listHtml = `<div class="cs-opt-list">` + opts.map(c=>`
-      <button type="button" class="cs-opt-btn ${transAdvFilter.mainCat===c?'selected':''}" onclick="selectTransFilterMainCat('${escJs(c)}')">
-        <span>${esc(c || 'كل الأقسام الرئيسية')}</span><span>${transAdvFilter.mainCat===c?'●':'○'}</span>
-      </button>
-    `).join('') + `</div>`;
-    showAppCustomForm('فلترة بالقسم الرئيسي', listHtml, null, true);
-    return;
-  }
-  if(kind === 'subCat'){
-    syncCategoryTrees();
-    let subs = [];
-    if(transAdvFilter.mainCat){
-      subs = [...(state.categoryTree.expense?.[transAdvFilter.mainCat]||[]), ...(state.categoryTree.income?.[transAdvFilter.mainCat]||[])];
-    } else {
-      subs = [...Object.values(state.categoryTree.expense||{}).flat(), ...Object.values(state.categoryTree.income||{}).flat()];
-    }
-    subs = [...new Set(subs.filter(Boolean))];
-    const opts = ['', ...subs];
-    const listHtml = `<div class="cs-opt-list">` + opts.map(sc=>`
-      <button type="button" class="cs-opt-btn ${transAdvFilter.subCat===sc?'selected':''}" onclick="selectTransFilterSubCat('${escJs(sc)}')">
-        <span>${esc(sc || 'كل الأقسام الفرعية')}</span><span>${transAdvFilter.subCat===sc?'●':'○'}</span>
-      </button>
-    `).join('') + `</div>`;
-    showAppCustomForm('فلترة بالقسم الفرعي', listHtml, null, true);
-    return;
-  }
-  if(kind === 'amount'){
+  if(kind === 'cat'){
+    // 2.2 Merged Main & Sub Category vertical 2-column picker
+    _tempFilterMainCat = transAdvFilter.mainCat || '';
     const html = `
-      <div class="c-list">
-        <div class="c-row"><label>من مبلغ</label><input id="fltAmtFromInp" type="number" step="0.01" placeholder="مثال: 450" value="${esc(transAdvFilter.amountFrom||'')}"></div>
-        <div class="c-row"><label>إلى مبلغ</label><input id="fltAmtToInp" type="number" step="0.01" placeholder="اتركه فارغاً لمطابقة المبلغ بالضبط" value="${esc(transAdvFilter.amountTo||'')}"></div>
+      <div class="mm-cat-split" style="height:260px;border:1px solid var(--line2);border-radius:12px;overflow:hidden">
+        <div class="mm-cat-col" id="fltMainCatCol" style="background:var(--panel);padding:4px"></div>
+        <div class="mm-cat-col" id="fltSubCatCol" style="background:var(--surface);padding:4px"></div>
       </div>
-      <p class="hint">لو كتبت رقم في «من مبلغ» فقط (مثلاً 450)، هيبحث عن 450 بالضبط.</p>
-      <div style="margin-top:8px"><button type="button" class="secondary" style="width:100%" onclick="transAdvFilter.amountFrom='';transAdvFilter.amountTo='';closeAppDialog();updateTransFilterGridUI();renderTransactionsScreen()">إلغاء فلتر المبلغ (عرض الكل)</button></div>
     `;
-    showAppCustomForm('فلترة بالمبلغ (من : إلى)', html, ()=>{
-      const af = String(val('fltAmtFromInp')||'').trim();
-      const at = String(val('fltAmtToInp')||'').trim();
-      transAdvFilter.amountFrom = af;
-      transAdvFilter.amountTo = at;
-      updateTransFilterGridUI();
-      renderTransactionsScreen();
-      return true;
-    });
+    showAppCustomForm('فلترة بالقسم الرئيسي والفرعي', html, null, true);
+    renderFilterCatColumnsModal();
   }
 }
 
@@ -1060,6 +1229,24 @@ function isSuezCanalBankCard(card){
   const nm = String(card?.name||'').toLowerCase();
   return nm.includes('قناة السويس') || nm.includes('قناه السويس') || nm.includes('suez');
 }
+function computeCardInstallmentNumbers(card, amount, months, customIrDec, customFeeDec){
+  const isSuez = isSuezCanalBankCard(card);
+  const t = (card?.terms || {})[months] || {monthlyRate:0, adminRate:0};
+  const mRate = (customIrDec !== undefined && customIrDec !== null) ? customIrDec : (Number(t.monthlyRate)||0);
+  const aRate = (customFeeDec !== undefined && customFeeDec !== null) ? customFeeDec : (Number(t.adminRate)||0);
+  if(isSuez){
+    // Suez Canal Bank: Installment is strictly (amount / months) e.g. 6000 / 6 = 1000! Admin fee is paid in month 1.
+    const effAdminRate = aRate > 0 ? aRate : (mRate * months);
+    const fee = round2(amount * effAdminRate);
+    const base = round2(amount / months);
+    return { isSuez: true, interest: 0, fee, base, total: round2(amount + fee) };
+  }
+  const interest = round2(amount * mRate * months);
+  const fee = round2(amount * aRate);
+  const base = round2((amount + interest) / months);
+  return { isSuez: false, interest, fee, base, total: round2(amount + interest + fee) };
+}
+
 function buildInstallmentSchedulesForCard(card, purchaseYM, months, baseInstallment, fee){
   const isSuez = isSuezCanalBankCard(card);
   const feeYM = addMonthsYM(purchaseYM, 1);
@@ -1072,6 +1259,29 @@ function buildInstallmentSchedulesForCard(card, purchaseYM, months, baseInstallm
   });
   return { feeYM, firstInstYM: schedules[0]?.month || feeYM, schedules };
 }
+
+// Auto-heal any existing Suez Canal Bank installment ops so 6000 / 6 is 1000
+function healSuezCanalBankOps(){
+  for(const op of (state.cardOps || [])){
+    if(op.type !== 'installment') continue;
+    const card = (state.cards || []).find(c => c.id === op.cardId);
+    if(card && isSuezCanalBankCard(card)){
+      const m = Number(op.months) || 12;
+      const amt = Number(op.amount) || 0;
+      const expectedBase = round2(amt / m);
+      if(amt > 0 && Math.abs((Number(op.installment)||0) - expectedBase) > 1){
+        const nums = computeCardInstallmentNumbers(card, amt, m);
+        if((Number(op.feeDue)||0) <= 0 && nums.fee > 0) op.feeDue = nums.fee;
+        op.adminFee = op.feeDue || nums.fee;
+        op.interest = 0;
+        op.installment = expectedBase;
+        op.total = round2(amt + (Number(op.feeDue)||0));
+        (op.schedules || []).forEach(sc => { sc.amount = expectedBase; sc.principalAndInterest = expectedBase; });
+      }
+    }
+  }
+}
+healSuezCanalBankOps();
 
 /* =========================================================
    #2.2 DIRECT-TAP DAILY TRANSACTIONS BUILDER
@@ -1570,412 +1780,7 @@ function refreshSecondaryFeeds(){
 }
 
 
-/* =========================================================
-   #3. REPORTS PAGE ("تحليل المعاملات")
-   - 3.1 Keep Month/Period Filter at Top inside Category Drill-Down (#catDetailModal)
-   - 3.2 Clicking a Subcategory in Table 1 Filters the Line Chart & Daily Report below!
-   ========================================================= */
-let activeReportTab = 'exp';
-let reportPeriodMode = 'monthly';
-let reportYear = activeYear;
-let mainRepChartOpen = false;
-let catDrillChartOpen = false;
-
-function openNativeInputPicker(id){
-  const el = document.getElementById(id);
-  if(!el) return;
-  try{
-    if(typeof el.showPicker === 'function') el.showPicker();
-    else el.focus();
-  }catch(_){ el.focus(); }
-}
-
-function syncRepInlineDateDisplays(){
-  const df = val('repCustomFrom') || (selected() + '-01');
-  const dt = val('repCustomTo') || today();
-  const fDisp = document.getElementById('repFromDisp');
-  const tDisp = document.getElementById('repToDisp');
-  if(fDisp) fDisp.textContent = formatDateDMY(df);
-  if(tDisp) tDisp.textContent = formatDateDMY(dt);
-}
-
-function onRepInlineDateChange(){
-  syncRepInlineDateDisplays();
-  renderReportsScreen();
-  if(activeCatDrillState) renderCategoryDrillDownContent();
-}
-
-function toggleUnifiedReportChart(){
-  if(activeCatDrillState){
-    catDrillChartOpen = !catDrillChartOpen;
-    document.getElementById('btnToggleMainRepChart')?.classList.toggle('active', catDrillChartOpen);
-    renderCategoryDrillDownContent();
-  } else {
-    mainRepChartOpen = !mainRepChartOpen;
-    const pnl = document.getElementById('repChartPanel');
-    const btn = document.getElementById('btnToggleMainRepChart');
-    if(pnl) pnl.style.display = mainRepChartOpen ? 'flex' : 'none';
-    if(btn) btn.classList.toggle('active', mainRepChartOpen);
-  }
-}
-function toggleMainReportChart(){ toggleUnifiedReportChart(); }
-function toggleCatDrillChart(){ toggleUnifiedReportChart(); }
-const CHART_COLORS = ['#ff6b6b','#ff9f43','#feca57','#1dd1a1','#48dbfb','#54a0ff','#5f27cd','#ff9ff3','#00d2d3','#c8d6e5','#ee5253','#10ac84'];
-
-function switchReportTab(tab){
-  activeReportTab = (tab === 'inc') ? 'inc' : 'exp';
-  if(activeCatDrillState){
-    closeCatDetailModal();
-  }
-  document.getElementById('repTabInc')?.classList.toggle('active', activeReportTab==='inc');
-  document.getElementById('repTabExp')?.classList.toggle('active', activeReportTab==='exp');
-  renderReportsScreen();
-}
-
-function onReportPeriodModeChange(mode){
-  reportPeriodMode = mode || 'monthly';
-  const stepBox = document.getElementById('repStepperBox');
-  const inlineDates = document.getElementById('repInlineDatesBox');
-  const isDateBoxes = (reportPeriodMode === 'all' || reportPeriodMode === 'custom');
-  if(stepBox) stepBox.style.display = isDateBoxes ? 'none' : 'inline-flex';
-  if(inlineDates){
-    inlineDates.style.display = isDateBoxes ? 'grid' : 'none';
-    if(reportPeriodMode === 'all'){
-      const allDates = (state.transactions||[]).map(t=>String(t.date||'').slice(0,10)).filter(d=>/^\d{4}-\d{2}-\d{2}$/.test(d)).sort();
-      setv('repCustomFrom', allDates[0] || (String(activeYear)+'-01-01'));
-      setv('repCustomTo', allDates[allDates.length-1] || today());
-    } else if(reportPeriodMode === 'custom'){
-      if(!val('repCustomFrom')) setv('repCustomFrom', selected() + '-01');
-      if(!val('repCustomTo')) setv('repCustomTo', today());
-    }
-    syncRepInlineDateDisplays();
-  }
-  renderReportsScreen();
-  if(activeCatDrillState) renderCategoryDrillDownContent();
-}
-
-function shiftReportPeriod(delta){
-  if(reportPeriodMode === 'yearly'){
-    reportYear += delta;
-    renderReportsScreen();
-  } else {
-    shiftActiveMonth(delta);
-  }
-  if(activeCatDrillState) renderCategoryDrillDownContent();
-}
-
-function openReportPeriodPicker(){
-  if(reportPeriodMode === 'yearly') return;
-  openHomePeriodPicker();
-}
-
-function getReportFilteredTransactions(isInc){
-  const allMatchingType = (state.transactions||[]).filter(t => isInc ? t.type==='income' : isActualExpenseTx(t));
-  if(reportPeriodMode === 'monthly'){
-    const curYM = selected();
-    return {
-      periodLabel: formatYMArabic(curYM),
-      yearForChart: activeYear,
-      list: allMatchingType.filter(t => monthKey(t.date) === curYM)
-    };
-  }
-  if(reportPeriodMode === 'yearly'){
-    const yStr = String(reportYear);
-    return {
-      periodLabel: `سنة ${yStr}`,
-      yearForChart: reportYear,
-      list: allMatchingType.filter(t => String(t.date||'').startsWith(yStr))
-    };
-  }
-  if(reportPeriodMode === 'custom'){
-    const dFrom = val('repCustomFrom') || '0000-01-01';
-    const dTo = val('repCustomTo') || '9999-12-31';
-    return {
-      periodLabel: `${dFrom} ← ${dTo}`,
-      yearForChart: Number(dTo.slice(0,4)) || activeYear,
-      list: allMatchingType.filter(t => {
-        const d = String(t.date||'').slice(0,10);
-        return d >= dFrom && d <= dTo;
-      })
-    };
-  }
-  const dFromAll = val('repCustomFrom') || '0000-01-01';
-  const dToAll = val('repCustomTo') || '9999-12-31';
-  return {
-    periodLabel: 'كل الفترات',
-    yearForChart: activeYear,
-    list: allMatchingType.filter(t => {
-      const d = String(t.date||'').slice(0,10);
-      return (!val('repCustomFrom') || d >= dFromAll) && (!val('repCustomTo') || d <= dToAll);
-    })
-  };
-}
-
-function renderReportsScreen(){
-  const isInc = (activeReportTab === 'inc');
-  document.getElementById('repTabInc')?.classList.toggle('active', isInc);
-  document.getElementById('repTabExp')?.classList.toggle('active', !isInc);
-  document.getElementById('repCardTotalInc')?.classList.toggle('active-inc', isInc);
-  document.getElementById('repCardTotalExp')?.classList.toggle('active-exp', !isInc);
-
-  const incData = getReportFilteredTransactions(true);
-  const expData = getReportFilteredTransactions(false);
-  const totIncPeriod = round2(incData.list.reduce((s,t)=>s+(Number(t.amount)||0), 0));
-  const totExpPeriod = round2(expData.list.reduce((s,t)=>s+(Number(t.amount)||0), 0));
-  const boxInc = document.getElementById('repBoxTotalInc');
-  const boxExp = document.getElementById('repBoxTotalExp');
-  if(boxInc) boxInc.textContent = maskable(egpSmart(totIncPeriod));
-  if(boxExp) boxExp.textContent = maskable(egpSmart(totExpPeriod));
-
-  const { periodLabel, list } = isInc ? incData : expData;
-  const repLblEl = document.getElementById('repPeriodLabel');
-  if(repLblEl) repLblEl.textContent = (reportPeriodMode === 'yearly') ? String(reportYear) : formatYMArabic(selected());
-
-  const byMain = {};
-  let grandTotal = 0;
-  for(const t of list){
-    const amt = Number(t.amount)||0;
-    if(amt <= 0) continue;
-    const cat = String(t.category||'أخرى').trim() || 'أخرى';
-    byMain[cat] = round2((byMain[cat]||0) + amt);
-    grandTotal = round2(grandTotal + amt);
-  }
-
-  const entries = Object.entries(byMain).sort((a,b)=>b[1]-a[1]);
-  const donutWrap = document.getElementById('repDonutWrap');
-  const chipsWrap = document.getElementById('repLegendChips');
-  const listEl = document.getElementById('repCatBreakdownList');
-
-  if(!entries.length || grandTotal <= 0){
-    donutWrap.innerHTML = '<div class="empty">لا توجد بيانات</div>';
-    chipsWrap.innerHTML = '';
-    listEl.innerHTML = `<div class="empty">لا توجد ${isInc?'إيرادات':'مصروفات'} مسجلة في (${esc(periodLabel)}).</div>`;
-    return;
-  }
-
-  let accPct = 0;
-  const stops = [];
-  entries.forEach(([cat, amt], idx)=>{
-    const color = CHART_COLORS[idx % CHART_COLORS.length];
-    const pct = (amt / grandTotal) * 100;
-    stops.push(`${color} ${accPct.toFixed(2)}% ${(accPct + pct).toFixed(2)}%`);
-    accPct += pct;
-  });
-  donutWrap.innerHTML = `
-    <div style="width:162px;height:162px;border-radius:50%;background:conic-gradient(${stops.join(',')});display:grid;place-items:center;box-shadow:0 6px 20px #0004">
-      <div style="width:96px;height:96px;border-radius:50%;background:var(--panel);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:4px">
-        <small style="font-size:.6rem;color:var(--muted)">${isInc?'الدخل':'المصروفات'}</small>
-        <b style="font-size:.76rem;direction:ltr">${maskable(fmtInt(grandTotal))}</b>
-      </div>
-    </div>
-  `;
-
-  const repTypeStr = isInc ? 'income' : 'expense';
-  chipsWrap.innerHTML = entries.slice(0, 6).map(([cat, amt], idx)=>{
-    const color = CHART_COLORS[idx % CHART_COLORS.length];
-    const pct = Math.round((amt / grandTotal) * 100);
-    return `<span class="tag" style="display:inline-flex;align-items:center;gap:5px;cursor:pointer" onclick="openCategoryDrillDown(${JSON.stringify(cat).replace(/"/g,'&quot;')}, '${repTypeStr}')"><i style="width:8px;height:8px;border-radius:50%;background:${color};display:inline-block"></i>${esc(cat)} ${pct}%</span>`;
-  }).join('');
-
-  listEl.innerHTML = entries.map(([cat, amt], idx)=>{
-    const color = CHART_COLORS[idx % CHART_COLORS.length];
-    const pct = Math.max(1, Math.round((amt / grandTotal) * 100));
-    return `
-      <div class="listitem" style="cursor:pointer;align-items:center;padding:11px 6px" onclick="openCategoryDrillDown(${JSON.stringify(cat).replace(/"/g,'&quot;')}, '${repTypeStr}')" title="اضغط لتحليل تفاصيل البند">
-        <span style="background:${color};color:#08121e;font-weight:400;font-size:.72rem;padding:3px 8px;border-radius:8px;min-width:44px;text-align:center">${pct}%</span>
-        <div class="info" style="padding:0 6px">
-          <b>${esc(cat)}</b>
-        </div>
-        <strong style="direction:ltr;font-size:.86rem">${maskable(egp(amt))} ›</strong>
-      </div>
-    `;
-  }).join('');
-}
-
-function buildSvgLineChartWithYAxis(monthTotals, isInc){
-  const maxVal = Math.max(...monthTotals, 100);
-  const niceMax = Math.ceil(maxVal / 100) * 100;
-  const w = 360, h = 165;
-  const padL = 48, padR = 14, padT = 16, padB = 26;
-  const plotW = w - padL - padR;
-  const plotH = h - padT - padB;
-  const strokeColor = isInc ? '#73a7ff' : '#43d6b2';
-
-  const ticks = [0, Math.round(niceMax * 0.33), Math.round(niceMax * 0.66), niceMax];
-  const gridHtml = ticks.map(tv => {
-    const y = padT + plotH - ((tv / niceMax) * plotH);
-    return `
-      <line x1="${padL}" y1="${y.toFixed(1)}" x2="${w - padR}" y2="${y.toFixed(1)}" stroke="var(--line)" stroke-dasharray="3,3" stroke-width="1"/>
-      <text x="${padL - 6}" y="${(y + 3).toFixed(1)}" fill="var(--muted)" font-size="9" text-anchor="end">${fmtInt(tv)}</text>
-    `;
-  }).join('');
-
-  const axesHtml = `
-    <line x1="${padL}" y1="${padT}" x2="${padL}" y2="${padT + plotH}" stroke="var(--line2)" stroke-width="1.5"/>
-    <line x1="${padL}" y1="${padT + plotH}" x2="${w - padR}" y2="${padT + plotH}" stroke="var(--line2)" stroke-width="1.5"/>
-  `;
-
-  const pts = monthTotals.map((val, idx)=>{
-    const x = padL + (idx * (plotW / 11));
-    const y = padT + plotH - ((val / niceMax) * plotH);
-    return { x, y, val, m: idx + 1 };
-  });
-
-  const polyPoints = pts.map(p => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
-  const areaPoints = `${pts[0].x.toFixed(1)},${(padT+plotH).toFixed(1)} ${polyPoints} ${pts[11].x.toFixed(1)},${(padT+plotH).toFixed(1)}`;
-
-  const dotsAndLabelsHtml = pts.map(p => `
-    <circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.4" fill="${strokeColor}" stroke="var(--panel)" stroke-width="1.5"/>
-    ${p.val > 0 ? `<text x="${p.x.toFixed(1)}" y="${Math.max(10, p.y - 6).toFixed(1)}" fill="var(--text)" font-size="8.5" text-anchor="middle">${fmtInt(p.val)}</text>` : ''}
-    <text x="${p.x.toFixed(1)}" y="${h - 7}" fill="var(--muted)" font-size="9" text-anchor="middle">${p.m}</text>
-  `).join('');
-
-  return `
-    <svg viewBox="0 0 ${w} ${h}" style="width:100%;height:auto;display:block;overflow:visible">
-      <defs>
-        <linearGradient id="lineAreaGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="${strokeColor}" stop-opacity="0.32"/>
-          <stop offset="100%" stop-color="${strokeColor}" stop-opacity="0.0"/>
-        </linearGradient>
-      </defs>
-      ${gridHtml}
-      ${axesHtml}
-      <polygon points="${areaPoints}" fill="url(#lineAreaGrad)"/>
-      <polyline fill="none" stroke="${strokeColor}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" points="${polyPoints}"/>
-      ${dotsAndLabelsHtml}
-    </svg>
-  `;
-}
-
-function openCategoryDrillDown(catName, txType){
-  activeCatDrillState = { catName, txType, subFilter: '' };
-  catDrillChartOpen = false;
-  document.getElementById('repModeSelectWrap').style.display = 'none';
-  document.getElementById('repSelectedCatBtn').style.display = 'flex';
-  document.getElementById('repMainContentWrap').style.display = 'none';
-  document.getElementById('catDetailInlineWrap').style.display = 'block';
-  document.getElementById('btnToggleMainRepChart')?.classList.toggle('active', false);
-  renderCategoryDrillDownContent();
-}
-
-function selectSubcategoryInDrillDown(subName){
-  if(!activeCatDrillState) return;
-  activeCatDrillState.subFilter = (activeCatDrillState.subFilter === subName) ? '' : subName;
-  renderCategoryDrillDownContent();
-}
-
-function shiftCatDrillPeriod(delta){
-  shiftReportPeriod(delta);
-}
-
-function openCatDrillPeriodPicker(){
-  openReportPeriodPicker();
-}
-
-function renderCategoryDrillDownContent(){
-  if(!activeCatDrillState) return;
-  const { catName, txType, subFilter } = activeCatDrillState;
-  const isInc = (txType === 'income');
-  const incData = getReportFilteredTransactions(true);
-  const expData = getReportFilteredTransactions(false);
-  const { periodLabel, yearForChart, list } = isInc ? incData : expData;
-
-  document.getElementById('catDetailTitle').textContent = subFilter ? `${catName} / ${subFilter}` : catName;
-  document.getElementById('btnToggleMainRepChart')?.classList.toggle('active', catDrillChartOpen);
-
-  const allMainCatTxs = list
-    .filter(t => (String(t.category||'أخرى').trim() || 'أخرى') === catName)
-    .map((x, idx)=>({...x, _kind:'tx', _order: getItemTimestampOrder(x, idx)}))
-    .sort((a,b)=>{
-      const dc = String(b.date||'').localeCompare(String(a.date||''));
-      if(dc !== 0) return dc;
-      return (b._order||0) - (a._order||0);
-    });
-  const totalCatAmt = round2(allMainCatTxs.reduce((s,t)=>s+(Number(t.amount)||0), 0));
-
-  // 1) Subcategory Breakdown Table (Clickable rows to filter Chart & Daily Report! 3.2)
-  const bySub = {};
-  for(const t of allMainCatTxs){
-    const sub = String(t.subCategory||'').trim() || catName;
-    bySub[sub] = round2((bySub[sub]||0) + (Number(t.amount)||0));
-  }
-  const subEntries = Object.entries(bySub).sort((a,b)=>b[1]-a[1]);
-  const subRowsHtml = subEntries.map(([sub, amt])=>{
-    const pct = totalCatAmt > 0 ? Math.round((amt / totalCatAmt) * 100) : 0;
-    const isSel = (subFilter === sub);
-    return `
-      <tr class="${isSel?'selected-sub':''}" onclick="selectSubcategoryInDrillDown(${JSON.stringify(sub).replace(/"/g,'&quot;')})">
-        <td><b>${esc(sub)}</b></td>
-        <td>${pct}%</td>
-        <td class="num ${isInc?'blue':'red'}"><b>${maskable(fmtNum(amt))}</b></td>
-      </tr>
-    `;
-  }).join('');
-
-  const subTableHtml = `
-    <table class="subcat-table">
-      <thead>
-        <tr>
-          <th>الصنف (اضغط للفلترة)</th>
-          <th>النسبة</th>
-          <th class="num">المبلغ</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr class="total-row ${!subFilter?'selected-sub':''}" onclick="selectSubcategoryInDrillDown('')">
-          <td><b>الإجمالي</b></td>
-          <td><b>100%</b></td>
-          <td class="num"><b>${maskable(fmtNum(totalCatAmt))}</b></td>
-        </tr>
-        ${subRowsHtml}
-      </tbody>
-    </table>
-  `;
-
-  // 2) Line Chart with Vertical Y-Axis (Filtered by subFilter if a subcategory is selected!)
-  const allYearMatching = (state.transactions||[]).filter(t => {
-    if(isInc ? t.type!=='income' : !isActualExpenseTx(t)) return false;
-    if((String(t.category||'أخرى').trim()||'أخرى') !== catName) return false;
-    if(subFilter){
-      const tSub = String(t.subCategory||'').trim() || catName;
-      if(tSub !== subFilter) return false;
-    }
-    return String(t.date||'').startsWith(String(yearForChart));
-  });
-  const monthTotals = Array(12).fill(0);
-  for(const t of allYearMatching){
-    const mn = Number(String(t.date||'').slice(5,7));
-    if(mn >= 1 && mn <= 12) monthTotals[mn-1] = round2(monthTotals[mn-1] + (Number(t.amount)||0));
-  }
-  const lineChartHtml = buildSvgLineChartWithYAxis(monthTotals, isInc);
-
-  // 3) Daily Transactions Report (Filtered by subFilter if a subcategory is selected!)
-  const displayedTxs = subFilter
-    ? allMainCatTxs.filter(t => (String(t.subCategory||'').trim() || catName) === subFilter)
-    : allMainCatTxs;
-  const dailyFeedHtml = buildDailyGroupedFeedHtml(displayedTxs, 'لا توجد معاملات مسجلة لهذا البند في هذه الفترة.');
-
-  document.getElementById('catDetailBody').innerHTML = `
-    <div class="panel" style="padding:0;overflow:hidden;margin-bottom:10px">${subTableHtml}</div>
-    <div class="panel" id="catDrillChartPanel" style="display:${catDrillChartOpen?'block':'none'};padding:12px 10px;margin-bottom:10px">${lineChartHtml}</div>
-    <div>${dailyFeedHtml}</div>
-  `;
-}
-
-function closeCatDetailModal(){
-  document.getElementById('catDetailModal')?.classList.remove('show');
-  activeCatDrillState = null;
-  const modeWrap = document.getElementById('repModeSelectWrap');
-  const catBtn = document.getElementById('repSelectedCatBtn');
-  const mainWrap = document.getElementById('repMainContentWrap');
-  const drillWrap = document.getElementById('catDetailInlineWrap');
-  if(modeWrap) modeWrap.style.display = 'block';
-  if(catBtn) catBtn.style.display = 'none';
-  if(mainWrap) mainWrap.style.display = 'block';
-  if(drillWrap) drillWrap.style.display = 'none';
-  document.getElementById('btnToggleMainRepChart')?.classList.toggle('active', mainRepChartOpen);
-}
-
+/* Analytics & Category Drill-Down loaded from analytics.js */
 
 /* =========================================================
    #1. QUICK TRANSACTION ENTRY MODAL (#quickModal)
@@ -2415,6 +2220,49 @@ function selectQuickSubCat(sc){
   renderQuickPickers();
   setQmDockMode('calc','qmAmount');
 }
+function openEditQuickCatPrompt(isSub){
+  const isInc = qmState.type === 'income';
+  const tree = isInc ? state.categoryTree.income : state.categoryTree.expense;
+  if(isSub){
+    const oldSub = qmState.subCategory;
+    const parent = qmState.category;
+    if(!oldSub || !parent) return toast('اختر قسماً فرعياً أولاً لتعديله');
+    showAppPrompt(`تعديل القسم الفرعي «${oldSub}»`, 'الاسم الجديد...', oldSub, (n)=>{
+      const clean = String(n||'').trim();
+      if(!clean || clean === oldSub) return;
+      tree[parent] = (tree[parent]||[]).map(s => s === oldSub ? clean : s);
+      state.transactions.forEach(t=>{ if(t.category===parent && t.subCategory===oldSub) t.subCategory=clean; });
+      qmState.subCategory = clean;
+      persist();
+      renderQuickPickers();
+      toast('تم تعديل القسم الفرعي ✓');
+    });
+  } else {
+    const oldMain = qmState.category;
+    if(!oldMain) return toast('اختر قسماً رئيسياً أولاً لتعديله');
+    showAppPrompt(`تعديل القسم الرئيسي «${oldMain}»`, 'الاسم الجديد...', oldMain, (n)=>{
+      const clean = String(n||'').trim();
+      if(!clean || clean === oldMain) return;
+      const subs = tree[oldMain] || [];
+      const keys = Object.keys(tree);
+      const rebuilt = {};
+      keys.forEach(k => { rebuilt[k === oldMain ? clean : k] = (k === oldMain ? subs : tree[k]); });
+      if(isInc){
+        state.categoryTree.income = rebuilt;
+        state.incomeCategories = Object.keys(rebuilt);
+      } else {
+        state.categoryTree.expense = rebuilt;
+        state.categories = Object.keys(rebuilt);
+      }
+      state.transactions.forEach(t=>{ if(t.category===oldMain) t.category=clean; });
+      qmState.category = clean;
+      persist();
+      renderQuickPickers();
+      toast('تم تعديل القسم الرئيسي ✓');
+    });
+  }
+}
+
 function openAddQuickCatPrompt(isSub){
   const label = isSub ? `إضافة قسم فرعي داخل «${qmState.category}»` : 'إضافة قسم رئيسي جديد';
   showAppPrompt(label, 'اكتب الاسم هنا...', '', (name)=>{
@@ -2540,15 +2388,12 @@ function saveQuickModal(){
     let op = {id:uid('op'), cardId:card.id, type:opType, title, amount, date, paid:0, dueDate:dueDateFor(card,date), createdAt:nowTs};
     if(opType === 'installment'){
       const months = num('qmCardMonths') || 12;
-      const t = (card.terms||{})[months] || {monthlyRate:0, adminRate:0};
-      const interest = round2(amount * t.monthlyRate * months);
-      const feeVal = round2(amount * t.adminRate);
-      const base = round2((amount + interest) / months);
+      const nums = computeCardInstallmentNumbers(card, amount, months);
       const purchaseYM = date.slice(0,7);
-      const built = buildInstallmentSchedulesForCard(card, purchaseYM, months, base, feeVal);
-      op.purchaseMonth = purchaseYM; op.months = months; op.interest = interest;
-      op.adminFee = feeVal; op.installment = base; op.total = round2(amount + interest + feeVal);
-      op.feeMonth = built.feeYM; op.feeDue = feeVal; op.feePaid = 0;
+      const built = buildInstallmentSchedulesForCard(card, purchaseYM, months, nums.base, nums.fee);
+      op.purchaseMonth = purchaseYM; op.months = months; op.interest = nums.interest;
+      op.adminFee = nums.fee; op.installment = nums.base; op.total = nums.total;
+      op.feeMonth = built.feeYM; op.feeDue = nums.fee; op.feePaid = 0;
       op.schedules = built.schedules;
     }
     state.cardOps.push(op);
@@ -3011,9 +2856,13 @@ function renderFullStatementModalContent(){
   document.getElementById('stmtPeriodLabel').textContent = allMonths ? 'كل الشهور' : formatYMArabic(ym);
 
   let combined = [];
+  const topTitleEl = document.getElementById('stmtTopTabTitle');
+  if(topTitleEl) topTitleEl.textContent = (kind === 'card') ? 'البطاقات' : 'الحسابات';
+  const stmtQ = (document.getElementById('stmtSearchInp')?.value || '').trim().toLowerCase();
+
   if(kind === 'account'){
     const acc = state.accounts.find(a=>a.id===id);
-    document.getElementById('stmtModalTitle').textContent = `كشف حساب: ${acc ? acc.name : ''}`;
+    document.getElementById('stmtModalTitle').textContent = acc ? acc.name : 'الحساب';
 
     const txItems = (state.transactions||[])
       .filter(t => t.accountId===id && (allMonths || monthKey(t.date)===ym))
@@ -3047,7 +2896,7 @@ function renderFullStatementModalContent(){
   } else {
     const card = state.cards.find(c=>c.id===id);
     const cName = card ? card.name : 'بطاقة';
-    document.getElementById('stmtModalTitle').textContent = `كشف بطاقة: ${cName}`;
+    document.getElementById('stmtModalTitle').textContent = cName;
 
     const cardOpIds = new Set((state.cardOps||[]).filter(o=>o.cardId===id).map(o=>o.id));
     const cardPayIds = new Set((state.cardPayments||[]).filter(p=>p.cardId===id).map(p=>p.id));
@@ -3092,6 +2941,12 @@ function renderFullStatementModalContent(){
     }));
   }
 
+  if(stmtQ){
+    combined = combined.filter(it => {
+      const hay = [it.title, it.note, it.description, it.category, it.subCategory, String(it.amount||'')].map(x=>String(x||'').toLowerCase()).join(' ');
+      return hay.includes(stmtQ);
+    });
+  }
   combined.sort((a,b)=>{
     const dc = String(b.date||'').localeCompare(String(a.date||''));
     if(dc !== 0) return dc;
@@ -3240,9 +3095,8 @@ function recalculateInstallmentOpWithTerms(op, card, monthlyRateDecimal, adminRa
   if(op.type !== 'installment') return;
   const amount = Number(op.amount)||0;
   const months = Number(op.months)||12;
-  const interest = round2(amount * monthlyRateDecimal * months);
-  const fee = round2(amount * adminRateDecimal);
-  const base = round2((amount + interest) / months);
+  const nums = computeCardInstallmentNumbers(card, amount, months, monthlyRateDecimal, adminRateDecimal);
+  const { interest, fee, base } = nums;
   const purchaseYM = op.purchaseMonth || String(op.date||today()).slice(0,7);
   const oldPaidByMonth = {};
   (op.schedules||[]).forEach(sc=>{ oldPaidByMonth[sc.month] = Number(sc.paid)||0; });
@@ -3470,6 +3324,12 @@ function dueDateFor(card,date){
    #6: COMMITMENTS PAGE (الالتزامات)
    - 6.1 & 6.2 جميع المستحقات: Add Amount column (المبلغ) & change "التزامات شهرية" to "شهري"
    ========================================================= */
+function cancelAddCommitmentForm(){
+  document.getElementById('addCommitmentFold')?.removeAttribute('open');
+  setv('defTitle',''); setv('defAmount',''); setv('defNote','');
+  setv('monTitle',''); setv('monAmount',''); setv('monNote','');
+  setv('opTitle',''); setv('opAmount','');
+}
 function setCommitmentAddKind(kind){
   setv('comAddKind', kind);
   document.getElementById('comKindTabDef')?.classList.toggle('active', kind==='deferred');
@@ -3513,18 +3373,15 @@ function showCreditQuote(){
     el.innerHTML='<div class="empty" style="padding:10px">أدخل المبلغ لعرض جدول الفائدة/الرسوم وأول قسط.</div>';
     return;
   }
-  const t = (card.terms||{})[months] || {monthlyRate:0, adminRate:0};
-  const interest = round2(amount * t.monthlyRate * months);
-  const fee = round2(amount * t.adminRate);
-  const base = round2((amount + interest)/months);
+  const nums = computeCardInstallmentNumbers(card, amount, months);
+  const { isSuez, interest, fee, base } = nums;
   const purchaseYM = val('opPurchaseVal') || selected();
   const built = buildInstallmentSchedulesForCard(card, purchaseYM, months, base, fee);
-  const isSuez = isSuezCanalBankCard(card);
 
   const firstRowLabel = isSuez ? 'رسوم إدارية' : 'فائدة';
   const firstRowAmt = isSuez ? fee : round2(interest / months);
   const firstRowMonth = isSuez ? formatYMArabic(built.feeYM) : formatYMArabic(built.firstInstYM);
-  const instRowAmt = isSuez ? base : round2((amount / months) + (interest / months));
+  const instRowAmt = base;
 
   el.innerHTML = `
     <table class="com-all-table" style="font-size:.74rem">
@@ -3559,11 +3416,11 @@ function addCardOperation(){
   const nowTs = Date.now();
   let op={id:uid('op'), cardId:card.id, type, title, amount, date, purchaseMonth:purchaseYM, paid:0, dueDate:dueDateFor(card,date), createdAt:nowTs};
   if(type==='installment'){
-    const months = num('opMonths')||12, t = (card.terms||{})[months]||{monthlyRate:0,adminRate:0};
-    const interest = round2(amount*t.monthlyRate*months), fee = round2(amount*t.adminRate), base = round2((amount+interest)/months);
-    const built = buildInstallmentSchedulesForCard(card, purchaseYM, months, base, fee);
-    op.months=months; op.interest=interest; op.adminFee=fee; op.installment=base; op.total=round2(amount+interest+fee);
-    op.feeMonth=built.feeYM; op.feeDue=fee; op.feePaid=0;
+    const months = num('opMonths')||12;
+    const nums = computeCardInstallmentNumbers(card, amount, months);
+    const built = buildInstallmentSchedulesForCard(card, purchaseYM, months, nums.base, nums.fee);
+    op.months=months; op.interest=nums.interest; op.adminFee=nums.fee; op.installment=nums.base; op.total=nums.total;
+    op.feeMonth=built.feeYM; op.feeDue=nums.fee; op.feePaid=0;
     op.schedules=built.schedules;
   }
   state.cardOps.push(op);
@@ -3903,6 +3760,18 @@ function deleteCommitment(id){
   }, true);
 }
 
+function openMonthlyDueActionsModal(kind, uidStr, opId, month, leftAmt, titleStr){
+  const isCardItem = kind !== 'commitment';
+  const html = `
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <button type="button" class="primary" onclick="closeAppDialog();openPayDueDialog('${escJs(kind)}','${escJs(uidStr)}','${escJs(opId)}','${escJs(month)}',${leftAmt},'${escJs(titleStr)}')">${leftAmt > 0 ? '💳 تسجيل سداد المستحق' : '✓ مسدد بالكامل'}</button>
+      <button type="button" class="secondary" style="border-color:var(--blue);color:var(--blue)" onclick="closeAppDialog();${isCardItem ? `openEditCardOpModal('${escJs(opId)}')` : `openEditCommitmentModal('${escJs(uidStr)}')`}">✎ تعديل البيانات</button>
+      <button type="button" class="smallbtn danger" style="padding:10px;border-radius:12px" onclick="closeAppDialog();${isCardItem ? `deleteCardOp('${escJs(opId)}')` : `deleteCommitment('${escJs(uidStr)}')`}">🗑 حذف</button>
+    </div>
+  `;
+  showAppCustomForm(titleStr, html, null, true);
+}
+
 function renderPlanScreen(){
   const m = selected();
   const { items, totalDue } = getUnifiedMonthlyDues(m);
@@ -3914,46 +3783,39 @@ function renderPlanScreen(){
   if(!items.length){
     listEl.innerHTML = '<div class="empty">لا توجد مبالغ مستحقة في هذا الشهر.</div>';
   } else {
-    const headHtml = `
-      <div class="com-grid-head four-cols">
-        <div>المعاملة</div>
-        <div>النوع</div>
-        <div>التفاصيل</div>
-        <div style="text-align:right">المستحق</div>
-      </div>
+    // 4.5 Unified Horizontal-Scroll Table for Monthly Dues matching All Commitments with full details
+    listEl.innerHTML = `
+      <table class="com-all-table">
+        <thead>
+          <tr>
+            <th>المعاملة</th>
+            <th>النوع</th>
+            <th>التفاصيل</th>
+            <th style="text-align:right">المبلغ</th>
+            <th style="text-align:right">المسدد</th>
+            <th style="text-align:right">المتبقي</th>
+            <th>الحالة</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${items.map(it=>{
+            const left = it.remaining;
+            const actCall = `openMonthlyDueActionsModal('${escJs(it.kind)}','${escJs(it.uid)}','${escJs(it.opId||'')}','${m}',${left},'${escJs(it.title)}')`;
+            return `
+              <tr style="cursor:pointer" onclick="${actCall}">
+                <td><b>${esc(it.title)}</b></td>
+                <td><span class="tag">${esc(it.categoryType)}</span></td>
+                <td><small style="color:var(--muted)">${esc(it.sub)}</small></td>
+                <td style="text-align:right;direction:ltr"><b>${maskable(fmtNum(it.amount))}</b></td>
+                <td style="text-align:right;direction:ltr" class="mint">${maskable(fmtNum(it.paid))}</td>
+                <td style="text-align:right;direction:ltr" class="${left>0?'orange':'mint'}"><b>${maskable(fmtNum(left))}</b></td>
+                <td><span class="tag" style="color:${left>0?'var(--orange)':'var(--mint)'}">${left>0?'سداد':'مسدد ✓'}</span></td>
+              </tr>
+            `;
+          }).join('')}
+        </tbody>
+      </table>
     `;
-    const rowsHtml = items.map(it=>{
-      const left = it.remaining;
-      const isCardItem = it.kind !== 'commitment';
-      const editFn = isCardItem ? `openEditCardOpModal('${escJs(it.opId)}')` : `openEditCommitmentModal('${escJs(it.uid)}')`;
-      const delFn = isCardItem ? `deleteCardOp('${escJs(it.opId)}')` : `deleteCommitment('${escJs(it.uid)}')`;
-      const payFn = `openPayDueDialog('${it.kind}','${escJs(it.uid)}','${escJs(it.opId||'')}','${m}',${left},'${escJs(it.title)}')`;
-      return `
-        <div class="tx-wrap" onclick="toggleItemActions(this,event)">
-          <div class="com-grid-row four-cols">
-            <div>
-              <b style="display:block;color:var(--text)">${esc(it.title)}</b>
-              ${left <= 0 ? `<small style="color:var(--mint)">مسدد ✓</small>` : (it.paid > 0 ? `<small style="color:var(--mint)">مسدد: ${fmtNum(it.paid)}</small>` : '')}
-            </div>
-            <div>
-              <span class="tag">${esc(it.categoryType)}</span>
-            </div>
-            <div>
-              <small style="display:block;color:var(--muted);font-size:.66rem">${esc(it.sub)}</small>
-            </div>
-            <div style="text-align:right;direction:ltr">
-              <strong class="${left>0?'orange':'mint'}">${maskable(egpSmart(left>0 ? left : it.amount))}</strong>
-            </div>
-          </div>
-          <div class="tap-actions">
-            <button type="button" class="smallbtn" style="border-color:var(--mint);color:var(--mint)" onclick="${payFn}">${left>0?'تسجيل سداد':'مسدد ✓'}</button>
-            <button type="button" class="smallbtn" style="border-color:var(--blue);color:var(--blue)" onclick="${editFn}">تعديل</button>
-            <button type="button" class="smallbtn danger" onclick="${delFn}">حذف</button>
-          </div>
-        </div>
-      `;
-    }).join('');
-    listEl.innerHTML = headHtml + rowsHtml;
   }
 
   renderAllCommitmentsMasterTable();
@@ -4476,39 +4338,36 @@ function renderSettingsCategories(){
   syncCategoryTrees();
   document.getElementById('setCatTabInc')?.classList.toggle('active', settingsCatMode==='income');
   document.getElementById('setCatTabExp')?.classList.toggle('active', settingsCatMode==='expense');
-  const tree = settingsCatMode==='income' ? state.categoryTree.income : state.categoryTree.expense;
+  const isInc = (settingsCatMode === 'income');
+  const tree = isInc ? state.categoryTree.income : state.categoryTree.expense;
   const entries = Object.entries(tree||{});
   if(!entries.length){
     container.innerHTML = '<div class="empty">لا توجد أقسام مسجلة. اضغط على علامة ＋ بالأعلى للإضافة.</div>';
     return;
   }
-  container.innerHTML = entries.map(([mc, subs], mIdx)=>{
+  container.innerHTML = entries.map(([mc, subs])=>{
     const isOpen = !!expandedSettingsMainCats[mc];
     const previewSubs = subs.length ? subs.slice(0,5).join('، ') + (subs.length>5 ? '…' : '') : 'لا توجد أقسام فرعية';
     const subsHtml = isOpen ? `
-      <div class="cat-mgr-subs">
-        ${subs.map((sc, sIdx)=>`
-          <div class="cat-mgr-sub-row">
-            <div style="display:flex;align-items:center;min-width:0;flex:1">
-              <div class="cat-reorder-box">
-                <button type="button" class="cat-move-btn" ${sIdx===0?'disabled':''} onclick="moveSubCategoryOrder('${escJs(mc)}','${escJs(sc)}',-1)" title="تحريك لأعلى">↑</button>
-                <button type="button" class="cat-move-btn" ${sIdx===subs.length-1?'disabled':''} onclick="moveSubCategoryOrder('${escJs(mc)}','${escJs(sc)}',1)" title="تحريك لأسفل">↓</button>
+      <div class="cat-mgr-subs" data-parent-cat="${esc(mc)}">
+        <div class="sub-drag-list" data-parent-cat="${esc(mc)}">
+          ${subs.map(sc=>`
+            <div class="cat-mgr-sub-row" data-cat-name="${esc(sc)}" style="margin-bottom:4px">
+              <div style="display:flex;align-items:center;min-width:0;flex:1">
+                <span class="cat-drag-handle sub-drag-handle" title="اسحب لإعادة الترتيب">☰</span>
+                <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(sc)}</span>
               </div>
-              <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(sc)}</span>
+              <button type="button" class="icon-act-btn" title="تعديل الفرعي" onclick="renameSubCategoryInSettings('${escJs(mc)}','${escJs(sc)}')">✎</button>
             </div>
-            <button type="button" class="icon-act-btn" title="تعديل الفرعي" onclick="renameSubCategoryInSettings('${escJs(mc)}','${escJs(sc)}')">✎</button>
-          </div>
-        `).join('')}
+          `).join('')}
+        </div>
         <button type="button" class="smallbtn" style="width:100%;margin-top:2px;border-color:var(--mint);color:var(--mint)" onclick="addSubCategoryInSettings('${escJs(mc)}')">＋ إضافة قسم فرعي</button>
       </div>
     ` : '';
     return `
-      <div class="cat-mgr-row">
+      <div class="cat-mgr-row" data-cat-name="${esc(mc)}">
         <div class="cat-mgr-main">
-          <div class="cat-reorder-box" onclick="event.stopPropagation()">
-            <button type="button" class="cat-move-btn" ${mIdx===0?'disabled':''} onclick="moveMainCategoryOrder('${escJs(mc)}',-1)" title="تحريك لأعلى">↑</button>
-            <button type="button" class="cat-move-btn" ${mIdx===entries.length-1?'disabled':''} onclick="moveMainCategoryOrder('${escJs(mc)}',1)" title="تحريك لأسفل">↓</button>
-          </div>
+          <span class="cat-drag-handle main-drag-handle" title="اسحب لإعادة الترتيب">☰</span>
           <div class="cat-mgr-main-title" onclick="toggleSettingsMainCatExpand('${escJs(mc)}')">
             <b>${esc(mc)} <span style="color:var(--muted);font-weight:400">(${subs.length})</span></b>
             <small>${esc(previewSubs)}</small>
@@ -4522,6 +4381,35 @@ function renderSettingsCategories(){
       </div>
     `;
   }).join('');
+
+  // Attach Touch/Pointer Drag-to-Reorder for Main Categories & Open Subcategory Lists
+  initDragReorderContainer(container, '.cat-mgr-row', '.main-drag-handle', (newOrder)=>{
+    const curTree = isInc ? state.categoryTree.income : state.categoryTree.expense;
+    const rebuilt = {};
+    newOrder.forEach(k => { if(curTree[k] !== undefined) rebuilt[k] = curTree[k]; });
+    Object.keys(curTree).forEach(k => { if(rebuilt[k] === undefined) rebuilt[k] = curTree[k]; });
+    if(isInc){
+      state.categoryTree.income = rebuilt;
+      state.incomeCategories = Object.keys(rebuilt);
+    } else {
+      state.categoryTree.expense = rebuilt;
+      state.categories = Object.keys(rebuilt);
+    }
+    persist();
+    toast('تم حفظ ترتيب الأقسام ✓');
+  });
+
+  container.querySelectorAll('.sub-drag-list').forEach(subListEl => {
+    const parentMc = subListEl.getAttribute('data-parent-cat');
+    initDragReorderContainer(subListEl, '.cat-mgr-sub-row', '.sub-drag-handle', (newSubOrder)=>{
+      const curTree = isInc ? state.categoryTree.income : state.categoryTree.expense;
+      if(parentMc && curTree[parentMc]){
+        curTree[parentMc] = newSubOrder;
+        persist();
+        toast('تم حفظ ترتيب الأقسام الفرعية ✓');
+      }
+    });
+  });
 }
 
 /* Compact Month/Year Picker Dialog */
@@ -4582,6 +4470,30 @@ function clearYMCell(){
 /* =========================================================
    #8.3 GOOGLE DRIVE CLOUD SYNC (Gmail Account + Direct Cloud Upload via Google Script / OAuth2 / Android Share)
    ========================================================= */
+function updateLocalAutoFreqBtnText(){
+  const btn = document.getElementById('btnLocalAutoFreq');
+  if(!btn) return;
+  const freq = state.prefs?.autoDriveFreq || 'off';
+  const map = { off:'🔄 تلقائي', daily:'🔄 تلقائي: يومي', weekly:'🔄 تلقائي: أسبوعي', monthly:'🔄 تلقائي: شهري' };
+  btn.textContent = map[freq] || '🔄 تلقائي';
+}
+
+function openAutoBackupFreqDialog(){
+  const cur = state.prefs?.autoDriveFreq || 'off';
+  const opts = [
+    ['off', 'معطل (إيقاف النسخ التلقائي)'],
+    ['daily', 'يومياً (حفظ نسخة كل يوم)'],
+    ['weekly', 'أسبوعياً (حفظ نسخة كل أسبوع)'],
+    ['monthly', 'شهرياً (حفظ نسخة كل شهر)']
+  ];
+  const html = `<div class="cs-opt-list">` + opts.map(([v, lbl])=>`
+    <button type="button" class="cs-opt-btn ${cur===v?'selected':''}" onclick="closeAppDialog();saveAutoDriveBackupFreq('${v}')">
+      <span>${esc(lbl)}</span><span>${cur===v?'●':'○'}</span>
+    </button>
+  `).join('') + `</div>`;
+  showAppCustomForm('نوع النسخ المحلي التلقائي', html, null, true);
+}
+
 function saveAutoDriveBackupFreq(freq){
   state.prefs = state.prefs || {};
   state.prefs.autoDriveFreq = freq || 'off';
@@ -4589,6 +4501,7 @@ function saveAutoDriveBackupFreq(freq){
     createAutomaticLocalSnapshot();
   }
   persist();
+  updateLocalAutoFreqBtnText();
   renderAutoSnapshotsList();
   toast(freq === 'off' ? 'تم إيقاف النسخ التلقائي' : 'تم تفعيل النسخ التلقائي وحفظ نسخة فورية ✓');
 }
@@ -5039,6 +4952,7 @@ function pickCustomSelectOption(idx){
 }
 function syncCustomSelectTriggers(){
   document.querySelectorAll('select').forEach(sel=>{
+    if(sel.getAttribute('data-no-custom')==='1') return;
     let trig = sel.nextElementSibling;
     if(!trig || !trig.classList.contains('custom-sel-trigger')){
       sel.style.display = 'none';

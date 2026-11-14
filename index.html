@@ -54,39 +54,33 @@
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
         </button>
       </div>
-      <div class="ym-stepper" dir="ltr">
+      <!-- 2.3 استبدال مربع التاريخ بسهمين بمربع إلغاء الفلتر عند تفعيل الفلتر -->
+      <div class="ym-stepper" id="transNavStepper" dir="ltr">
         <button type="button" class="step-arrow" onclick="shiftTransPeriod(-1)">‹</button>
         <button type="button" class="step-label" onclick="openTransPeriodPicker()" id="homePeriodLabel">نوفمبر 2026</button>
         <button type="button" class="step-arrow" onclick="shiftTransPeriod(1)">›</button>
       </div>
+      <button type="button" class="cancel-filter-top-btn" id="btnCancelFilterTop" style="display:none" onclick="closeAndClearSearchFilter()">✕ إلغاء الفلتر</button>
     </div>
 
-    <!-- 2.1 - 2.3 شبكة الفلتر بالترتيب: تاريخ - مبلغ - حساب - قسم رئيسي - فرعي - إلغاء الفلتر (وبدون فلتر كل الحسابات القديم) -->
-    <div id="mmSearchBox" style="display:none;margin-bottom:8px">
-      <div class="mm-filter-chips-grid" id="mmFilterChipsGrid">
-        <button type="button" class="mm-f-card" id="fCardDate" onclick="openTransFilterPrompt('date')">
-          <span class="mm-f-lbl">📅 تاريخ</span>
-          <b class="mm-f-val" id="fValDate">الكل</b>
+    <!-- 2.1, 2.2, 2.4, 2.5 شبكة الفلتر في صف واحد (4 مربعات: بالتاريخ - بالمبلغ - بالحساب - بالقسم) داخل كارت منفصل عن صف الإحصائيات -->
+    <div id="mmSearchBox" class="filter-bar-detached" style="display:none">
+      <div class="mm-filter-chips-grid four-in-row" id="mmFilterChipsGrid">
+        <button type="button" class="mm-f-card" id="fCardDate" onclick="handleFilterCardTap('date', event)">
+          <span class="mm-f-lbl">بالتاريخ</span>
+          <b class="mm-f-val" id="fValDate"></b>
         </button>
-        <button type="button" class="mm-f-card" id="fCardAmt" onclick="openTransFilterPrompt('amount')">
-          <span class="mm-f-lbl">💰 مبلغ</span>
-          <b class="mm-f-val" id="fValAmt">الكل</b>
+        <button type="button" class="mm-f-card" id="fCardAmt" onclick="handleFilterCardTap('amount', event)">
+          <span class="mm-f-lbl">بالمبلغ</span>
+          <b class="mm-f-val" id="fValAmt"></b>
         </button>
-        <button type="button" class="mm-f-card" id="fCardAcc" onclick="openTransFilterPrompt('account')">
-          <span class="mm-f-lbl">🏦 حساب</span>
-          <b class="mm-f-val" id="fValAcc">الكل</b>
+        <button type="button" class="mm-f-card" id="fCardAcc" onclick="handleFilterCardTap('account', event)">
+          <span class="mm-f-lbl">بالحساب</span>
+          <b class="mm-f-val" id="fValAcc"></b>
         </button>
-        <button type="button" class="mm-f-card" id="fCardMainCat" onclick="openTransFilterPrompt('mainCat')">
-          <span class="mm-f-lbl">🏷 قسم رئيسي</span>
-          <b class="mm-f-val" id="fValMainCat">الكل</b>
-        </button>
-        <button type="button" class="mm-f-card" id="fCardSubCat" onclick="openTransFilterPrompt('subCat')">
-          <span class="mm-f-lbl">🔖 فرعي</span>
-          <b class="mm-f-val" id="fValSubCat">الكل</b>
-        </button>
-        <button type="button" class="mm-f-card reset-f-card" onclick="clearTransactionsSearch()">
-          <span class="mm-f-lbl">✕ إلغاء</span>
-          <b class="mm-f-val">إلغاء الفلتر</b>
+        <button type="button" class="mm-f-card" id="fCardCat" onclick="handleFilterCardTap('cat', event)">
+          <span class="mm-f-lbl">بالقسم</span>
+          <b class="mm-f-val" id="fValCat"></b>
         </button>
       </div>
     </div>
@@ -294,7 +288,7 @@
           <div class="c-row"><label>المبلغ</label><input id="defAmount" type="number" step="0.01" inputmode="decimal" placeholder="0"></div>
           <div class="c-row"><label>تاريخ الاستحقاق</label><input id="defDueDate" type="date"></div>
           <div class="c-row"><label>ملاحظة</label><input id="defNote" placeholder="تفاصيل إضافية"></div>
-          <button type="button" class="primary" style="margin-top:6px" onclick="saveNewCommitmentItem()">حفظ</button>
+          <div class="actions" style="margin-top:6px"><button type="button" class="primary" onclick="saveNewCommitmentItem()">حفظ</button><button type="button" class="secondary" onclick="cancelAddCommitmentForm()">إلغاء</button></div>
         </div>
 
         <div id="comFormMonthly" class="c-list" style="display:none">
@@ -312,7 +306,7 @@
             <input type="hidden" id="comEndVal">
           </div>
           <div class="c-row"><label>ملاحظة</label><input id="monNote" placeholder="تفاصيل إضافية"></div>
-          <button type="button" class="primary" style="margin-top:6px" onclick="saveNewCommitmentItem()">حفظ</button>
+          <div class="actions" style="margin-top:6px"><button type="button" class="primary" onclick="saveNewCommitmentItem()">حفظ</button><button type="button" class="secondary" onclick="cancelAddCommitmentForm()">إلغاء</button></div>
         </div>
 
         <div id="comFormCard" class="c-list" style="display:none">
@@ -341,7 +335,7 @@
             <input type="hidden" id="opPurchaseVal">
           </div>
           <div id="creditQuote" class="panel installment-only" style="margin-top:4px;background:var(--surface);padding:10px"><div class="empty">أدخل المبلغ لعرض القسط وتاريخ البدء حسب البنك.</div></div>
-          <button type="button" class="primary" style="margin-top:6px" onclick="addCardOperation()">حفظ</button>
+          <div class="actions" style="margin-top:6px"><button type="button" class="primary" onclick="addCardOperation()">حفظ</button><button type="button" class="secondary" onclick="cancelAddCommitmentForm()">إلغاء</button></div>
         </div>
       </div>
     </details>
@@ -359,7 +353,7 @@
           <span class="fold-arrow">▼</span>
         </div>
       </summary>
-      <div class="fold-body" style="padding:0;overflow:hidden" id="commitmentsList"></div>
+      <div class="fold-body" style="padding:0;overflow:hidden"><div class="com-table-wrap" id="commitmentsList"></div></div>
     </details>
 
     <!-- 8. قائمة جميع المستحقات قابلة للطي ومغلقة افتراضياً -->
@@ -444,7 +438,7 @@
         <small>تطوير: م/ محمد خالد</small>
       </div>
     </div>
-    <span class="tag" id="devCardVerBadge" style="border-color:var(--mint);color:var(--mint);padding:4px 10px;font-size:.74rem">V13.5</span>
+    <span class="tag" id="devCardVerBadge" style="border-color:var(--mint);color:var(--mint);padding:4px 10px;font-size:.74rem">V13.6</span>
   </div>
 
   <!-- 4.1 إعدادات عامة (محاذاة موحدة + اختيار نوع الخط الفونت + إخفاء الأرقام والكسور + 10 ألوان) -->
@@ -617,37 +611,38 @@
         <div class="c-row">
           <label class="bidi-ar">نسخ محلي</label>
           <div class="c-row-btns equal-two-btns">
-            <select id="prefAutoDriveFreq" onchange="saveAutoDriveBackupFreq(this.value)">
-              <option value="off">تلقائي: معطل</option>
-              <option value="daily">تلقائي: يومي</option>
-              <option value="weekly">تلقائي: أسبوعي</option>
-              <option value="monthly">تلقائي: شهري</option>
-            </select>
+            <button type="button" class="smallbtn aligned-ctrl-btn" id="btnLocalAutoFreq" onclick="openAutoBackupFreqDialog()">🔄 تلقائي</button>
             <button type="button" class="smallbtn aligned-ctrl-btn" onclick="backup()" title="تصدير نسخة يدوية">
               <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
               <span class="bidi-ar">يدوي</span>
             </button>
           </div>
+          <select id="prefAutoDriveFreq" data-no-custom="1" style="display:none">
+            <option value="off">معطل</option>
+            <option value="daily">يومي</option>
+            <option value="weekly">أسبوعي</option>
+            <option value="monthly">شهري</option>
+          </select>
         </div>
 
-        <!-- سطر 2: نسخ سحابي (جوجل درايف: مشاركة فورية + مزامنة سحابية تلقائية) -->
+        <!-- سطر 2: نسخ سحابي (جوجل درايف) -->
         <div class="c-row">
           <label class="bidi-ar">نسخ سحابي</label>
           <div class="c-row-btns equal-two-btns">
-            <button type="button" class="smallbtn aligned-ctrl-btn" style="border-color:var(--blue)!important;color:var(--blue)!important" onclick="quickShareBackupToDrive()">☁ مشاركة لـ Drive</button>
+            <button type="button" class="smallbtn aligned-ctrl-btn" style="border-color:var(--blue)!important;color:var(--blue)!important" onclick="quickShareBackupToDrive()">☁ جوجل درايف</button>
             <button type="button" class="smallbtn aligned-ctrl-btn" id="btnCloudSyncSetup" onclick="openDriveCloudSetupModal()">⚙ ربط تلقائي</button>
           </div>
         </div>
 
-        <!-- سطر 3: استعادة (محلي من ملف / من النسخ التلقائية المحفوظة) -->
+        <!-- سطر 3: استعادة (محلي / نسخ تلقائية في سطر واحد بدون رقم) -->
         <div class="c-row">
           <label class="bidi-ar">استعادة</label>
           <div class="c-row-btns equal-two-btns">
             <button type="button" class="smallbtn aligned-ctrl-btn" onclick="openFilePicker('restore')">
               <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              <span class="bidi-ar">ملف محلي</span>
+              <span class="bidi-ar">محلي</span>
             </button>
-            <button type="button" class="smallbtn aligned-ctrl-btn" onclick="openAutoSnapshotsDialog()">🔄 نسخ تلقائية (<span id="autoSnapsCountLbl">0</span>)</button>
+            <button type="button" class="smallbtn aligned-ctrl-btn" onclick="openAutoSnapshotsDialog()">🔄 نسخ تلقائية</button>
           </div>
         </div>
         <input id="restore" class="file-hidden" type="file" onchange="restore(event)">
@@ -678,7 +673,7 @@
       <div class="c-list">
         <div class="c-row">
           <span class="c-lbl">الإصدار الحالي</span>
-          <span class="upd-equal-box" id="appVersionTag">V13.5</span>
+          <span class="upd-equal-box" id="appVersionTag">V13.6</span>
         </div>
         <div class="c-row">
           <span class="c-lbl">فحص التحديثات</span>
@@ -705,6 +700,8 @@
 
 </div>
 
+<!-- 2.6 Floating Search Lens Button Above + Button -->
+<button class="fab-search" id="fabSearchBtn" onclick="toggleSearchFromFab()" title="تفعيل / إلغاء البحث">🔍</button>
 <!-- Context-Aware Floating + Button -->
 <button class="fab" onclick="handleFabClick()">＋</button>
 
@@ -848,11 +845,20 @@
       </div>
 
       <div id="qmDockCat" style="display:none;flex-direction:column;height:100%;min-height:0">
+        <!-- 1.4 فريم لكلمة رئيسي وفريم لكلمة فرعي، كل كلمة شمالها + ويمينها قلم للتعديل -->
         <div class="quick-grid-head shaded-dock-head">
           <span>القسم</span>
-          <div style="display:flex;gap:12px;align-items:center">
-            <span style="cursor:pointer;color:var(--text)" onclick="openAddQuickCatPrompt(false)">＋ رئيسي</span>
-            <span style="cursor:pointer;color:var(--blue)" onclick="openAddQuickCatPrompt(true)">＋ فرعي</span>
+          <div style="display:flex;gap:8px;align-items:center" dir="ltr">
+            <div class="cat-head-frame">
+              <button type="button" class="chf-btn" onclick="openAddQuickCatPrompt(false)" title="إضافة قسم رئيسي">＋</button>
+              <span class="chf-lbl">رئيسي</span>
+              <button type="button" class="chf-btn edit" onclick="openEditQuickCatPrompt(false)" title="تعديل القسم الرئيسي المحدد">✎</button>
+            </div>
+            <div class="cat-head-frame sub">
+              <button type="button" class="chf-btn" onclick="openAddQuickCatPrompt(true)" title="إضافة قسم فرعي">＋</button>
+              <span class="chf-lbl">فرعي</span>
+              <button type="button" class="chf-btn edit" onclick="openEditQuickCatPrompt(true)" title="تعديل القسم الفرعي المحدد">✎</button>
+            </div>
           </div>
         </div>
         <div class="mm-cat-split">
@@ -865,34 +871,35 @@
         </div>
       </div>
 
-      <!-- 1.5 كيبورد الأرقام والآلة الحاسبة في 4 صفوف فقط وبدون زر 00 -->
+      <!-- 1.3 رجوع كيبورد الأرقام 5 صفوف × 4 أعمدة بدون 00 لتكون الأرقام مريحة في المنتصف -->
       <div id="qmDockCalc" style="display:none;flex-direction:column;height:100%;min-height:0">
         <div class="quick-grid-head shaded-dock-head">
           <span id="qmCalcTargetTitle">المبلغ</span>
           <b id="qmCalcExprPreview" dir="ltr" style="font-size:.82rem;color:var(--text);font-weight:700">0</b>
         </div>
-        <div class="qm-calc-pad four-rows-pad">
+        <div class="qm-calc-pad five-rows-pad">
           <button type="button" class="calc-key" onclick="qmCalcPress('7')">7</button>
           <button type="button" class="calc-key" onclick="qmCalcPress('8')">8</button>
           <button type="button" class="calc-key" onclick="qmCalcPress('9')">9</button>
           <button type="button" class="calc-key op" onclick="qmCalcPress('÷')">÷</button>
-          <button type="button" class="calc-key" onclick="qmCalcPress('⌫')">⌫</button>
 
           <button type="button" class="calc-key" onclick="qmCalcPress('4')">4</button>
           <button type="button" class="calc-key" onclick="qmCalcPress('5')">5</button>
           <button type="button" class="calc-key" onclick="qmCalcPress('6')">6</button>
           <button type="button" class="calc-key op" onclick="qmCalcPress('×')">×</button>
-          <button type="button" class="calc-key clr" onclick="qmCalcPress('C')">C</button>
 
           <button type="button" class="calc-key" onclick="qmCalcPress('1')">1</button>
           <button type="button" class="calc-key" onclick="qmCalcPress('2')">2</button>
           <button type="button" class="calc-key" onclick="qmCalcPress('3')">3</button>
           <button type="button" class="calc-key op" onclick="qmCalcPress('-')">−</button>
-          <button type="button" class="calc-key op plus-key" onclick="qmCalcPress('+')">＋</button>
 
           <button type="button" class="calc-key" onclick="qmCalcPress('.')">.</button>
-          <button type="button" class="calc-key" style="grid-column:span 2" onclick="qmCalcPress('0')">0</button>
-          <button type="button" class="calc-key eq-key" style="grid-column:span 2" onclick="qmCalcPress('=')">＝ إدراج</button>
+          <button type="button" class="calc-key" onclick="qmCalcPress('0')">0</button>
+          <button type="button" class="calc-key" onclick="qmCalcPress('⌫')">⌫</button>
+          <button type="button" class="calc-key op plus-key" onclick="qmCalcPress('+')">＋</button>
+
+          <button type="button" class="calc-key clr" onclick="qmCalcPress('C')">C</button>
+          <button type="button" class="calc-key eq-key" style="grid-column:span 3" onclick="qmCalcPress('=')">＝ احسب وأدرج الناتج</button>
         </div>
       </div>
     </div>
@@ -948,19 +955,32 @@
 </div>
 
 <!-- =========================================================
-     #4.1 شاشة كشف الحساب الكاملة للحسابات والبطاقات (مثل المعاملات اليومية مع فلتر الشهر وإجمالي الدخل والمصروفات والصافي)
+     #6.2 شاشة كشف الحساب المطابقة تماماً لهيدر المعاملات اليومية (4 صفوف + إبقاء الشريط السفلي للصفحات ظاهراً)
      ========================================================= -->
-<div class="modal fullpage-modal" id="statementFullModal" onclick="if(event.target===this)closeFullStatementModal()">
-  <div class="sheet fullpage-sheet" style="overflow-y:auto">
-    <div class="qm-top-bar">
-      <button type="button" class="qm-back-btn" onclick="closeFullStatementModal()">←</button>
-      <b id="stmtModalTitle">كشف حساب</b>
-      <button type="button" class="smallbtn" id="stmtAllMonthsBtn" onclick="toggleStatementAllMonths()">كل الشهور</button>
+<div class="modal fullpage-modal with-bottom-nav" id="statementFullModal" onclick="if(event.target===this)closeFullStatementModal()">
+  <div class="sheet fullpage-sheet" style="overflow-y:auto;padding-bottom:80px!important">
+    <!-- الصف الأول: اللوجو واسم التاب الحالية اللي كنت فيها -->
+    <header class="top" style="flex-shrink:0">
+      <div class="brand">
+        <div class="logo"><img src="icon-192.png" alt="X-Wallet"></div>
+        <b>X-Wallet</b>
+      </div>
+      <div class="top-tab-title" id="stmtTopTabTitle">الحسابات</div>
+    </header>
+
+    <!-- الصف الثاني: المربع الشمال (كشف حساب - للرجوع) والمربع اليمين (اسم الحساب أو البطاقة) -->
+    <div class="sub-tabs" style="flex-shrink:0">
+      <button type="button" class="sub-tab-btn" onclick="closeFullStatementModal()">← كشف حساب</button>
+      <button type="button" class="sub-tab-btn active" id="stmtModalTitle">الحساب</button>
     </div>
 
+    <!-- الصف الثالث والرابع: مربع البحث والتاريخ + الـ 3 مربعات (دخل / مصروفات / صافي) -->
     <div class="mm-header-card" style="flex-shrink:0">
-      <div class="mm-nav-row" id="stmtMonthNavRow">
-        <span style="font-size:.76rem;color:var(--muted)">فترة الكشف</span>
+      <div class="mm-nav-row trans-search-nav-row" id="stmtMonthNavRow">
+        <div class="mm-inline-search-bar">
+          <input id="stmtSearchInp" type="search" placeholder="ابحث" oninput="renderFullStatementModalContent()">
+          <button type="button" class="mm-filter-icon-btn" id="stmtAllMonthsBtn" onclick="toggleStatementAllMonths()" title="عرض كل الشهور / بالشهر" style="width:auto;padding:0 8px;font-size:.68rem">كل الشهور</button>
+        </div>
         <div class="ym-stepper" dir="ltr">
           <button type="button" class="step-arrow" onclick="shiftStatementMonth(-1)">‹</button>
           <button type="button" class="step-label" onclick="openStatementPeriodPicker()" id="stmtPeriodLabel">نوفمبر 2026</button>
@@ -1060,6 +1080,7 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
 <script src="core.js"></script>
+<script src="analytics.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

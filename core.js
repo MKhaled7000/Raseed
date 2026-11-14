@@ -7,7 +7,7 @@
    - Separate IndexedDB Store for Auto-Snapshots (Fixes 8.2MB vs 3MB backup size)
    - Selective Screen Rendering on Persist (Instant Save Speed)
    ========================================================= */
-const APP_VERSION = '13.5';
+const APP_VERSION = '13.6';
 const APP_BUILD = '2026-11-14';
 const KEY = 'raseed_mobile_v2';
 const SNAP_KEY = 'raseed_auto_snapshots_v1';
@@ -136,4 +136,84 @@ function getSanitizedStateForBackup(rawState){
     delete copy.prefs.bioCredentialId;
   }
   return copy;
+}
+
+
+/* 6. VisualViewport Native Keyboard Guard (Prevents In-App Calculator from EVER overlapping Mobile Keyboard) */
+(function initMobileKeyboardGuard(){
+  function checkKeyboard(){
+    const qm = document.getElementById('quickModal');
+    if(!qm || !qm.classList.contains('show')) return;
+    const activeEl = document.activeElement;
+    const isTextFocused = activeEl && (activeEl.id === 'qmNote' || activeEl.id === 'qmDesc' || (activeEl.tagName === 'INPUT' && !activeEl.readOnly && activeEl.type !== 'date'));
+    const vpHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+    const kbOpen = vpHeight < (window.screen.availHeight * 0.72) || isTextFocused;
+    if(kbOpen){
+      qm.classList.add('hide-bottom-dock');
+    }
+  }
+  if(window.visualViewport){
+    window.visualViewport.addEventListener('resize', checkKeyboard);
+  }
+  document.addEventListener('focusin', (e)=>{
+    const t = e.target;
+    if(t && (t.id === 'qmNote' || t.id === 'qmDesc')){
+      document.getElementById('quickModal')?.classList.add('hide-bottom-dock');
+    }
+  });
+})();
+
+/* 7. Touch & Pointer Drag-to-Reorder Helper for Categories & Subcategories (5.1) */
+function initDragReorderContainer(containerEl, itemSelector, handleSelector, onReorderDone){
+  if(!containerEl) return;
+  let dragItem = null;
+  let startY = 0;
+
+  containerEl.querySelectorAll(handleSelector).forEach(handle => {
+    handle.style.touchAction = 'none';
+    handle.onpointerdown = function(ev){
+      ev.preventDefault();
+      ev.stopPropagation();
+      const item = handle.closest(itemSelector);
+      if(!item) return;
+      dragItem = item;
+      startY = ev.clientY;
+      dragItem.classList.add('dragging-cat-row');
+      try{ handle.setPointerCapture(ev.pointerId); }catch(_){}
+
+      const onMove = (mev) => {
+        if(!dragItem) return;
+        const curY = mev.clientY;
+        const siblings = [...containerEl.querySelectorAll(':scope > ' + itemSelector)];
+        for(const sib of siblings){
+          if(sib === dragItem) continue;
+          const rect = sib.getBoundingClientRect();
+          const midY = rect.top + rect.height / 2;
+          if(curY < midY && dragItem.compareDocumentPosition(sib) & Node.DOCUMENT_POSITION_PRECEDING){
+            containerEl.insertBefore(dragItem, sib);
+            break;
+          } else if(curY > midY && dragItem.compareDocumentPosition(sib) & Node.DOCUMENT_POSITION_FOLLOWING){
+            containerEl.insertBefore(dragItem, sib.nextSibling);
+            break;
+          }
+        }
+      };
+
+      const onUp = (uev) => {
+        if(!dragItem) return;
+        dragItem.classList.remove('dragging-cat-row');
+        try{ handle.releasePointerCapture(uev.pointerId); }catch(_){}
+        handle.removeEventListener('pointermove', onMove);
+        handle.removeEventListener('pointerup', onUp);
+        handle.removeEventListener('pointercancel', onUp);
+        const orderedNames = [...containerEl.querySelectorAll(':scope > ' + itemSelector)].map(el => el.getAttribute('data-cat-name')).filter(Boolean);
+        dragItem = null;
+        if(onReorderDone && orderedNames.length) onReorderDone(orderedNames);
+      };
+
+      handle.addEventListener('pointermove', onMove);
+      handle.addEventListener('pointerup', onUp);
+      handle.addEventListener('pointercancel', onUp);
+    };
+  });
 }
